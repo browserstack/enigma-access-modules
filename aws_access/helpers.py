@@ -1,32 +1,36 @@
 import boto3
-import json
 import logging
 import os
-from django.template import Template, Context
 
 from bootprocess.general import emailSES
-from Access.aws_access import constants
+from BrowserStackAutomation.settings import data as CONFIG
+from aws_access import constants
+from Access.helpers import generateStringFromTemplate
 
 
 logger = logging.getLogger(__name__)
-send_approved_email_template_path = os.path.join(
-    os.path.dirname(__file__), 'templates', 'approved_email_template.html.j2'
-)
 
 
 def aws_account_exists(account):
-    if not get_aws_credentails(account):
+    if not _get_aws_credentails(account):
         return False
     return True
 
-def get_aws_credentails(account):
-    with open('config.json') as data_file:
-        data = json.load(data_file)
-        return data.get("aws_accounts", {}).get(account) or dict()
+def aws_group_exists(account, group):
+    client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
+    try:
+        client.get_group(GroupName=group)
+    except Exception as e:
+        logger.error(str(e))
+        return False
+    return True
+
+def _get_aws_credentails(account):
+    return CONFIG.get("aws_accounts", {}).get(account) or dict()
 
 
 def get_aws_client(account, resource):
-    creds = get_aws_credentails(account=account)
+    creds = _get_aws_credentails(account=account)
     return boto3.client(resource, **creds)
 
 
@@ -35,6 +39,8 @@ def grant_aws_access(user, label):
         if label["action"] == constants.GROUP_ACCESS:
             client = get_aws_client(account=label["account"], resource=constants.IAM_RESOURCE)
             client.add_user_to_group(GroupName=label["group"], UserName=user.email)
+        else:
+            return False
     except Exception as e:
         logger.error(str(e))
         return False
@@ -45,28 +51,21 @@ def revoke_aws_access(user, label):
         if label["action"] == constants.GROUP_ACCESS:
             client = get_aws_client(account=label["account"], resource=constants.IAM_RESOURCE)
             client.remove_user_from_group(GroupName=label["group"], UserName=user.email)
+        else:
+            return False
     except Exception as e:
         logger.error(str(e))
         return False
     return True
 
-def get_aws_groups(account):
+def get_aws_groups(account, marker):
     client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
-    return client.list_groups()['Groups']
+    return client.list_groups()
 
 
 def send_approved_email(
     user, label_desc, label_meta, approver, request_id,auto_approve_rules = None
 ):
-    template = Template(open(send_approved_email_template_path, "r").read())
-    context = Context({
-        "request_id": request_id,
-        "approver": approver,
-        "user_email": user.email,
-        "access_desc": label_desc,
-        "access_meta": label_meta
-    })
-
     email_targets = [ user.email ]
     if auto_approve_rules:
         email_subject = (
@@ -80,8 +79,13 @@ def send_approved_email(
                 request_id, label_desc, user.email, approver
             )
         )
-
-    email_body = template.render(context)
+    email_body = generateStringFromTemplate("approved_email_template.html.j2", {
+        "request_id": request_id,
+        "approver": approver,
+        "user_email": user.email,
+        "access_desc": label_desc,
+        "access_meta": label_meta
+    })
 
     try:
         emailSES(email_targets, email_subject, email_body)

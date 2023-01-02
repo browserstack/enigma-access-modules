@@ -77,7 +77,18 @@ class AWSAccess(object):
         return []
     
     def validate_request(self, access_labels_data, request_user, is_group=False):
-        return access_labels_data
+        valid_access_label_array = list()
+        for access_label_data in access_labels_data:
+            if not access_label_data.get("action"):
+                raise Exception(constants.ERROR_MESSAGES["valid_action_required"])
+            if access_label_data["action"] == constants.GROUP_ACCESS:
+                if not helpers.aws_account_exists(access_label_data.get("account")):
+                    raise Exception(constants.ERROR_MESSAGES["valid_account_required"])
+                if not helpers.aws_group_exists(access_label_data.get("group")):
+                    raise Exception(constants.ERROR_MESSAGES["valid_group_required"])
+            valid_access_label = {"data" : access_label_data}
+            valid_access_label_array.append(valid_access_label)
+        return valid_access_label_array
     
     def fetch_access_approve_email(self, request, data):
         context_details = {
@@ -98,7 +109,7 @@ class AWSAccess(object):
         return 'aws_access/accessRequest.html'
 
     def access_desc(self):
-        return "AWS Access"
+        return "AWS Group Access"
 
     def match_keywords(self):
         return  ['aws','amazon','web','services','console','cloud']

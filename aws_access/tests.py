@@ -1,6 +1,6 @@
 import pytest
 
-from Access.aws_access import constants, helpers, access
+from aws_access import constants, helpers, access
 
 class MockBoto3:
     def add_user_to_group(self, GroupName, UserName):
@@ -19,7 +19,7 @@ class MockBoto3withException:
 
 
 def test_get_aws_credentails(*args, **kwargs):
-    value = helpers.get_aws_credentails("test")
+    value = helpers._get_aws_credentails("test")
     assert value == {}
 
 @pytest.mark.parametrize(
