@@ -1,44 +1,25 @@
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
-from django.shortcuts import render
 import json
-from bootprocess.general import emailSES
-from Access.helpers import saveMetaData, getMetaData
-# from bootprocess.general import emailSES
 
-# Need to import MAIL_APPROVER_GROUPS CONFLUENCE_BASE_URL ADMIN_EMAIL API_TOKEN etc variables
+from bootprocess.general import emailSES
+from Access.helpers import save_meta_data, get_meta_data
+from Access.access_modules.base_email_access.access import BaseEmailAccess
+from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL, ACCESS_MODULES
+from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)
 
-class Confluence():
-  available = True
-  group_access_allowed = True
-
-  def __init__(self, test):
-    if(test):
-      self.CONFLUENCE_BASE_URL = "https://test.atlassian.net"
-      self.ADMIN_EMAIL = ""
-      self.API_TOKEN = ""
-    else:
-      with open('/config.json') as data_file:
-        data = json.load(data_file)
-        self.CONFLUENCE_BASE_URL = data["confluence_module"]["BASE_URL"]
-        self.ADMIN_EMAIL = data["confluence_module"]["ADMIN_EMAIL"]
-        self.API_TOKEN = data["confluence_module"]["API_TOKEN"]
-
-  # Added this function as this class inherited from BaseEmailAccess
-  def get_extra_fields(self):
-    return []
-
+class Confluence(BaseEmailAccess):
   def grant_owner(self):
-    return []
+    return [ ACCESS_APPROVE_EMAIL ]
 
   def revoke_owner(self):
-    return []
+    return [ ACCESS_APPROVE_EMAIL ]
   
   def access_mark_revoke_permission(self, access_type):
-    return []
+    return [ ACCESS_APPROVE_EMAIL ]
   
   def fetch_access_request_form_path(self):
     return "confluence/access_request_form.html"
@@ -47,7 +28,7 @@ class Confluence():
     return [ user.email ] + self.grant_owner()
   
   def auto_grant_email_targets(self, user):
-    return [ user.email ] 
+    return [ user.email ] + self.grant_owner()
 
   def validate_request(self, access_labels_data, request_user, is_group=False):
     access_workspace = access_labels_data[0]["accessWorkspace"]
@@ -88,7 +69,7 @@ class Confluence():
 
   def __approve_space_access(self, space_key, permission, subject_identifier, subject_type="user"):
     try:
-      auth = HTTPBasicAuth(self.ADMIN_EMAIL, self.API_TOKEN)
+      auth = HTTPBasicAuth(ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"], ACCESS_MODULES["confluence_module"]["API_TOKEN"])
       headers = {
         "Accept": "application/json",
         "Content-Type": "application/json"
@@ -100,11 +81,13 @@ class Confluence():
         },
         "operation": permission
       })
-      response = requests.request("POST", self.CONFLUENCE_BASE_URL+"/wiki/rest/api/space/"+space_key+"/permission", data=payload, headers=headers, auth=auth)
+      response = requests.request("POST", ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]+"/wiki/rest/api/space/"+space_key+"/permission", data=payload, headers=headers, auth=auth)
 
-      if(response.status_code != 200 and response.status_code != 201):
+      if(response.status_code != 200 and response.status_code != 400):
         logger.error(f"Could not approve permission {str(permission)} for response {str(response.text)}")
         return False
+      if(response.status_code == 400):
+        return json.loads(response.text)["message"].split(" ")[-1]
       return str(json.loads(response.text)["id"]) 
     except Exception as e:
       logger.error(f"Could not approve permission {str(permission)} for error {str(e)}")
@@ -112,8 +95,8 @@ class Confluence():
   
   def __revoke_space_access(self, space_key, permission_id):
     try:
-      auth = HTTPBasicAuth(self.ADMIN_EMAIL, self.API_TOKEN)
-      response = requests.request("DELETE", self.CONFLUENCE_BASE_URL+"/wiki/rest/api/space/"+space_key+"/permission/"+permission_id, auth=auth)
+      auth = HTTPBasicAuth(ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"], ACCESS_MODULES["confluence_module"]["API_TOKEN"])
+      response = requests.request("DELETE", ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]+"/wiki/rest/api/space/"+space_key+"/permission/"+permission_id, auth=auth)
       if(response.status_code != 204):
         return False
       
@@ -127,11 +110,11 @@ class Confluence():
   def access_request_data(self, request, is_group=False):
     available_spaces = {}
     available_spaces["spaces"] = []
-    auth = HTTPBasicAuth(self.ADMIN_EMAIL, self.API_TOKEN)
+    auth = HTTPBasicAuth(ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"], ACCESS_MODULES["confluence_module"]["API_TOKEN"])
     start = 0
     limit = 25
     while(True):
-      response = requests.request("GET", self.CONFLUENCE_BASE_URL+"/wiki/rest/api/space?type=global&start="+str(start)+"&limit="+str(limit)+"", auth=auth)
+      response = requests.request("GET", ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]+"/wiki/rest/api/space?type=global&start="+str(start)+"&limit="+str(limit)+"", auth=auth)
       spaces = json.loads(response.text)
       for space in spaces["results"]:
         available_spaces["spaces"].append({"key": space["key"], "name": space["name"]})
@@ -155,25 +138,30 @@ class Confluence():
   def approve(self, user, labels, approver, requestId, is_group=False, auto_approve_rules = None):
     permissions = []
     access_type = ""
-    if 'View Access' in labels["access_type"]:
-      access_type = 'View Access'
-      permissions = self.__get_accesses_with_type('View Access')
-    elif 'Edit Access' in labels["access_type"]:
-      access_type = 'Edit Access'
-      permissions = self.__get_accesses_with_type("Edit Access")
-    elif "Admin Access" in labels["access_type"]:
-      access_type = "Admin Access"
-      permissions = self.__get_accesses_with_type["Admin Access"]
-    
-    approve_result = []
+    for label in labels:
+      if 'View Access' in label['access_type']:
+        access_type = 'View Access'
+        permissions = self.__get_accesses_with_type('View Access')
+      elif 'Edit Access' in label['access_type']:
+        access_type = 'Edit Access'
+        permissions = self.__get_accesses_with_type("Edit Access")
+      elif "Admin Access" in label['access_type']:
+        access_type = "Admin Access"
+        permissions = self.__get_accesses_with_type("Admin Access")
+      
+      approve_result = []
+      print(permissions)
 
-    for permission in permissions:
-      response = self.__approve_space_access(labels["access_workspace"], permission, user.confluenceId, subject_type="user")
-      if((response is bool) and response == False):
-        return False
+      user.confluenceId = "63a322234bc858b303cbc9e2"
+      for permission in permissions:
+        response = self.__approve_space_access(label["access_workspace"], permission, user.confluenceId, subject_type="user")
+        print("Hello Response", type(response))
+        if(response == False):
+          return False
       
-      approve_result.append({"permission": permission, "permission_id": response})
+        approve_result.append({"permission": permission, "permission_id": response})
       
+      save_meta_data(user, labels, approve_result)
     
     email_targets = self.auto_grant_email_targets(user)
     email_body = f"Access successfully granted for confluence: {access_type} for Confluence Access to {user.email}.<br>Request has been approved by {approver}."
@@ -181,19 +169,18 @@ class Confluence():
 
     try:
       emailSES(email_targets, email_subject, email_body)
-      saveMetaData(user, labels, approve_result)
       return True
     except Exception as e:
       logger.error("Could not send email for error %s", str(e))
       return False
 
   def revoke(self, user, label):
-    permissions = getMetaData(user, label)
+    permissions = get_meta_data(user, label)
 
     for permission in permissions[::-1]:
-      if(self.__revoke_space_access(label["access_workspace"], permission["permission_id"]) == False):
+      response = self.__revoke_space_access(label["access_workspace"], permission["permission_id"])
+      if(response == False):
         logger.error("could not revoke access for %s", str(permission))
-        # Want to verify this if someone revoked access from UI of confluence when should we stop or continue
         return False
     
     label_desc = self.get_label_desc(label)
@@ -212,23 +199,7 @@ class Confluence():
     return "Confluence Access Module"
 
   def tag(self):
-    return 'confluenceModule'
-
-  # Added this function as this class inherited from BaseEmailAccess
-  def fetch_access_approve_email(self, request, data):
-    context_details = {
-      'approvers': {
-        'primary': data['approvers']['primary'],
-        'other': data['approvers']['other']
-      },
-      'requestId': data['requestId'],
-      'user': request.user,
-      'requestData': data['request_data'],
-      'accessType': self.tag(),
-      'accessDesc': self.access_desc(),
-      'isGroup': data['is_group']
-    }
-    return str(render(request, 'base_email_access/accessApproveEmail.html', context_details).content.decode("utf-8"))
+    return 'confluence_module'
 
 def get_object():
-  return Confluence(False)
+  return Confluence()

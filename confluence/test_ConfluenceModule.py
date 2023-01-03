@@ -1,3 +1,4 @@
+from BrowserStackAutomation.settings import ACCESS_MODULES
 import pytest
 from . import access
 
@@ -55,15 +56,15 @@ def test_Confluence(mocker, requests_mock):
       "desc": "Admin Access"
     }]
 
-  requests_mock.post(f'{confluence_access.CONFLUENCE_BASE_URL}/wiki/rest/api/space/test/permission', status_code=200, json={'id': 1234})
-  requests_mock.delete(f'{confluence_access.CONFLUENCE_BASE_URL}/wiki/rest/api/space/test/permission/1234', status_code=204)
+  requests_mock.post(f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/test/permission', status_code=200, json={'id': 1234})
+  requests_mock.delete(f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/test/permission/1234', status_code=204)
 
   mocker.patch("bootprocess.general.emailSES", return_value="")
-  mocker.patch("Access.helpers.saveMetaData", return_value="")
+  mocker.patch("Access.helpers.save_meta_data", return_value="")
   permission = {"key": "read", "target": "space"}
-  mocker.patch("Access.helpers.getMetaData", return_value=[{"permission": permission, "permission_id": "1234"}])
-  resp = confluence_access.approve(userMock, label1[0], "test", "123123")
+  mocker.patch("Access.helpers.get_meta_data", return_value=[{"permission": permission, "permission_id": "1234"}])
+  resp = confluence_access.approve(userMock, label1, "test", "123123")
   assert resp == True
 
-  resp = confluence_access.revoke(userMock, label1[0])
+  resp = confluence_access.revoke(userMock, label1)
 
