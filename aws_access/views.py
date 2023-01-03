@@ -7,9 +7,8 @@ import helpers
 
 
 @login_required
-def get_aws_accounts(request, account):
-    accounts = list(CONFIG.get("aws_accounts", {}).keys())
-    response = {"data": accounts}
+def get_aws_accounts(request):
+    response = {"data": helpers.get_aws_accounts()}
     return JsonResponse(response)
 
 

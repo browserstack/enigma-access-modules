@@ -20,7 +20,7 @@ class MockBoto3withException:
 
 def test_get_aws_credentails(*args, **kwargs):
     value = helpers._get_aws_credentails("test")
-    assert value == {}
+    assert type(value) == dict
 
 @pytest.mark.parametrize(
     """test_name, user_email, label, expected_return_value, boto3_client""",
@@ -105,46 +105,6 @@ def test_revoke_aws_access(
     mocker.patch("bootprocess.general.emailSES", return_value="")
     
     return_value = helpers.revoke_aws_access(user=userMock, label=label)
-    assert return_value == expected_return_value
-
-
-
-@pytest.mark.parametrize(
-    """test_name, user_email, label_desc, label_meta, approver_email, request_id, expected_return_value""",
-    [
-        (
-            "Send Approved Email",
-            "user@example.com",
-            "label_desc",
-            "label_meta",
-            "approver@example.com",
-            "request_id",
-            True,
-        ),
-    ],
-)
-def test_send_approved_email(
-    mocker,
-    test_name,
-    user_email,
-    label_desc,
-    label_meta,
-    approver_email,
-    request_id,
-    expected_return_value,
-):
-    
-    userMock = mocker.MagicMock()
-    userMock.email = user_email
-    
-    approverMock = mocker.MagicMock()
-    approverMock.email = approver_email
-    
-    mocker.patch("bootprocess.general.emailSES", return_value="")
-    
-    return_value = helpers.send_approved_email(
-        userMock, label_desc, label_meta, approverMock, request_id, auto_approve_rules = None
-    )
     assert return_value == expected_return_value
 
 

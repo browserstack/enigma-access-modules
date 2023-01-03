@@ -2,12 +2,14 @@ import json
 from django.shortcuts import render
 from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL
 from . import helpers, constants
+from Access.access_modules.base_email_access.access import BaseEmailAccess
+from bootprocess.general import emailSES
 import logging
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-class AWSAccess(object):
+class AWSAccess(BaseEmailAccess):
     def grant_owner(self):
         return [ ACCESS_APPROVE_EMAIL ]
 
@@ -23,17 +25,36 @@ class AWSAccess(object):
     def approve(self, user, labels, approver, request_id, is_group=False, auto_approve_rules = None):
         return_value = False
         exception = ""
+        label_desc = self.combine_labels_desc(labels)
+        label_meta = self.combine_labels_meta(labels)
         for label in labels:
             return_value, exception = helpers.grant_aws_access(user, label["account"], label["group"])
 
-        helpers.send_approved_email(
-            user=user,
-            label_desc=self.combine_labels_desc(labels),
-            label_meta=self.combine_labels_meta(labels),
-            approver=approver,
-            request_id=request_id,
-            auto_approve_rules=auto_approve_rules
-        )
+        if auto_approve_rules:
+            email_subject = (
+                    "Access Granted: %s for access to %s for user %s.<br>Request has been approved by %s. <br> Rules :- %s" % ( 
+                        request_id, label_desc, user.email, approver, " ,".join(auto_approve_rules)
+                    )
+                )
+        else:
+            email_subject = (
+                "Access Granted: %s for access to %s for user %s.<br>Request has been approved by %s." % ( 
+                    request_id, label_desc, user.email, approver
+                )
+            )
+        email_body = self.generateStringFromTemplate("approved_email_template.html.j2", {
+            "request_id": request_id,
+            "approver": approver,
+            "user_email": user.email,
+            "access_desc": label_desc,
+            "access_meta": label_meta
+        })
+        email_targets = [ user.email ]
+        try:
+            emailSES(email_targets, email_subject, email_body)
+        except Exception as e:
+            logger.error("Could not send email for error %s", str(e))
+
         return return_value, exception
     
     def get_label_desc(self, access_label):
@@ -59,12 +80,7 @@ class AWSAccess(object):
         return combined_meta
     
     def access_request_data(self, request, is_group=False):
-        request_data = {}
-
-        with open('config.json') as data_file:
-            data = json.load(data_file)
-            request_data["accounts"] = list(data.get("aws_accounts", {}).keys())
-
+        request_data = {"accounts": helpers.get_aws_accounts()}
         return request_data
 
     def revoke(self, user, label):

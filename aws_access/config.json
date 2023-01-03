@@ -1,3 +1,9 @@
 {
-    "aws_accounts": {}
+    "aws_accounts": [
+        {
+            "account": "Dev",
+            "access_key_id": "id",
+            "access_secret_key": "key"
+        }
+    ]
 }
