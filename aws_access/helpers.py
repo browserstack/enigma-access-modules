@@ -23,7 +23,7 @@ def aws_group_exists(account, group):
     return True
 
 def _get_aws_credentails(account):
-    accounts = CONFIG.get("aws_accounts", [])
+    accounts = CONFIG["access_modules"]["aws_access"].get("aws_accounts", [])
     for account_data in accounts:
         if account_data["account"] == account:
             return dict(
@@ -65,7 +65,7 @@ def revoke_aws_access(user, label):
     return True, ""
 
 def get_aws_accounts():
-    accounts = CONFIG.get("aws_accounts", [])
+    accounts = CONFIG["access_modules"]["aws_access"].get("aws_accounts", [])
     account_names = []
     for account in accounts:
         account_names.append(account["account"])

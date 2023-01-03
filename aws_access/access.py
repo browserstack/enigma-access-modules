@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render
+from django.template import loader
 from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL
 from . import helpers, constants
 from Access.access_modules.base_email_access.access import BaseEmailAccess
@@ -42,7 +43,7 @@ class AWSAccess(BaseEmailAccess):
                     request_id, label_desc, user.email, approver
                 )
             )
-        email_body = self.generateStringFromTemplate("approved_email_template.html.j2", {
+        email_body = self._generateStringFromTemplate("approved_email_template.html.j2", {
             "request_id": request_id,
             "approver": approver,
             "user_email": user.email,
@@ -81,6 +82,7 @@ class AWSAccess(BaseEmailAccess):
     
     def access_request_data(self, request, is_group=False):
         request_data = {"accounts": helpers.get_aws_accounts()}
+        print(request_data)
         return request_data
 
     def revoke(self, user, label):
@@ -129,9 +131,19 @@ class AWSAccess(BaseEmailAccess):
 
     def match_keywords(self):
         return  ['aws','amazon','web','services','console','cloud']
-
+    
     def tag(self):
         return 'aws_access'
+
+    def _generateStringFromTemplate(filename, **kwargs):
+        template = loader.get_template(filename)
+        vals = {}
+        for key, value in kwargs.items():
+            vals[key] = value
+        return template.render(vals)
+    
+    def access_types(self):
+        return {}
 
 def get_object():
     return AWSAccess()
