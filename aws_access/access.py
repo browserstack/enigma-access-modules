@@ -5,9 +5,11 @@ from . import helpers, constants
 import logging
 from datetime import datetime
 
+from Access.access_modules.base_email_access.access import BaseEmailAccess
+
 logger = logging.getLogger(__name__)
 
-class AWSAccess(object):
+class AWSAccess(BaseEmailAccess):
     def grant_owner(self):
         return [ ACCESS_APPROVE_EMAIL ]
 
@@ -32,7 +34,8 @@ class AWSAccess(object):
             label_meta=self.combine_labels_meta(labels),
             approver=approver,
             request_id=request_id,
-            auto_approve_rules=auto_approve_rules
+            auto_approve_rules=auto_approve_rules,
+            generateStringFromTemplate=self.generateStringFromTemplate,
         )
         return return_value, exception
     
@@ -41,6 +44,9 @@ class AWSAccess(object):
         if access_label["action"] == constants.GROUP_ACCESS:
             desc = access_label['action'] + ' for group: ' + access_label['group']
         return desc
+
+    def access_types(self):
+        return {}
 
     def combine_labels_desc(self, access_labels):
         label_desc_array = [self.get_label_desc(access_label) for access_label in access_labels]
@@ -61,9 +67,12 @@ class AWSAccess(object):
     def access_request_data(self, request, is_group=False):
         request_data = {}
 
+        # TODO do not read config.json directly, move to settings.py
         with open('config.json') as data_file:
             data = json.load(data_file)
-            request_data["accounts"] = list(data.get("aws_accounts", {}).keys())
+            request_data["accounts"] = list(data.get("access_modules", {})["aws_module"]["aws_accounts"].keys())
+
+        logger.error(request_data)
 
         return request_data
 

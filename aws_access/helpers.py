@@ -4,9 +4,7 @@ import os
 
 from bootprocess.general import emailSES
 from BrowserStackAutomation.settings import data as CONFIG
-from aws_access import constants
-from Access.helpers import generateStringFromTemplate
-
+from . import constants
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +62,7 @@ def get_aws_groups(account, marker):
 
 
 def send_approved_email(
-    user, label_desc, label_meta, approver, request_id,auto_approve_rules = None
+    user, label_desc, label_meta, approver, request_id, auto_approve_rules = None, generateStringFromTemplate = None
 ):
     email_targets = [ user.email ]
     if auto_approve_rules:
