@@ -4,7 +4,6 @@ from requests.auth import HTTPBasicAuth
 import json
 
 from bootprocess.general import emailSES
-from Access.helpers import save_meta_data, get_meta_data
 from Access.access_modules.base_email_access.access import BaseEmailAccess
 from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL, ACCESS_MODULES
 from bootprocess.general import emailSES
@@ -150,12 +149,9 @@ class Confluence(BaseEmailAccess):
         permissions = self.__get_accesses_with_type("Admin Access")
       
       approve_result = []
-      print(permissions)
 
-      user.confluenceId = "63a322234bc858b303cbc9e2"
       for permission in permissions:
         response = self.__approve_space_access(label["access_workspace"], permission, user.confluenceId, subject_type="user")
-        print("Hello Response", type(response))
         if(response == False):
           return False
       
