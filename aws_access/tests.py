@@ -6,7 +6,7 @@ class MockBoto3:
     def add_user_to_group(self, GroupName, UserName):
         pass
 
-    def remove_user_to_group(self, GroupName, UserName):
+    def remove_user_from_group(self, GroupName, UserName):
         pass
 
 
@@ -14,7 +14,7 @@ class MockBoto3withException:
     def add_user_to_group(GroupName, UserName):
         raise Exception
 
-    def remove_user_to_group(GroupName, UserName):
+    def remove_user_from_group(GroupName, UserName):
         raise Exception
 
 
@@ -157,7 +157,6 @@ def test_AWSAccess(mocker):
 
     mocker.patch("aws_access.helpers.grant_aws_access", return_value=(True, ""))
     mocker.patch("aws_access.helpers.revoke_aws_access", return_value=(True, ""))
-    mocker.patch("aws_access.helpers.send_approved_email", return_value=True)
 
     return_value, error = aws_access.approve(
         user=None, labels=[label_1], approver=None, request_id="request_id"
