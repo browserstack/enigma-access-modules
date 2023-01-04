@@ -28,8 +28,8 @@ def _get_aws_credentails(account):
         if account_data["account"] == account:
             return dict(
                 {
-                    "access_key_id": account_data["access_key_id"],
-                    "access_secret_key": account_data["access_secret_key"]
+                    "aws_access_key_id": account_data["access_key_id"],
+                    "aws_secret_access_key": account_data["secret_access_key"]
                 }
             )
     return dict()
@@ -73,4 +73,7 @@ def get_aws_accounts():
 
 def get_aws_groups(account, marker):
     client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
-    return client.list_groups(Marker=marker)
+    if marker:
+        return client.list_groups(Marker=marker)
+    else:
+        return client.list_groups()

@@ -3,7 +3,7 @@
         {
             "account": "Dev",
             "access_key_id": "id",
-            "access_secret_key": "key"
+            "secret_access_key": "key"
         }
     ]
 }
