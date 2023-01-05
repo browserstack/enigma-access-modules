@@ -134,7 +134,7 @@ class Confluence(BaseEmailAccess):
     return permissions
 
   
-  def approve(self, user, labels, approver, requestId, is_group=False, auto_approve_rules = None):
+  def approve(self, user, labels, approver, request, is_group=False, auto_approve_rules = None):
     permissions = []
     access_type = ""
     for label in labels:
@@ -157,11 +157,11 @@ class Confluence(BaseEmailAccess):
       
         approve_result.append({"permission": permission, "permission_id": response})
       
-      save_meta_data(user, labels, approve_result)
+      request.updateMetaData("confluence", approve_result)
     
     email_targets = self.auto_grant_email_targets(user)
     email_body = f"Access successfully granted for confluence: {access_type} for Confluence Access to {user.email}.<br>Request has been approved by {approver}."
-    email_subject = f"Approved Access: {requestId} for access to {self.access_desc()} for user {user.email}"
+    email_subject = f"Approved Access: {request.request_id} for access to {self.access_desc()} for user {user.email}"
 
     try:
       emailSES(email_targets, email_subject, email_body)
@@ -170,8 +170,8 @@ class Confluence(BaseEmailAccess):
       logger.error("Could not send email for error %s", str(e))
       return False
 
-  def revoke(self, user, label):
-    permissions = get_meta_data(user, label)
+  def revoke(self, user, label, request):
+    permissions = request.meta_data["confluence"]
 
     for permission in permissions[::-1]:
       response = self.__revoke_space_access(label["access_workspace"], permission["permission_id"])
