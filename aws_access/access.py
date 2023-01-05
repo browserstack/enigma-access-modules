@@ -87,9 +87,9 @@ class AWSAccess(BaseEmailAccess):
 
     def revoke(self, user, label):
         logger.info(f'[{datetime.now().strftime("%Y-%m-%d")}] [aws] Revoke Started({user.email}) : {label}')
-        is_revoked = helpers.revoke_aws_access(user.user, label)
+        is_revoked, exception = helpers.revoke_aws_access(user.user, label)
         logger.info(f'[{datetime.now().strftime("%Y-%m-%d")}] [aws] Revoke Result({user.email}) : {is_revoked}')
-        return is_revoked, ""
+        return is_revoked, exception
     
     def get_extra_fields(self):
         return []
