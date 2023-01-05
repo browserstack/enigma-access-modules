@@ -35,28 +35,6 @@
     </select>
   </div>
 
-  <!-- <div class="form-group awsRequest addToGroup"> -->
-  <!--   <div class="form-group"> -->
-  <!--     <label for="groupComponents">AWS Groups for access</label> -->
-  <!--      -->
-  <!--     <div class="row"> -->
-  <!--     <div class="col-xs-5 col-md-5"> -->
-  <!--       <select id="groupComponents" class="form-control" size="8" multiple="multiple" placeholder="component_config,component_keys"> -->
-  <!--       </select> -->
-  <!--     </div> -->
-  <!--    -->
-  <!--     <div class="col-xs-2 col-md-2" style="margin-top:1%;"> -->
-  <!--       <button type="button" id="groupComponents_rightSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-right" style="font-size:24px"></i></button> -->
-  <!--       <button type="button" id="groupComponents_leftSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-left" style="font-size:24px"></i></button> -->
-  <!--     </div> -->
-  <!--    -->
-  <!--     <div class="col-xs-5 col-md-5"> -->
-  <!--       <select id="groupComponents_to" class="form-control required" size="8" multiple="multiple"> -->
-  <!--       </select> -->
-  <!--     </div> -->
-  <!--   </div> -->
-  <!-- </div> -->
-
   <div class="form-group">
     <label class="form-check-label">Reason</label>
     <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
@@ -68,7 +46,6 @@
  jQuery(document).ready(function ($) {
    function getawsAccountData(event) {
      server = event.target.value
-     // console.log(server)
      if(server === "") return ;
      $("#deployComponents").html(`<option value="fetching">Fetching ...</option>`);
      $("#keyOwner").html(`<option value="fetching">Fetching ...</option>`);
@@ -167,34 +144,8 @@
    }
 
    function registertoEventsOnLoad(){
-     // $("#awsAccount").on('change', getawsAccountData);
-     // $("#vaultAction").on('change', changeVaultAction);
-
-     // $('.addNewKey').show()
      $('#awsAccount').dropdown();
-     // $('#vaultAction').dropdown();
-     // $('.labelParam').on('change', registerLabelChange);
-     //when page loads getting the value of vaultAction in accessLabel by executing the handler registerLabelChange
-     // $('#vaultAction').trigger('change');
      $('#awsAccount').trigger('change');
-
-     // $(["#deployComponents", "#keyOwner", "#accessKeyPath"]).each((idx, elem) => {
-
-     //   $(elem).multiselect({
-     //     search: {
-     //       left: '<input type="text" class="form-control" placeholder="Search..." />',
-     //       right: '<input type="text" class="form-control" placeholder="Search..." />',
-     //     },
-     //     fireSearch: function (value) {
-     //       return value.length > 1;
-     //     },
-     //     submitAllLeft: false,
-     //     submitAllRight: false,
-     //     afterMoveToRight: registerMultiselectButtonClick,
-     //     afterMoveToLeft: registerMultiselectButtonClick
-     //   });
-
-     // });
    }
 
    registertoEventsOnLoad();

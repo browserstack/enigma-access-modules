@@ -29,7 +29,7 @@ class AWSAccess(BaseEmailAccess):
         label_desc = self.combine_labels_desc(labels)
         label_meta = self.combine_labels_meta(labels)
         for label in labels:
-            return_value, exception = helpers.grant_aws_access(user, label["account"], label["group"])
+            granted_access, exception = helpers.grant_aws_access(user, label["account"], label["group"])
 
         if auto_approve_rules:
             email_subject = (
@@ -54,15 +54,14 @@ class AWSAccess(BaseEmailAccess):
         try:
             emailSES(email_targets, email_subject, email_body)
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error(f"{self.tag()} Could not send email for error {str(e)}")
 
-        return return_value, exception
+        return granted_access, exception
     
     def get_label_desc(self, access_label):
-        desc = ""
         if access_label["action"] == constants.GROUP_ACCESS:
-            desc = access_label['action'] + ' for group: ' + access_label['group']
-        return desc
+            return access_label['action'] + ' for group: ' + access_label['group']
+        return ""
 
     def combine_labels_desc(self, access_labels):
         label_desc_array = [self.get_label_desc(access_label) for access_label in access_labels]
@@ -72,27 +71,25 @@ class AWSAccess(BaseEmailAccess):
         return access_label
 
     def combine_labels_meta(self, access_labels):
-        combined_meta = {}
         if access_labels:
             combined_meta = access_labels[0]
             for label in access_labels[1:]:
                 for key, value in label.items():
                     combined_meta[key] += f", {value}"
-        return combined_meta
+            return combined_meta
+        return dict()
     
     def access_request_data(self, request, is_group=False):
-        request_data = {"accounts": helpers.get_aws_accounts()}
-        print(request_data)
-        return request_data
+        return dict({"accounts": helpers.get_aws_accounts()})
 
     def revoke(self, user, label):
-        logger.info(f'[{datetime.now().strftime("%Y-%m-%d")}] [aws] Revoke Started({user.email}) : {label}')
+        logger.info(f'[{datetime.now().strftime("%Y-%m-%d")}] [{self.tag()}] Revoke Started({user.email}) : {label}')
         is_revoked, exception = helpers.revoke_aws_access(user.user, label)
-        logger.info(f'[{datetime.now().strftime("%Y-%m-%d")}] [aws] Revoke Result({user.email}) : {is_revoked}')
+        logger.info(f'[{datetime.now().strftime("%Y-%m-%d")}] [{self.tag()}] Revoke Result({user.email}) : {is_revoked}')
         return is_revoked, exception
     
     def get_extra_fields(self):
-        return []
+        return list()
     
     def validate_request(self, access_labels_data, request_user, is_group=False):
         valid_access_label_array = list()
