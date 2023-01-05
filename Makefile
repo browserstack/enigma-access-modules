@@ -4,7 +4,7 @@ all: test lint
 
 .PHONY: build
 build:
-	@docker-compose up -d 
+	@docker-compose up -d
 
 .PHONY: down
 down:
@@ -12,7 +12,7 @@ down:
 
 ## Run tests with coverage
 .PHONY: test
-test: 
+test:
 	@if [ $$(docker ps -a -f name=test | wc -l) -eq 2 ]; then \
 			docker exec test python -m pytest --version; \
 	else \
