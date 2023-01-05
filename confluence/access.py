@@ -79,14 +79,16 @@ class Confluence(BaseEmailAccess):
         },
         "operation": permission
       })
-      response = requests.request("POST", ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]+"/wiki/rest/api/space/"+space_key+"/permission", data=payload, headers=headers, auth=auth)
+      GRANT_ACCESS_URL = f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/{space_key}/permission'
+      response = requests.request("POST", GRANT_ACCESS_URL, data=payload, headers=headers, auth=auth)
 
-      if(response.status_code != 200 and response.status_code != 400):
+      if(response.status_code == 200):
+        return str(json.loads(response.text)["id"])
+      elif(response.status_code == 400):
+        return json.loads(response.text)["message"].split(" ")[-1]
+      else:
         logger.error(f"Could not approve permission {str(permission)} for response {str(response.text)}")
         return False
-      if(response.status_code == 400):
-        return json.loads(response.text)["message"].split(" ")[-1]
-      return str(json.loads(response.text)["id"]) 
     except Exception as e:
       logger.error(f"Could not approve permission {str(permission)} for error {str(e)}")
       return False
@@ -94,7 +96,8 @@ class Confluence(BaseEmailAccess):
   def __revoke_space_access(self, space_key, permission_id):
     try:
       auth = HTTPBasicAuth(ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"], ACCESS_MODULES["confluence_module"]["API_TOKEN"])
-      response = requests.request("DELETE", ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]+"/wiki/rest/api/space/"+space_key+"/permission/"+permission_id, auth=auth)
+      REVOKE_URL = f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/{space_key}/permission/{permission_id}'
+      response = requests.request("DELETE", REVOKE_URL, auth=auth)
       if(response.status_code != 204):
         return False
       
