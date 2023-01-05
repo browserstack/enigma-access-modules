@@ -6,7 +6,6 @@ import json
 from bootprocess.general import emailSES
 from Access.access_modules.base_email_access.access import BaseEmailAccess
 from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL, ACCESS_MODULES
-from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)
 
