@@ -126,15 +126,15 @@ class Confluence(BaseEmailAccess):
     return available_spaces
 
   def __get_accesses_with_type(self, access_type):
-    permissions = [{"key": "read", "target": "space"}, {"key": "delete", "target": "space"}, {"key": "create", "target": "comment"}, {"key": "delete", "target": "comment"}]
-    if(access_type == "Edit Access" or access_type == "Admin Access"):
-      permissions = permissions + [{"key": "create", "target": "page"}, {"key": "create", "target": "blogpost"}, {"key": "create", "target": "attachment"}, {"key": "delete", "target": "page"}, {"key": "delete", "target": "blogpost"}, {"key": "delete", "target": "attachment"}]
-    
+    VIEW_PERMISSIONS = [{"key": "read", "target": "space"}, {"key": "delete", "target": "space"}, {"key": "create", "target": "comment"}, {"key": "delete", "target": "comment"}]
+    EDIT_PERMISSIONS = VIEW_PERMISSIONS + [{"key": "create", "target": "page"}, {"key": "create", "target": "blogpost"}, {"key": "create", "target": "attachment"}, {"key": "delete", "target": "page"}, {"key": "delete", "target": "blogpost"}, {"key": "delete", "target": "attachment"}]
+    ADMIN_PERMISSIONS = EDIT_PERMISSIONS + [{"key": "export", "target": "space"}, {"key": "administer", "target": "space"}, {"key": "archive", "target": "page"}, {"key": "restrict_content", "target": "space"}]
     if(access_type == "Admin Access"):
-      permissions = permissions + [{"key": "export", "target": "space"}, {"key": "administer", "target": "space"}, {"key": "archive", "target": "page"}, {"key": "restrict_content", "target": "space"}]
-      
-    return permissions
-
+      return ADMIN_PERMISSIONS
+    elif(access_type == "Edit Access"):
+      return EDIT_PERMISSIONS
+    else:
+      return VIEW_PERMISSIONS
   
   def approve(self, user, labels, approver, request, is_group=False, auto_approve_rules = None):
     permissions = []
