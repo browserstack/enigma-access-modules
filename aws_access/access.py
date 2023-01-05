@@ -43,7 +43,7 @@ class AWSAccess(BaseEmailAccess):
                     request_id, label_desc, user.email, approver
                 )
             )
-        email_body = self._generateStringFromTemplate("approved_email_template.html.j2", {
+        email_body = self._generateStringFromTemplate("aws_access/approved_email_template.html.j2", **{
             "request_id": request_id,
             "approver": approver,
             "user_email": user.email,
@@ -135,7 +135,7 @@ class AWSAccess(BaseEmailAccess):
     def tag(self):
         return 'aws_access'
 
-    def _generateStringFromTemplate(filename, **kwargs):
+    def _generateStringFromTemplate(self, filename, **kwargs):
         template = loader.get_template(filename)
         vals = {}
         for key, value in kwargs.items():

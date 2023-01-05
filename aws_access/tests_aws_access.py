@@ -1,6 +1,6 @@
 import pytest
 
-from aws_access import constants, helpers, access
+from Access.access_modules.aws_access import constants, helpers, access, views
 
 class MockBoto3:
     def add_user_to_group(self, GroupName, UserName):
@@ -9,8 +9,30 @@ class MockBoto3:
     def remove_user_from_group(self, GroupName, UserName):
         pass
 
+    def list_groups(Marker=None):
+        return {
+            'Groups': [
+                {
+                    'Path': '/',
+                    'GroupName': 'Group 1',
+                    'GroupId': '1',
+                    'Arn': 'Group1',
+                    'CreateDate': "2023-01-01"
+                },
+                {
+                    'Path': '/',
+                    'GroupName': 'Group 2',
+                    'GroupId': '2',
+                    'Arn': 'Group2',
+                    'CreateDate': "2023-01-01"
+                },
+            ],
+            'IsTruncated': False,
+            'Marker': None
+        }
 
-class MockBoto3withException:
+
+class MockBoto3withException(MockBoto3):
     def add_user_to_group(GroupName, UserName):
         raise Exception
 
@@ -29,7 +51,7 @@ def test_get_aws_credentails(*args, **kwargs):
             "Grant AWS access - Success",
             "test@example.com",
             {
-                "action": constants.AWS_ACCESS,
+                "action": constants.GROUP_ACCESS,
                 "account": "test",
                 "group": "test"
             },
@@ -40,7 +62,7 @@ def test_get_aws_credentails(*args, **kwargs):
             "Grant AWS access - Failure",
             "test@example.com",
             {
-                "action": constants.AWS_ACCESS,
+                "action": constants.GROUP_ACCESS,
                 "account": "test",
                 "group": "test"
             },
@@ -56,12 +78,10 @@ def test_grant_aws_access(
     userMock = mocker.MagicMock()
     userMock.email = user_email
 
-    mockAccessModule = mocker.MagicMock()
-    mockAccessModule.get_aws_client.return_value = boto3_client
-    
+    mocker.patch("Access.access_modules.aws_access.helpers.get_aws_client", return_value=boto3_client)
     mocker.patch("bootprocess.general.emailSES", return_value="")
 
-    return_value = helpers.grant_aws_access(user=userMock, label=label)
+    return_value, _ = helpers.grant_aws_access(user=userMock, label=label)
     assert return_value == expected_return_value
 
 
@@ -72,7 +92,7 @@ def test_grant_aws_access(
             "Revoke AWS access - Success",
             "test@example.com",
             {
-                "action": constants.AWS_ACCESS,
+                "action": constants.GROUP_ACCESS,
                 "account": "test",
                 "group": "test"
             },
@@ -83,7 +103,7 @@ def test_grant_aws_access(
             "Revoke AWS access - Failure",
             "test@example.com",
             {
-                "action": constants.AWS_ACCESS,
+                "action": constants.GROUP_ACCESS,
                 "account": "test",
                 "group": "test"
             },
@@ -99,23 +119,13 @@ def test_revoke_aws_access(
     userMock = mocker.MagicMock()
     userMock.email = user_email
 
-    mockAccessModule = mocker.MagicMock()
-    mockAccessModule.get_aws_client.return_value = boto3_client
+    mocker.patch("Access.access_modules.aws_access.helpers.get_aws_client", return_value=boto3_client)
     
-    mocker.patch("bootprocess.general.emailSES", return_value="")
-    
-    return_value = helpers.revoke_aws_access(user=userMock, label=label)
+    return_value, _ = helpers.revoke_aws_access(user=userMock, label=label)
     assert return_value == expected_return_value
 
 
 def test_AWSAccess(mocker):
-    aws_access = access.AWSAccess()
-
-    assert type(aws_access.grant_owner()) == list
-    assert type(aws_access.revoke_owner()) == list
-    assert type(aws_access.access_mark_revoke_permission()) == list
-    assert type(aws_access.email_targets()) == list
-
     userMock = mocker.MagicMock()
     userMock.email = "test@example.com"
     userMock.username = "user"
@@ -123,6 +133,12 @@ def test_AWSAccess(mocker):
     requestMock = mocker.MagicMock()
     requestMock.user = userMock
 
+    aws_access = access.AWSAccess()
+
+    assert type(aws_access.grant_owner()) == list
+    assert type(aws_access.revoke_owner()) == list
+    assert type(aws_access.access_mark_revoke_permission("access_type")) == list
+    assert type(aws_access.email_targets(user=userMock)) == list
 
     label_1 = {
         "action": constants.GROUP_ACCESS,
@@ -144,7 +160,7 @@ def test_AWSAccess(mocker):
     assert label_meta == label_1
     
     expected_combined_meta = {
-        "action": constants.GROUP_ACCESS,
+        "action": label_1["action"] + ", " + label_2["action"],
         "account": label_1["account"] + ", " + label_2["account"],
         "group": label_1["group"] + ", " + label_2["group"],
     }
@@ -153,19 +169,19 @@ def test_AWSAccess(mocker):
 
     assert type(aws_access.access_request_data("test")) == dict
     assert aws_access.get_extra_fields() == []
-    assert aws_access.validate_request(label_1, None) == label_1
+    assert aws_access.validate_request([label_1], None) == [{"data": label_1}]
 
-    mocker.patch("aws_access.helpers.grant_aws_access", return_value=(True, ""))
-    mocker.patch("aws_access.helpers.revoke_aws_access", return_value=(True, ""))
+    mocker.patch("Access.access_modules.aws_access.helpers.grant_aws_access", return_value=(True, ""))
+    mocker.patch("Access.access_modules.aws_access.helpers.revoke_aws_access", return_value=(True, ""))
 
     return_value, error = aws_access.approve(
-        user=None, labels=[label_1], approver=None, request_id="request_id"
+        user=userMock, labels=[label_1], approver=None, request_id="request_id"
     )
     assert return_value == True
     assert error == ""
 
     return_value, error = aws_access.revoke(
-        user=None, labels=[label_1]
+        user=userMock, label=label_1
     )
     assert return_value == True
     assert error == ""
@@ -173,7 +189,7 @@ def test_AWSAccess(mocker):
     data = {
         "approvers": {
             "primary": "primary",
-            "others": "other"
+            "other": "other"
         },
         "requestId": "requestId",
         "request_data": {},
@@ -181,3 +197,15 @@ def test_AWSAccess(mocker):
     }
     response = aws_access.fetch_access_approve_email(request=requestMock, data=data)
     assert type(response) == str
+
+
+def test_get_aws_accounts(mocker):
+    accounts = helpers.get_aws_accounts()
+    assert type(accounts) == list
+
+
+def test_get_aws_groups(mocker):
+    mocker.patch("Access.access_modules.aws_access.helpers.get_aws_client", return_value=MockBoto3())
+    group_data = helpers.get_aws_groups(account="test", marker=None)
+    assert "Groups" in group_data
+    assert len(group_data["Groups"]) == 2
