@@ -41,4 +41,3 @@ COPY . .
 # Starts Docker Container and keeps it running for Debugging
 FROM base as test
 ENTRYPOINT ["tail", "-f", "/dev/null"]
-

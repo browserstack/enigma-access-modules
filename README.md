@@ -19,7 +19,7 @@ colima start
 ```
 ### Setup
 
-1. Create pytest.ini file from pytest.ini .sample file. Edit the DJANGO_SETTINGS_MODULE to the settings path. 
+1. Create pytest.ini file from pytest.ini .sample file. Edit the DJANGO_SETTINGS_MODULE to the settings path.
 
 ### How to run tests
 
