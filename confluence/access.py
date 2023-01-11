@@ -10,15 +10,6 @@ from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL, ACCESS_MODULES
 logger = logging.getLogger(__name__)
 
 class Confluence(BaseEmailAccess):
-  def grant_owner(self):
-    return [ ACCESS_APPROVE_EMAIL ]
-
-  def revoke_owner(self):
-    return [ ACCESS_APPROVE_EMAIL ]
-  
-  def access_mark_revoke_permission(self, access_type):
-    return [ ACCESS_APPROVE_EMAIL ]
-  
   def fetch_access_request_form_path(self):
     return "confluence/access_request_form.html"
 

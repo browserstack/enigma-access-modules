@@ -25,9 +25,6 @@ def test_Confluence(mocker, requests_mock):
 
   request = MockRequest()
   
-  assert type(confluence_access.grant_owner()) == list
-  assert type(confluence_access.revoke_owner()) == list
-  assert type(confluence_access.access_mark_revoke_permission("")) == list
   assert type(confluence_access.email_targets(userMock)) == list
   assert type(confluence_access.auto_grant_email_targets(userMock)) == list
 
