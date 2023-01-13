@@ -22,17 +22,39 @@
 </div>
 </div>
 
-<input type="hidden" id="awsAccessLabel" name="accessLabel"></input>
-<div class="row">
-<div class="col-md-2">
+<div id="awsAccessLabel" name="accessLabel"></div>
+<div style="margin: 0px; padding: 1%;">
+<div>
+  <input type="hidden" id="hashicorpLabel" name="accessLabel">
   <div class="form-group">
     <label for="awsAccount">AWS Account</label>
-    <select class="form-control labelParam" id="awsAccount">
+    <select class="form-control" id="awsAccount">
       <option hidden disabled selected value> -- select -- </option>
       {% for each_account in each_access.accessRequestData.accounts %}
       <option value="{{ each_account }}">{{ each_account }}</option>
       {% endfor %}
     </select>
+  </div>
+
+  <div class="form-group d-none" id="aws-groups-form-div" style="padding-top:10px;">
+    <label for="awsGroups">AWS groups that you should be a part of</label>
+
+    <div class="row" style="padding-top:5px;">
+      <div class="col-xs-5 col-md-5">
+        <select id="awsGroupComponents" class="form-control" size="8" multiple="multiple">
+        </select>
+      </div>
+
+      <div class="col-xs-2 col-md-2" style="margin-top:1%;">
+        <button type="button" id="awsGroupComponents_rightSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
+        <button type="button" id="awsGroupComponents_leftSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
+      </div>
+
+      <div class="col-xs-5 col-md-5">
+        <select id="awsGroupComponents_to" class="form-control required" size="8" multiple="multiple">
+        </select>
+      </div>
+    </div>
   </div>
 
   <div class="form-group">
@@ -43,112 +65,95 @@
 </div>
 
 <script type="text/javascript">
- jQuery(document).ready(function ($) {
-   function getawsAccountData(event) {
-     server = event.target.value
-     if(server === "") return ;
-     $("#deployComponents").html(`<option value="fetching">Fetching ...</option>`);
-     $("#keyOwner").html(`<option value="fetching">Fetching ...</option>`);
-     $("#accessKeyPath").html(`<option value="fetching">Fetching ...</option>`);
-     $("#addNewKey-keyPath").autocomplete({
-       source: ["Fetching ..."]
-     })
-     $.ajax({
-         url: "/api/v1/vault/getawsAccountData",
-         data: {"serverAddress": server},
-         success: function(result){
-           if(result["error"]){
-             console.error(`There was some error fetching ${server} data`,result["error"])
-               var ERROR ="ERROR, check dev tools console"
-              $("#deployComponents").html(`<option value="error">${ERROR}</option>`);
-              $("#keyOwner").html(`<option value="error">${ERROR}</option>`);
-              $("#addNewKey-keyPath").autocomplete({
-                source: [ERROR]
-              })
-           }else{
-             var folders = result["data"]["folders"]
-             $("#addNewKey-keyPath").autocomplete({
-               source: folders
-             })
-             var componentsArray = result["data"]["components"];
-             var optionArray = $.map(componentsArray,function(item,idx){ return `<option value="${item}"> ${item} </option>` });
-             $("#deployComponents").html(optionArray.join("")); 
+  jQuery(document).ready(function ($) {
+    function showGroupComponentsStaticMessage(message) {
+      $("#awsGroupComponents").html(`<option value="static">${message}</option>`);
+      $("#awsGroupComponents_to").html(`<option value="static">${message}</option>`);
+    }
 
-             var ownersArray = result["data"]["owners"]
-             optionArray = $.map(ownersArray,function(item,idx){ return `<option value="${item}"> ${item} </option>` });
-             $("#keyOwner").html(optionArray.join("")); 
+    function populateAWSGroups() {
+      showGroupComponentsStaticMessage("Fetching ...");
 
-             var keypaths = result["data"]["keypaths"]
-             optionArray = $.map(keypaths, function (item, idx) { return `<option value="${item}"> ${item} </option>` });
-             optionArray = [ ...optionArray, $.map(folders, function (item, idx) { return `<option value="${item}*"> ${item}* </option>` })];
+      let account = getSelectedAWSAccount();
+      if(account === "") return;
 
-             $("#accessKeyPath").html(optionArray.join(""));  
-           }
-         }});
-   }
+      $.ajax({
+        url: "/api/v1/aws/accountGroups/groups/",
+        data: {"AWSAccount": account},
+        error: (xhr, status, error) => {
+          showGroupComponentsStaticMessage(`Failed to fetch groups. Error ${error}`);
+        },
+      }).done(function(data, statusText, xhr){
+        let status = xhr.status;
+        let head = xhr.getAllResponseHeaders();
+        if(status != 200) {
+          showGroupComponentsStaticMessage(`Failed to fetch groups. API response status code ${status}`);
+          return;
+        }
+        if(!("AWSGroups" in data)) {
+          showGroupComponentsStaticMessage('Got malformed API response');
+          return;
+        }
+        $("#awsGroupComponents_to").html('');
+        let optionArray = $.map(data["AWSGroups"], function(item, idx) { return `<option value="${item}"> ${item} </option>` });
+        $("#awsGroupComponents").html(optionArray.join(""));
+      });
+    }
 
-   function changeVaultAction(event) {
-     newAction = event.target
-     $('.vaultAction').hide();
-     $('.' + newAction.value).show();
-   }
+    function awsAccountChanged() {
+      $('#aws-groups-form-div').removeClass('d-none');
+      $('#aws-groups-form-div').show();
+      populateAWSGroups();
+      updateAccessLabel();
+    }
 
+    function awsGroupChanged() {
+      updateAccessLabel();
+    }
 
-   var labelComponents = {
-   }
-   // this function will change what will #awsAccessLabel or name=accessLabel will store
-   // in backend
-   function updateAccessLabel(){
-     let vaultAction = $('#vaultAction').val();
-     if (vaultAction === "accessKey" && labelComponents["accessKeyPath"] ) {
-       //split required for accesskey
-       keypaths = labelComponents["accessKeyPath"].split(",")
-       if(keypaths.length > 1){
-         labelComponentsArray = []
-         keypaths.forEach(keypath => {
-           newLabelComponents = {...labelComponents}
-           newLabelComponents["accessKeyPath"] = keypath
-           labelComponentsArray.push(newLabelComponents)            
-         });
-         $('#awsAccessLabel').val(JSON.stringify(labelComponentsArray));
-       }
-       else
-         $('#awsAccessLabel').val(JSON.stringify([labelComponents]));
-     } else {
-       //since splitting isn't required yet for addkey and addcomponent
-       $('#awsAccessLabel').val(JSON.stringify([labelComponents]));
-     }
-   }
+    function getSelectedAWSAccount() {
+      return $('#awsAccount').val();
+    }
 
-   function registerLabelChange(event) {
-     var vaultAction = $('#vaultAction').val();
-     labelParam = $(event.target).get()[0];
-     //for ${vaultAction}-KEYNAME
-     if (labelParam.id.startsWith(vaultAction))
-       labelComponents[labelParam.id.replace(vaultAction + '-', '')] = labelParam.value || labelParam.placeholder;
-     else{ //for vaultAction, awsAccount
-       labelComponents[labelParam.id] = labelParam.value || labelParam.placeholder;
-       // bug when user switches from "addNewKey" to "accessKey" view and doesn't change "#accessKey-accessType" dropdown
-       // it doesn't get register so manually triggering the change so it get picked up in "labelComponents"
-       if(vaultAction === "accessKey")
-         $("#accessKey-accessType").trigger('change');
-     }
-     updateAccessLabel();
-   }
+    function getSelectedAWSGroups() {
+      return $('#awsGroupComponents_to').children().map(function () { return $(this).val() }).get().filter(groupName => groupName != "static");
+    }
 
-   function registerMultiselectButtonClick($left, $right, $selectedOptions) {
-     var inputId = $left.attr("id");
-     var listOfValuesOnRightSelect = $right.children().map(function () { return $(this).val() }).get()
-     labelComponents[inputId] = listOfValuesOnRightSelect.join(",") || $left.attr("placeholder");
-     updateAccessLabel()
-   }
+    function updateAccessLabel(){
+      let awsAccount = getSelectedAWSAccount();
+      let awsGroups = getSelectedAWSGroups();
+      let labelData = {
+        "action": "GroupAccess",
+        "account": awsAccount,
+        "groups": awsGroups,
+      };
+      $('#awsAccessLabel').html(JSON.stringify(labelData));
+    }
 
-   function registertoEventsOnLoad(){
-     $('#awsAccount').dropdown();
-     $('#awsAccount').trigger('change');
-   }
+    function registerEventsOnLoad(){
+      $('#awsAccount').dropdown();
+      $('#awsAccount').on('change', awsAccountChanged);
+      $("#awsGroupComponents").on('change', awsGroupChanged);
+      $("#awsGroupComponents_to").on('change', awsGroupChanged);
 
-   registertoEventsOnLoad();
+      $(["#awsGroupComponents"]).each((idx, elem) => {
+        $(elem).multiselect({
+          search: {
+            left: '<input type="text" class="form-control" placeholder="Search..." />',
+            right: '<input type="text" class="form-control" placeholder="Search..." />',
+          },
+          fireSearch: function (value) {
+            return value.length > 1;
+          },
+          submitAllLeft: false,
+          submitAllRight: false,
+          afterMoveToRight: updateAccessLabel,
+          afterMoveToLeft: updateAccessLabel,
+        });
+      });
+      updateAccessLabel();
+    }
 
- });
+    registerEventsOnLoad();
+  });
 </script>
