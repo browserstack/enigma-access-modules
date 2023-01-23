@@ -22,14 +22,14 @@
 </div>
 </div>
 
-<div id="gcpAccessLabel" name="accessLabel"></div>
+<!-- <div id="gcpAccessLabel" name="accessLabel"></div> -->
 <div style="margin: 0px; padding: 1%;">
 <div>
   <div class="form-group">
     <label for="gcpDomain">GCP Domain</label>
     <select class="form-control" id="gcpDomain">
       <option hidden disabled selected value> -- select -- </option>
-      {% for each_account in each_access.accessRequestData.accounts %}
+      {% for each_account in each_access.accessRequestData.domains %}
       <option value="{{ each_account }}">{{ each_account }}</option>
       {% endfor %}
     </select>
@@ -60,6 +60,7 @@
     <label class="form-check-label">Reason</label>
     <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
   </div>
+  <input type="hidden" id="gcpAccessLabel" value="[]" name="accessLabel">
 </div>
 </div>
 
@@ -126,7 +127,12 @@
         "domain": gcpDomain,
         "groups": gcpGroups,
       };
-      $('#gcpAccessLabel').html(JSON.stringify(labelData));
+      let labels = JSON.parse($('#gcpAccessLabel').val());
+      if(!labels.length) {
+        labels = [labelData]
+      }
+      labels[0] = labelData
+      $('#gcpAccessLabel').val(JSON.stringify(labels));
     }
 
     function registerEventsOnLoad(){
