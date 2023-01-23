@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  test:
+    container_name: test
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    env_file:
+    - ./secrets/ops_app_test.env
+    volumes:
+    - .:/srv/code/dev
+    - ./mounts/logs/:/ebs/logs/
