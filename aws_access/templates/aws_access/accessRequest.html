@@ -22,7 +22,7 @@
 </div>
 </div>
 
-<div id="awsAccessLabel" name="accessLabel"></div>
+<!-- <div id="awsAccessLabel" name="accessLabel"></div> -->
 <div style="margin: 0px; padding: 1%;">
 <div>
   <input type="hidden" id="hashicorpLabel" name="accessLabel">
@@ -61,6 +61,7 @@
     <label class="form-check-label">Reason</label>
     <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
   </div>
+  <input type="hidden" id="gcpAccessLabel" value="[]" name="accessLabel">
 </div>
 </div>
 
@@ -78,7 +79,7 @@
       if(account === "") return;
 
       $.ajax({
-        url: "/api/v1/aws/accountGroups/groups/",
+        url: "/api/v1/aws/account/groups/",
         data: {"AWSAccount": account},
         error: (xhr, status, error) => {
           showGroupComponentsStaticMessage(`Failed to fetch groups. Error ${error}`);
@@ -127,7 +128,12 @@
         "account": awsAccount,
         "groups": awsGroups,
       };
-      $('#awsAccessLabel').html(JSON.stringify(labelData));
+      let labels = JSON.parse($('#awsAccessLabel').val());
+      if(!labels.length) {
+        labels = [labelData]
+      }
+      labels[0] = labelData
+      $('#awsAccessLabel').val(JSON.stringify(labels));
     }
 
     function registerEventsOnLoad(){
