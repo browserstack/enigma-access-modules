@@ -1,0 +1,9 @@
+{
+  "domains": [
+    {
+      "domain_id": "thinkcoderepeat.com",
+      "admin_id": "harish@thinkcoderepeat.com",
+      "service_account_path": "./gcp.json"
+    }
+  ]
+}

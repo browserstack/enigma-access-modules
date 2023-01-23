@@ -1,0 +1,158 @@
+<style>
+  table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+
+  tr:nth-child(even) {
+    background-color:#3a3939;
+  }
+</style>
+
+<div class="page-header">
+<div class="container-fluid">
+  <h2 class="h5 no-margin-bottom">{{ each_access.formDesc }}</h2>
+</div>
+</div>
+
+<div id="gcpAccessLabel" name="accessLabel"></div>
+<div style="margin: 0px; padding: 1%;">
+<div>
+  <div class="form-group">
+    <label for="gcpDomain">GCP Domain</label>
+    <select class="form-control" id="gcpDomain">
+      <option hidden disabled selected value> -- select -- </option>
+      {% for each_account in each_access.accessRequestData.accounts %}
+      <option value="{{ each_account }}">{{ each_account }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="form-group d-none" id="gcp-groups-form-div" style="padding-top:10px;">
+    <label for="awsGroups">AWS groups that you should be a part of</label>
+
+    <div class="row" style="padding-top:5px;">
+      <div class="col-xs-5 col-md-5">
+        <select id="gcpGroupComponents" class="form-control" size="8" multiple="multiple">
+        </select>
+      </div>
+
+      <div class="col-xs-2 col-md-2" style="margin-top:1%;">
+        <button type="button" id="gcpGroupComponents_rightSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
+        <button type="button" id="gcpGroupComponents_leftSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
+      </div>
+
+      <div class="col-xs-5 col-md-5">
+        <select id="gcpGroupComponents_to" class="form-control required" size="8" multiple="multiple">
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-check-label">Reason</label>
+    <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
+  </div>
+</div>
+</div>
+
+<script type="text/javascript">
+  jQuery(document).ready(function ($) {
+    function showGroupComponentsStaticMessage(message) {
+      $("#gcpGroupComponents").html(`<option value="static">${message}</option>`);
+      $("#gcpGroupComponents_to").html(`<option value="static">${message}</option>`);
+    }
+
+    function populateGCPGroups() {
+      showGroupComponentsStaticMessage("Fetching ...");
+
+      let GCPDomain = getSelectedGCPDomain();
+      if(GCPDomain === "") return;
+
+      $.ajax({
+        url: "/api/v1/gcp/domain/groups/",
+        data: {"gcp_domain": GCPDomain},
+        error: (xhr, status, error) => {
+          showGroupComponentsStaticMessage(`Failed to fetch groups. Error ${error}`);
+        },
+      }).done(function(data, statusText, xhr){
+        let status = xhr.status;
+        let head = xhr.getAllResponseHeaders();
+        if(status != 200) {
+          showGroupComponentsStaticMessage(`Failed to fetch groups. API response status code ${status}`);
+          return;
+        }
+        if(!("gcp_groups" in data)) {
+          showGroupComponentsStaticMessage('Got malformed API response');
+          return;
+        }
+        $("#gcpGroupComponents_to").html('');
+        let optionArray = $.map(data["gcp_groups"], function(item, idx) { return `<option value="${item["group_email"]}"> ${item["group_name"]} </option>` });
+        $("#gcpGroupComponents").html(optionArray.join(""));
+      });
+    }
+
+    function gcpDomainChanged() {
+      $('#gcp-groups-form-div').removeClass('d-none');
+      $('#gcp-groups-form-div').show();
+      populateGCPGroups();
+      updateAccessLabel();
+    }
+
+    function gcpGroupChanged() {
+      updateAccessLabel();
+    }
+
+    function getSelectedGCPDomain() {
+      return $('#gcpDomain').val();
+    }
+
+    function getSelectedGCPGroups() {
+      return $('#gcpGroupComponents_to').children().map(function () { return $(this).val() }).get().filter(groupName => groupName != "static");
+    }
+
+    function updateAccessLabel(){
+      let gcpDomain = getSelectedGCPDomain();
+      let gcpGroups = getSelectedGCPGroups();
+      let labelData = {
+        "action": "GroupAccess",
+        "domain": gcpDomain,
+        "groups": gcpGroups,
+      };
+      $('#gcpAccessLabel').html(JSON.stringify(labelData));
+    }
+
+    function registerEventsOnLoad(){
+      $('#gcpDomain').dropdown();
+      $('#gcpDomain').on('change', gcpDomainChanged);
+      $("#gcpGroupComponents").on('change', gcpGroupChanged);
+      $("#gcpGroupComponents_to").on('change', gcpGroupChanged);
+
+      $(["#gcpGroupComponents"]).each((idx, elem) => {
+        $(elem).multiselect({
+          search: {
+            left: '<input type="text" class="form-control" placeholder="Search..." />',
+            right: '<input type="text" class="form-control" placeholder="Search..." />',
+          },
+          fireSearch: function (value) {
+            return value.length > 1;
+          },
+          submitAllLeft: false,
+          submitAllRight: false,
+          afterMoveToRight: updateAccessLabel,
+          afterMoveToLeft: updateAccessLabel,
+        });
+      });
+      updateAccessLabel();
+    }
+
+    registerEventsOnLoad();
+  });
+</script>
