@@ -1,0 +1,80 @@
+<div class="page-header">
+    <div class="container-fluid">
+      <h2 class="h5 no-margin-bottom">{{ each_access.formDesc }}</h2>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    labelComponents = [{}]
+    function githubAccessLevelChange(elem){
+        if(!labelComponents.length){
+          labelComponents = [{}]
+        }
+        labelComponents[0]["accessLevel"] = elem.value;
+        $('#github_accessLabel').val(JSON.stringify(labelComponents));
+    }
+
+    jQuery(document).ready(function($) {
+          $('#search-github').multiselect({
+              search: {
+                  left: '<input type="text" class="form-control" placeholder="Search..." />',
+                  right: '<input type="text" class="form-control" placeholder="Search..." />',
+              },
+              fireSearch: function(value) {
+                  return value.length > 1;
+              }
+          });
+      });
+  </script>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="row">
+      <p style="color: yellow;">NOTE: Github merge access will not be raised if branch Protection on that Repository is Disabled. To enable Branch protection contact the Admin<br>
+          More Details: https://browserstack.atlassian.net/wiki/spaces/ENG/pages/3532064207/Github+FAQs#Github-merge-access-request-is-GrantFailed</p>
+      </div>
+          <div class="row">
+            <div class="col-sm-3">
+              <label for="Access" class="" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
+              <select id="githubaccess" name="githubAccessLevel" class="form-control" onchange="githubAccessLevelChange(this)">
+                    <option hidden disabled selected value> -- select -- </option>
+                    <option value="push" >push</option>
+                    <option value="pull" >pull</option>
+                    <option value="admin" >admin</option>
+                    <option value="merge" >push + merge</option>
+                  </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xs-5 col-md-5">
+              <select id="search-github" class="form-control" size="8" multiple="multiple">
+                          {% for repo in each_access.accessRequestData.githubRepoList %}
+                            <option value="{{repo}}">{{repo}}</option>
+                          {%endfor%}
+                        </select>
+            </div>
+
+            <div class="col-xs-2 col-md-2" style="margin-top:1%;">
+              <button type="button" id="search-github_rightAll" class="btn btn-block btn-primary" disabled><i class="fa fa-angle-double-right" style="font-size:24px"></i></button>
+              <button type="button" id="search-github_rightSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
+              <button type="button" id="search-github_leftSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
+              <button type="button" id="search-github_leftAll" class="btn btn-block btn-primary" disabled><i class="fa fa-angle-double-left" style="font-size:24px"></i></button>
+            </div>
+
+            <div class="col-xs-5 col-md-5">
+              <select name="selectedRepoList" id="search-github_to" class="form-control" size="8" multiple="multiple"></select>
+            </div>
+          </div>
+
+
+
+          <div class="form-group" style="padding-left:1%;">
+            <p>NOTE: Requires github username to be present.<br>
+              You will be automatically added to github org when 1st github request gets approved.</p>
+            <label class="col-sm-3" for="reason" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for Access:</label>
+            <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024" required>
+          </div>
+          <input type="hidden" id="github_accessLabel" value="[]" name="accessLabel">
+    </div>
+  </div>
