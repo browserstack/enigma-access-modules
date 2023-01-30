@@ -72,9 +72,12 @@ class Confluence(BaseEmailAccess):
                     "operation": permission,
                 }
             )
-            GRANT_ACCESS_URL = f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/{space_key}/permission'
+            GRANT_URL = "%s/wiki/rest/api/space/%s/permission" % (
+                ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"],
+                space_key,
+            )
             response = requests.request(
-                "POST", GRANT_ACCESS_URL, data=payload, headers=headers, auth=auth
+                "POST", GRANT_URL, data=payload, headers=headers, auth=auth
             )
 
             if response.status_code == 200:
@@ -83,7 +86,9 @@ class Confluence(BaseEmailAccess):
                 return json.loads(response.text)["message"].split(" ")[-1]
             else:
                 logger.error(
-                    f"Could not approve permission {str(permission)} for response {str(response.text)}"
+                    f"""
+                    Could not approve permission {str(permission)} for response {str(response.text)}
+                    """
                 )
                 return False
         except Exception as e:
@@ -98,7 +103,11 @@ class Confluence(BaseEmailAccess):
                 ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"],
                 ACCESS_MODULES["confluence_module"]["API_TOKEN"],
             )
-            REVOKE_URL = f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/{space_key}/permission/{permission_id}'
+            REVOKE_URL = "%s/wiki/rest/api/space/%s/permission/%s" % (
+                ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"],
+                space_key,
+                permission_id,
+            )
             response = requests.request("DELETE", REVOKE_URL, auth=auth)
             if response.status_code != 204:
                 return False
@@ -205,8 +214,22 @@ class Confluence(BaseEmailAccess):
             request.updateMetaData("confluence", approve_result)
 
         email_targets = self.auto_grant_email_targets(user)
-        email_body = f"Access successfully granted for confluence: {access_type} for Confluence Access to {user.email}.<br>Request has been approved by {approver}."
-        email_subject = f"Approved Access: {request.request_id} for access to {self.access_desc()} for user {user.email}"
+        email_body = """
+        Access successfully granted for confluence: %s for Confluence Access to %s.
+        <br>
+        Request has been approved by %s.
+        """ % (
+            access_type,
+            user.email,
+            approver,
+        )
+        email_subject = """
+        Approved Access: %s for access to %s for user %s
+        """ % (
+            request.request_id,
+            self.access_desc(),
+            user.email,
+        )
 
         try:
             emailSES(email_targets, email_subject, email_body)

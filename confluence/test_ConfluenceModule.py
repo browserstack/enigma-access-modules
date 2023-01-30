@@ -1,4 +1,3 @@
-import pytest
 from . import access
 from BrowserStackAutomation.settings import ACCESS_MODULES
 
@@ -133,18 +132,27 @@ def test_Confluence(mocker, requests_mock):
         {"type": "Admin Access", "desc": "Admin Access"},
     ]
 
+    grant_url = "%s/wiki/rest/api/space/test/permission" % (
+        ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
+    )
+
     requests_mock.post(
-        f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/test/permission',
+        grant_url,
         status_code=200,
         json={"id": 1234},
     )
+    revoke_url = "%s/wiki/rest/api/space/test/permission/1234" % (
+        ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
+    )
     requests_mock.delete(
-        f'{ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]}/wiki/rest/api/space/test/permission/1234',
+        revoke_url,
         status_code=204,
     )
 
     mocker.patch("bootprocess.general.emailSES", return_value="")
     resp = confluence_access.approve(userMock, label1, "1234", request)
-    assert resp == True
+    assert resp is True
 
     resp = confluence_access.revoke(userMock, label1[0], request)
+
+    assert resp is True
