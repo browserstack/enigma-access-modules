@@ -1,6 +1,7 @@
 import logging
 import requests
 from requests.auth import HTTPBasicAuth
+from django.template import loader
 import json
 
 from bootprocess.general import emailSES
@@ -140,6 +141,12 @@ class Confluence(BaseEmailAccess):
                 + "",
                 auth=auth,
             )
+            if response.status_code == 404:
+                logger.error(
+                    """Error Occured while featching confluence spaces,
+                     please check values in config.json"""
+                )
+                return {"spaces": []}
             spaces = json.loads(response.text)
             for space in spaces["results"]:
                 available_spaces["spaces"].append(
@@ -213,30 +220,41 @@ class Confluence(BaseEmailAccess):
 
             request.updateMetaData("confluence", approve_result)
 
-        email_targets = self.auto_grant_email_targets(user)
-        email_body = """
-        Access successfully granted for confluence: %s for Confluence Access to %s.
-        <br>
-        Request has been approved by %s.
-        """ % (
-            access_type,
-            user.email,
-            approver,
-        )
-        email_subject = """
-        Approved Access: %s for access to %s for user %s
-        """ % (
-            request.request_id,
-            self.access_desc(),
-            user.email,
-        )
-
         try:
-            emailSES(email_targets, email_subject, email_body)
+            self.__send_approve_email(user, request.request_id, access_type, approver)
             return True
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
             return False
+
+    def __send_approve_email(self, user, request_id, access_type, approver):
+        targets = self.auto_grant_email_targets(user)
+        subject = "Approved Access: %s for access to %s for user %s" % (
+            request_id,
+            self.access_desc(),
+            user.email,
+        )
+
+        body = self.__generate_string_from_template(
+            filename="approve_email.html",
+            access_type=access_type,
+            user_email=user.email,
+            approver=approver,
+        )
+        emailSES(targets, subject, body)
+
+    def __generate_string_from_template(self, filename, **kwargs):
+        template = loader.get_template(filename)
+        vals = {}
+        for key, value in kwargs.items():
+            vals[key] = value
+        return template.render(vals)
+    
+    def __send_revoke_email(self, user, label_desc):
+        email_targets = self.auto_grant_email_targets(user)
+        email_subject = "Revoke Request: %s for %s" % (label_desc, user.email)
+        email_body = ""
+        emailSES(email_targets, email_subject, email_body)
 
     def revoke(self, user, label, request):
         permissions = request.meta_data["confluence"]
@@ -250,11 +268,8 @@ class Confluence(BaseEmailAccess):
                 return False
 
         label_desc = self.get_label_desc(label)
-        email_targets = self.auto_grant_email_targets(user)
-        email_subject = "Revoke Request: %s for %s" % (label_desc, user.email)
-        email_body = ""
         try:
-            emailSES(email_targets, email_subject, email_body)
+            self.__send_revoke_email(user, label_desc)
             return True
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
