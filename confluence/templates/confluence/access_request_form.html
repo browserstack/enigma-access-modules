@@ -1,0 +1,66 @@
+<div class="page-header">
+    <div class="container-fluid">
+      <h2 class="h5 no-margin-bottom 111">{{ each_access.formDesc }}</h2>
+    </div>
+  </div>
+
+  <script type="text/javascript">  
+    function workspaceChange(elem){
+      labelComponents = JSON.parse($('#confluenceAccessLabel').val());
+      if(!labelComponents.length){
+        labelComponents = [{}]
+      }
+      labelComponents[0]["accessWorkspace"] = elem.value
+      $('#confluenceAccessLabel').val(JSON.stringify(labelComponents));
+    }
+
+    function accessTypeChange(elem){
+    labelComponents = JSON.parse($('#confluenceAccessLabel').val());
+    if(!labelComponents.length){
+      labelComponents = [{}]
+    }
+    labelComponents[0]["confluenceAccessType"] = elem.value
+    $('#confluenceAccessLabel').val(JSON.stringify(labelComponents));
+  }
+  </script>
+
+  <div class="form-group" style="padding-left:1%;">
+    <!-- <div style="margin-bottom: 20px;">
+      <label class="col-sm-3" for="reason" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Workspace:</label>
+      <input type="text" class="form-text1" id="workspace" name="accessWorkspace" style="width:60%;" maxlength="2024" oninput="workspaceChange(this)" required>
+    </div> -->
+    
+    <div class="form-group">
+      <label class="col-sm-3" for="workspace" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium; float: left">Workspace:</label>
+      <select class="form-control col-sm-3" id="workspace" name="accessWorkspace" onchange="workspaceChange(this)">
+        <option hidden disabled selected value> -- select -- </option>
+        {% for each_space in each_access.accessRequestData.spaces %}
+        <option value="{{ each_space.key }}">{{ each_space.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    </div>
+
+    <div class="form-group">
+      {% if each_access.accessTypes|length > 1 %}
+      <label class="col-sm-3" for="commonAccessLabel" style="padding-left: 15px; font-weight: bolder; min-height: 0px; margin-top: 10px; font-size: medium; float: left">Select an access type:</label>
+      <select class="form-control col-sm-3" id="confluence_access_type" name="confluenceAccessType" onchange="accessTypeChange(this)" required>
+        <option hidden disabled selected value> -- select -- </option>
+        {% for each_access_type in each_access.accessTypes %}
+        <!-- adding &quot; so json.loads can work in backend -->
+        <option value="[&quot;{{ each_access_type.type }}&quot;]">{{ each_access_type.desc }}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <!-- adding &quot; so json.loads can work in backend -->
+      <input type="hidden" name="commonAccessLabel" value="[&quot;{{ each_access.accessTypes.0.type }}&quot;]">
+      {% endif %}
+    </div>
+
+    <div>
+      <label class="col-sm-3" for="reason" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for Access:</label>
+      <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024" required>
+    </div>
+    <input type="hidden" id="confluenceAccessLabel" value="[]" name="accessLabel">
+  </div>
