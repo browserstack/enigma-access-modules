@@ -55,6 +55,8 @@ class GithubAccess(BaseEmailAccess):
     def offboard_github(self, github_username):
         return revoke_access(github_username)
 
+    available = True
+
     def approve(self, user, labels, approver, request_id, is_group=False, auto_approve_rules = None):
         return_value = True
         error_message = ""
