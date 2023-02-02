@@ -123,7 +123,7 @@ def test_GCPAccess(mocker):
         {
             "action": "GroupAccess",
             "domain": "example.com",
-            "groups": ["group@example.com"],
+            "group": "group@example.com",
         }
     ]
 
@@ -132,12 +132,10 @@ def test_GCPAccess(mocker):
     assert label == [form_label[0]]
 
     label_desc = gcp_access.get_label_desc(label[0])
-    assert label_desc == "GroupAccess for groups: " + ", ".join(form_label[0]["groups"])
+    assert label_desc == "GroupAccess for group: " + form_label[0]["group"]
 
     combine_label_desc = gcp_access.combine_labels_desc(label)
-    assert combine_label_desc == "GroupAccess for groups: " + ", ".join(
-        form_label[0]["groups"]
-    )
+    assert combine_label_desc == "GroupAccess for group: " + form_label[0]["group"]
 
     mocker.patch("gcp.helpers.get_gcp_client", return_value=MockGoogleClient())
     result = gcp_access.approve(userMock, label, "test", request)

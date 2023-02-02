@@ -22,7 +22,6 @@
 </div>
 </div>
 
-<!-- <div id="gcpAccessLabel" name="accessLabel"></div> -->
 <div style="margin: 0px; padding: 1%;">
 <div>
   <div class="form-group">
@@ -36,12 +35,13 @@
   </div>
 
   <div class="form-group d-none" id="gcp-groups-form-div" style="padding-top:10px;">
-    <label for="awsGroups">AWS groups that you should be a part of</label>
+    <label for="gcpGroups">GCP groups that you should be a part of</label>
 
     <div class="row" style="padding-top:5px;">
       <div class="col-xs-5 col-md-5">
         <select id="gcpGroupComponents" class="form-control" size="8" multiple="multiple">
         </select>
+        <div class="gcp-next-page-token-btn d-inline"><button type="button" id="gcpNextPageToken" class="btn btn-primary" style="padding: 0px 30px;" value=""><i class="small material-icons">Next Page</i></button></div>
       </div>
 
       <div class="col-xs-2 col-md-2" style="margin-top:1%;">
@@ -54,11 +54,10 @@
         </select>
       </div>
     </div>
-  </div>
-
-  <div class="form-group">
-    <label class="form-check-label">Reason</label>
-    <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
+    <div class="form-group">
+      <label class="form-check-label">Reason</label>
+      <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
+    </div>
   </div>
   <input type="hidden" id="gcpAccessLabel" value="[]" name="accessLabel">
 </div>
@@ -71,15 +70,23 @@
       $("#gcpGroupComponents_to").html(`<option value="static">${message}</option>`);
     }
 
-    function populateGCPGroups() {
-      showGroupComponentsStaticMessage("Fetching ...");
+    function showGroupFromComponentsStaticMessage(message) {
+      $("#gcpGroupComponents").html(`<option value="static">${message}</option>`);
+    }
+
+    function showGroupToComponentsStaticMessage(message) {
+      $("#gcpGroupComponents").html(`<option value="static">${message}</option>`);
+    }
+
+    function populateGCPGroups(page_token=null) {
+      showGroupFromComponentsStaticMessage("Fetching ...");
 
       let GCPDomain = getSelectedGCPDomain();
       if(GCPDomain === "") return;
 
       $.ajax({
         url: "/api/v1/gcp/domain/groups/",
-        data: {"gcp_domain": GCPDomain},
+        data: {"gcp_domain": GCPDomain, "page_token": page_token},
         error: (xhr, status, error) => {
           showGroupComponentsStaticMessage(`Failed to fetch groups. Error ${error}`);
         },
@@ -94,11 +101,26 @@
           showGroupComponentsStaticMessage('Got malformed API response');
           return;
         }
-        $("#gcpGroupComponents_to").html('');
-        let optionArray = $.map(data["gcp_groups"], function(item, idx) { return `<option value="${item["group_email"]}"> ${item["group_name"]} </option>` });
+        // $("#gcpGroupComponents_to").html('');
+        let optionArray = $.map(data["gcp_groups"], function(group, idx) { return `<option value="${group["email"]}"> ${group["name"]} </option>` });
         $("#gcpGroupComponents").html(optionArray.join(""));
+        console.log(data)
+        if(!data["page_token"]){
+          console.log("not found token")
+          $("#gcpNextPageToken").val("")
+        }else {
+          console.log("found token")
+          $("#gcpNextPageToken").val(data["page_token"])
+        }
       });
     }
+
+    $(document).on("click", "#gcpNextPageToken", () => {
+      console.log($('#gcpNextPageToken').val())
+      next_page_token = $("#gcpNextPageToken").val()
+      populateGCPGroups(next_page_token)
+    })
+
 
     function gcpDomainChanged() {
       $('#gcp-groups-form-div').removeClass('d-none');
@@ -122,16 +144,16 @@
     function updateAccessLabel(){
       let gcpDomain = getSelectedGCPDomain();
       let gcpGroups = getSelectedGCPGroups();
-      let labelData = {
-        "action": "GroupAccess",
-        "domain": gcpDomain,
-        "groups": gcpGroups,
-      };
-      let labels = JSON.parse($('#gcpAccessLabel').val());
-      if(!labels.length) {
-        labels = [labelData]
+      updatedLabels = []
+      for(group of gcpGroups) {
+        updatedLabels.push({
+          "action": "GroupAccess",
+          "domain": gcpDomain,
+          "group": group
+        })
       }
-      labels[0] = labelData
+      let labels = JSON.parse($('#gcpAccessLabel').val());
+      labels = updatedLabels
       $('#gcpAccessLabel').val(JSON.stringify(labels));
     }
 
@@ -156,6 +178,7 @@
           afterMoveToLeft: updateAccessLabel,
         });
       });
+      $("#gcpGroupComponents_to").html('');
       updateAccessLabel();
     }
 

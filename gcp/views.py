@@ -11,14 +11,18 @@ def get_gcp_domains(request):
 @login_required
 def get_gcp_groups(request):
     data = request.GET
-    if not helpers.get_gcp_domain_details(data["gcp_domain"]):
+    if not data.get("gcp_domain") and not helpers.get_gcp_domain_details(
+        data["gcp_domain"]
+    ):
         return JsonResponse({"error": "Valid domain is required for GCP Access."})
-
-    groups = helpers.get_gcp_groups(data["gcp_domain"])
-    group_names = []
-    for group in groups:
-        group_names.append({"group_name": group["name"], "group_email": group["email"]})
-
-    response = {"gcp_groups": group_names}
+    page_token = ""
+    if data.get("page_token"):
+        page_token = data.get("page_token")
+    groups, page_token = helpers.get_gcp_groups(data["gcp_domain"], page_token)
+    if groups is False:
+        return JsonResponse(
+            {"error": "Something went wrong while fetching GCP groups."}
+        )
+    response = {"gcp_groups": groups, "page_token": page_token}
 
     return JsonResponse(response)
