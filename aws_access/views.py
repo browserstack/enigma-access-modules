@@ -2,7 +2,6 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseNotFound
 import json
 from . import constants
-from BrowserStackAutomation.settings import data as CONFIG
 from . import helpers
 
 
@@ -29,5 +28,5 @@ def get_aws_groups(request, account):
         data.append(group["GroupName"])
     response = {"data": data}
     if aws_groups_data.get("IsTruncated"):
-        response["marker" : aws_groups_data["Marker"]]
+        response["marker": aws_groups_data["Marker"]]
     return JsonResponse(response)

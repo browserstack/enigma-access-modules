@@ -1,6 +1,6 @@
 import pytest
 
-from Access.access_modules.aws_access import constants, helpers, access, views
+from Access.access_modules.aws_access import constants, helpers, access
 
 
 class MockBoto3:

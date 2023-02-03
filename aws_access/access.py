@@ -1,4 +1,3 @@
-import json
 from django.shortcuts import render
 from django.template import loader
 from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL
