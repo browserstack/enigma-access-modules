@@ -1,14 +1,15 @@
 {
-    "type": "object",
-    "properties": {
-        "CONFLUENCE_BASE_URL": {
-            "type": "string"
-        },
-        "ADMIN_EMAIL": {
-            "type": "string"
-        },
-        "API_TOKEN": {
-            "type": "string"
-        }
+  "type": "object",
+  "properties": {
+    "CONFLUENCE_BASE_URL": {
+      "type": "string"
+    },
+    "ADMIN_EMAIL": {
+      "type": "string"
+    },
+    "API_TOKEN": {
+      "type": "string"
     }
+  },
+  "required": []
 }
