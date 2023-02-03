@@ -72,17 +72,17 @@
              })
              var componentsArray = result["data"]["components"];
              var optionArray = $.map(componentsArray,function(item,idx){ return `<option value="${item}"> ${item} </option>` });
-             $("#deployComponents").html(optionArray.join("")); 
+             $("#deployComponents").html(optionArray.join(""));
 
              var ownersArray = result["data"]["owners"]
              optionArray = $.map(ownersArray,function(item,idx){ return `<option value="${item}"> ${item} </option>` });
-             $("#keyOwner").html(optionArray.join("")); 
+             $("#keyOwner").html(optionArray.join(""));
 
              var keypaths = result["data"]["keypaths"]
              optionArray = $.map(keypaths, function (item, idx) { return `<option value="${item}"> ${item} </option>` });
              optionArray = [ ...optionArray, $.map(folders, function (item, idx) { return `<option value="${item}*"> ${item}* </option>` })];
 
-             $("#accessKeyPath").html(optionArray.join(""));  
+             $("#accessKeyPath").html(optionArray.join(""));
            }
          }});
    }
@@ -108,7 +108,7 @@
          keypaths.forEach(keypath => {
            newLabelComponents = {...labelComponents}
            newLabelComponents["accessKeyPath"] = keypath
-           labelComponentsArray.push(newLabelComponents)            
+           labelComponentsArray.push(newLabelComponents)
          });
          $('#awsAccessLabel').val(JSON.stringify(labelComponentsArray));
        }

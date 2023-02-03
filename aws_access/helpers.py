@@ -13,6 +13,7 @@ def aws_account_exists(account):
         return False
     return True
 
+
 def aws_group_exists(account, group):
     client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
     try:
@@ -22,6 +23,7 @@ def aws_group_exists(account, group):
         return False
     return True
 
+
 def _get_aws_credentails(account):
     accounts = CONFIG["access_modules"]["aws_access"].get("aws_accounts", [])
     for account_data in accounts:
@@ -29,7 +31,7 @@ def _get_aws_credentails(account):
             return dict(
                 {
                     "aws_access_key_id": account_data["access_key_id"],
-                    "aws_secret_access_key": account_data["secret_access_key"]
+                    "aws_secret_access_key": account_data["secret_access_key"],
                 }
             )
     return dict()
@@ -43,7 +45,9 @@ def get_aws_client(account, resource):
 def grant_aws_access(user, label):
     try:
         if label["action"] == constants.GROUP_ACCESS:
-            client = get_aws_client(account=label["account"], resource=constants.IAM_RESOURCE)
+            client = get_aws_client(
+                account=label["account"], resource=constants.IAM_RESOURCE
+            )
             client.add_user_to_group(GroupName=label["group"], UserName=user.email)
         else:
             return False
@@ -52,10 +56,13 @@ def grant_aws_access(user, label):
         return False, str(e)
     return True, ""
 
+
 def revoke_aws_access(user, label):
     try:
         if label["action"] == constants.GROUP_ACCESS:
-            client = get_aws_client(account=label["account"], resource=constants.IAM_RESOURCE)
+            client = get_aws_client(
+                account=label["account"], resource=constants.IAM_RESOURCE
+            )
             client.remove_user_from_group(GroupName=label["group"], UserName=user.email)
         else:
             return False
@@ -64,12 +71,14 @@ def revoke_aws_access(user, label):
         return False, str(e)
     return True, ""
 
+
 def get_aws_accounts():
     accounts = CONFIG["access_modules"]["aws_access"].get("aws_accounts", [])
     account_names = []
     for account in accounts:
         account_names.append(account["account"])
     return account_names
+
 
 def get_aws_groups(account, marker):
     client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
