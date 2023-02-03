@@ -1,0 +1,9 @@
+{
+  "domains": [
+    {
+      "domain_id": "browserstack.com",
+      "admin_id": "test@browserstack.com",
+      "service_account_path": "./gcp.json"
+    }
+  ]
+}
