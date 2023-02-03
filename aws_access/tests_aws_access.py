@@ -74,7 +74,7 @@ def test_get_aws_credentails(*args, **kwargs):
 def test_grant_aws_access(
     mocker, test_name, user_email, label, expected_return_value, boto3_client
 ):
-    
+
     userMock = mocker.MagicMock()
     userMock.email = user_email
 
@@ -115,12 +115,12 @@ def test_grant_aws_access(
 def test_revoke_aws_access(
     mocker, test_name, user_email, label, expected_return_value, boto3_client
 ):
-    
+
     userMock = mocker.MagicMock()
     userMock.email = user_email
 
     mocker.patch("Access.access_modules.aws_access.helpers.get_aws_client", return_value=boto3_client)
-    
+
     return_value, _ = helpers.revoke_aws_access(user=userMock, label=label)
     assert return_value == expected_return_value
 
@@ -158,7 +158,7 @@ def test_AWSAccess(mocker):
 
     label_meta = aws_access.get_label_meta(access_label=label_1)
     assert label_meta == label_1
-    
+
     expected_combined_meta = {
         "action": label_1["action"] + ", " + label_2["action"],
         "account": label_1["account"] + ", " + label_2["account"],

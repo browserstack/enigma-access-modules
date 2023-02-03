@@ -1,5 +1,5 @@
 {
-    "CONFLUENCE_BASE_URL": "https://test.atlassian.net",
-    "ADMIN_EMAIL": "test@browserstack.com",
-    "API_TOKEN": "xyz"
+  "CONFLUENCE_BASE_URL": "https://test.atlassian.net",
+  "ADMIN_EMAIL": "test@browserstack.com",
+  "API_TOKEN": "xyz"
 }

@@ -1,32 +1,32 @@
 {
-    "type": "object",
-    "properties": {
-      "aws_accounts": {
-        "type": "array",
-        "items": [
-          {
-            "type": "object",
-            "properties": {
-              "account": {
-                "type": "string"
-              },
-              "access_key_id": {
-                "type": "string"
-              },
-              "secret_access_key": {
-                "type": "string"
-              }
+  "type": "object",
+  "properties": {
+    "aws_accounts": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "account": {
+              "type": "string"
             },
-            "required": [
-              "account",
-              "access_key_id",
-              "secret_access_key"
-            ]
-          }
-        ]
-      }
-    },
-    "required": [
-      "aws_accounts"
-    ]
-  }
+            "access_key_id": {
+              "type": "string"
+            },
+            "secret_access_key": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "account",
+            "access_key_id",
+            "secret_access_key"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "aws_accounts"
+  ]
+}

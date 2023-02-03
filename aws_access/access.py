@@ -33,13 +33,13 @@ class AWSAccess(BaseEmailAccess):
 
         if auto_approve_rules:
             email_subject = (
-                    "Access Granted: %s for access to %s for user %s.<br>Request has been approved by %s. <br> Rules :- %s" % ( 
+                    "Access Granted: %s for access to %s for user %s.<br>Request has been approved by %s. <br> Rules :- %s" % (
                         request_id, label_desc, user.email, approver, " ,".join(auto_approve_rules)
                     )
                 )
         else:
             email_subject = (
-                "Access Granted: %s for access to %s for user %s.<br>Request has been approved by %s." % ( 
+                "Access Granted: %s for access to %s for user %s.<br>Request has been approved by %s." % (
                     request_id, label_desc, user.email, approver
                 )
             )
@@ -57,7 +57,7 @@ class AWSAccess(BaseEmailAccess):
             logger.error(f"{self.tag()} Could not send email for error {str(e)}")
 
         return granted_access, exception
-    
+
     def get_label_desc(self, access_label):
         if access_label["action"] == constants.GROUP_ACCESS:
             return access_label['action'] + ' for group: ' + access_label['group']
@@ -78,7 +78,7 @@ class AWSAccess(BaseEmailAccess):
                     combined_meta[key] += f", {value}"
             return combined_meta
         return dict()
-    
+
     def access_request_data(self, request, is_group=False):
         return dict({"accounts": helpers.get_aws_accounts()})
 
@@ -87,10 +87,10 @@ class AWSAccess(BaseEmailAccess):
         is_revoked, exception = helpers.revoke_aws_access(user.user, label)
         logger.info(f'[{datetime.now().strftime("%Y-%m-%d")}] [{self.tag()}] Revoke Result({user.email}) : {is_revoked}')
         return is_revoked, exception
-    
+
     def get_extra_fields(self):
         return list()
-    
+
     def validate_request(self, access_labels_data, request_user, is_group=False):
         valid_access_label_array = list()
         for access_label_data in access_labels_data:
@@ -104,7 +104,7 @@ class AWSAccess(BaseEmailAccess):
             valid_access_label = {"data" : access_label_data}
             valid_access_label_array.append(valid_access_label)
         return valid_access_label_array
-    
+
     def fetch_access_approve_email(self, request, data):
         context_details = {
             'approvers': {
@@ -128,7 +128,7 @@ class AWSAccess(BaseEmailAccess):
 
     def match_keywords(self):
         return  ['aws','amazon','web','services','console','cloud']
-    
+
     def tag(self):
         return 'aws_access'
 
@@ -138,7 +138,7 @@ class AWSAccess(BaseEmailAccess):
         for key, value in kwargs.items():
             vals[key] = value
         return template.render(vals)
-    
+
     def access_types(self):
         return {}
 
