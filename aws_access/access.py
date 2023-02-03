@@ -32,7 +32,6 @@ class AWSAccess(BaseEmailAccess):
         is_group=False,
         auto_approve_rules=None,
     ):
-        return_value = False
         exception = ""
         label_desc = self.combine_labels_desc(labels)
         label_meta = self.combine_labels_meta(labels)

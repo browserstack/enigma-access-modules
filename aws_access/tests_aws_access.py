@@ -172,11 +172,11 @@ def test_AWSAccess(mocker):
     return_value, error = aws_access.approve(
         user=userMock, labels=[label_1], approver=None, request_id="request_id"
     )
-    assert return_value == True
+    assert return_value is True
     assert error == ""
 
     return_value, error = aws_access.revoke(user=userMock, label=label_1)
-    assert return_value == True
+    assert return_value is True
     assert error == ""
 
     data = {
