@@ -122,7 +122,8 @@ class GCPAccess(BaseEmailAccess):
         )
         if not result:
             logger.error(
-                f"Error while removing the user from the group {label['group']}: {str(exception)}"
+                f"Error while removing the user from the group {label['group']}:"
+                f" {str(exception)}"
             )
             return False
 

@@ -16,16 +16,18 @@ def get_aws_accounts(request):
 def get_aws_groups(request, account):
     data = request.GET
     if not helpers.aws_account_exists(account):
-        response = {"error" : constants.ERROR_MESSAGES["valid_account_required"]}
+        response = {"error": constants.ERROR_MESSAGES["valid_account_required"]}
         return HttpResponseNotFound(json.dumps(response))
     marker = None
-    if data.get("marker"):  # marker to the page to be fetched if AWS response is paginated
+    if data.get(
+        "marker"
+    ):  # marker to the page to be fetched if AWS response is paginated
         marker = data["marker"]
     aws_groups_data = helpers.get_aws_groups(account=account, marker=marker)
     data = []
     for group in aws_groups_data["Groups"]:
-        data.append(group['GroupName'])
+        data.append(group["GroupName"])
     response = {"data": data}
     if aws_groups_data.get("IsTruncated"):
-        response["marker": aws_groups_data["Marker"]]
+        response["marker" : aws_groups_data["Marker"]]
     return JsonResponse(response)
