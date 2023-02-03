@@ -249,7 +249,7 @@ class Confluence(BaseEmailAccess):
         for key, value in kwargs.items():
             vals[key] = value
         return template.render(vals)
-
+    
     def __send_revoke_email(self, user, label_desc):
         email_targets = self.auto_grant_email_targets(user)
         email_subject = "Revoke Request: %s for %s" % (label_desc, user.email)
