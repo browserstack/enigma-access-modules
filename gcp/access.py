@@ -70,7 +70,8 @@ class GCPAccess(BaseEmailAccess):
             )
             if result is False:
                 logger.error(
-                    f"Something went wrong while adding the {user.email} to group {label['group']}: {str(exception)}"
+                    "Something went wrong while adding the %s to group %s: %s"
+                    % (user.email, label["group"], str(exception))
                 )
                 return False
 
@@ -83,7 +84,11 @@ class GCPAccess(BaseEmailAccess):
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
         email_targets = self.email_targets(user)
-        email_subject = f"Approved Access: {request_id} for access to {label_desc} for user {user.email}"
+        email_subject = "Approved Access: %s for access to %s for user %s" % (
+            request_id,
+            label_desc,
+            user.email,
+        )
         body = self.__generate_string_from_template(
             filename="approve_email.html",
             label_desc=label_desc,
