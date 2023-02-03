@@ -11,5 +11,9 @@
       "type": "string"
     }
   },
-  "required": []
+  "required": [
+    "CONFLUENCE_BASE_URL",
+    "ADMIN_EMAIL",
+    "API_TOKEN"
+  ]
 }
