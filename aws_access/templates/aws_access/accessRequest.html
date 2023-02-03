@@ -1,0 +1,154 @@
+<style>
+  table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+  }
+
+  tr:nth-child(even) {
+    background-color:#3a3939;
+  }
+</style>
+
+<div class="page-header">
+<div class="container-fluid">
+  <h2 class="h5 no-margin-bottom">{{ each_access.formDesc }}</h2>
+</div>
+</div>
+
+<input type="hidden" id="awsAccessLabel" name="accessLabel"></input>
+<div class="row">
+<div class="col-md-2">
+  <div class="form-group">
+    <label for="awsAccount">AWS Account</label>
+    <select class="form-control labelParam" id="awsAccount">
+      <option hidden disabled selected value> -- select -- </option>
+      {% for each_account in each_access.accessRequestData.accounts %}
+      <option value="{{ each_account }}">{{ each_account }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label class="form-check-label">Reason</label>
+    <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
+  </div>
+</div>
+</div>
+
+<script type="text/javascript">
+ jQuery(document).ready(function ($) {
+   function getawsAccountData(event) {
+     server = event.target.value
+     if(server === "") return ;
+     $("#deployComponents").html(`<option value="fetching">Fetching ...</option>`);
+     $("#keyOwner").html(`<option value="fetching">Fetching ...</option>`);
+     $("#accessKeyPath").html(`<option value="fetching">Fetching ...</option>`);
+     $("#addNewKey-keyPath").autocomplete({
+       source: ["Fetching ..."]
+     })
+     $.ajax({
+         url: "/api/v1/vault/getawsAccountData",
+         data: {"serverAddress": server},
+         success: function(result){
+           if(result["error"]){
+             console.error(`There was some error fetching ${server} data`,result["error"])
+               var ERROR ="ERROR, check dev tools console"
+              $("#deployComponents").html(`<option value="error">${ERROR}</option>`);
+              $("#keyOwner").html(`<option value="error">${ERROR}</option>`);
+              $("#addNewKey-keyPath").autocomplete({
+                source: [ERROR]
+              })
+           }else{
+             var folders = result["data"]["folders"]
+             $("#addNewKey-keyPath").autocomplete({
+               source: folders
+             })
+             var componentsArray = result["data"]["components"];
+             var optionArray = $.map(componentsArray,function(item,idx){ return `<option value="${item}"> ${item} </option>` });
+             $("#deployComponents").html(optionArray.join("")); 
+
+             var ownersArray = result["data"]["owners"]
+             optionArray = $.map(ownersArray,function(item,idx){ return `<option value="${item}"> ${item} </option>` });
+             $("#keyOwner").html(optionArray.join("")); 
+
+             var keypaths = result["data"]["keypaths"]
+             optionArray = $.map(keypaths, function (item, idx) { return `<option value="${item}"> ${item} </option>` });
+             optionArray = [ ...optionArray, $.map(folders, function (item, idx) { return `<option value="${item}*"> ${item}* </option>` })];
+
+             $("#accessKeyPath").html(optionArray.join(""));  
+           }
+         }});
+   }
+
+   function changeVaultAction(event) {
+     newAction = event.target
+     $('.vaultAction').hide();
+     $('.' + newAction.value).show();
+   }
+
+
+   var labelComponents = {
+   }
+   // this function will change what will #awsAccessLabel or name=accessLabel will store
+   // in backend
+   function updateAccessLabel(){
+     let vaultAction = $('#vaultAction').val();
+     if (vaultAction === "accessKey" && labelComponents["accessKeyPath"] ) {
+       //split required for accesskey
+       keypaths = labelComponents["accessKeyPath"].split(",")
+       if(keypaths.length > 1){
+         labelComponentsArray = []
+         keypaths.forEach(keypath => {
+           newLabelComponents = {...labelComponents}
+           newLabelComponents["accessKeyPath"] = keypath
+           labelComponentsArray.push(newLabelComponents)            
+         });
+         $('#awsAccessLabel').val(JSON.stringify(labelComponentsArray));
+       }
+       else
+         $('#awsAccessLabel').val(JSON.stringify([labelComponents]));
+     } else {
+       //since splitting isn't required yet for addkey and addcomponent
+       $('#awsAccessLabel').val(JSON.stringify([labelComponents]));
+     }
+   }
+
+   function registerLabelChange(event) {
+     var vaultAction = $('#vaultAction').val();
+     labelParam = $(event.target).get()[0];
+     //for ${vaultAction}-KEYNAME
+     if (labelParam.id.startsWith(vaultAction))
+       labelComponents[labelParam.id.replace(vaultAction + '-', '')] = labelParam.value || labelParam.placeholder;
+     else{ //for vaultAction, awsAccount
+       labelComponents[labelParam.id] = labelParam.value || labelParam.placeholder;
+       // bug when user switches from "addNewKey" to "accessKey" view and doesn't change "#accessKey-accessType" dropdown
+       // it doesn't get register so manually triggering the change so it get picked up in "labelComponents"
+       if(vaultAction === "accessKey")
+         $("#accessKey-accessType").trigger('change');
+     }
+     updateAccessLabel();
+   }
+
+   function registerMultiselectButtonClick($left, $right, $selectedOptions) {
+     var inputId = $left.attr("id");
+     var listOfValuesOnRightSelect = $right.children().map(function () { return $(this).val() }).get()
+     labelComponents[inputId] = listOfValuesOnRightSelect.join(",") || $left.attr("placeholder");
+     updateAccessLabel()
+   }
+
+   function registertoEventsOnLoad(){
+     $('#awsAccount').dropdown();
+     $('#awsAccount').trigger('change');
+   }
+
+   registertoEventsOnLoad();
+
+ });
+</script>

@@ -1,0 +1,14 @@
+Access successfully granted for {{ request_id }} for {{ user_email }}.
+<br />
+<p>Access Description: {{ access_desc }}</p>
+<p>Access Metadata:</p>
+<table style="border: 1px solid black;">
+{% for key, value in access_meta.items %}
+<tr style="border: 1px solid black;"><td style="border: 1px solid black; padding: 5px">{{ key }}</td><td style="border: 1px solid black; padding: 5px">{{ value }}</td></tr>
+{% endfor %}
+</table>
+<br />
+<p>Request has been approved by {{ approver }}.</p>
+<br />
+<p>No futher action needed.</p>
+<br />
