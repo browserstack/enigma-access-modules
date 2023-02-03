@@ -22,10 +22,8 @@
 </div>
 </div>
 
-<!-- <div id="awsAccessLabel" name="accessLabel"></div> -->
 <div style="margin: 0px; padding: 1%;">
 <div>
-  <input type="hidden" id="hashicorpLabel" name="accessLabel">
   <div class="form-group">
     <label for="awsAccount">AWS Account</label>
     <select class="form-control" id="awsAccount">
@@ -43,6 +41,7 @@
       <div class="col-xs-5 col-md-5">
         <select id="awsGroupComponents" class="form-control" size="8" multiple="multiple">
         </select>
+        <div class="aws-next-page-token-btn d-inline"><button type="button" id="awsNextPageToken" class="btn btn-primary" style="padding: 0px 30px;" value=""><i class="small material-icons">Next Page</i></button></div>
       </div>
 
       <div class="col-xs-2 col-md-2" style="margin-top:1%;">
@@ -55,13 +54,13 @@
         </select>
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-check-label">Reason</label>
+      <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
+    </div>
   </div>
 
-  <div class="form-group">
-    <label class="form-check-label">Reason</label>
-    <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
-  </div>
-  <input type="hidden" id="gcpAccessLabel" value="[]" name="accessLabel">
+  <input type="hidden" id="awsAccessLabel" value="[]" name="accessLabel">
 </div>
 </div>
 
@@ -72,15 +71,19 @@
       $("#awsGroupComponents_to").html(`<option value="static">${message}</option>`);
     }
 
-    function populateAWSGroups() {
-      showGroupComponentsStaticMessage("Fetching ...");
+    function showFromGroupComponentsStaticMessage(message) {
+      $("#awsGroupComponents").html(`<option value="static">${message}</option>`);
+    }
+
+    function populateAWSGroups(marker=null) {
+      showFromGroupComponentsStaticMessage("Fetching ...");
 
       let account = getSelectedAWSAccount();
       if(account === "") return;
 
       $.ajax({
         url: "/api/v1/aws/account/groups/",
-        data: {"AWSAccount": account},
+        data: {"AWSAccount": account, "marker": marker},
         error: (xhr, status, error) => {
           showGroupComponentsStaticMessage(`Failed to fetch groups. Error ${error}`);
         },
@@ -95,11 +98,23 @@
           showGroupComponentsStaticMessage('Got malformed API response');
           return;
         }
-        $("#awsGroupComponents_to").html('');
-        let optionArray = $.map(data["AWSGroups"], function(item, idx) { return `<option value="${item}"> ${item} </option>` });
+        // $("#awsGroupComponents_to").html('');
+        let optionArray = $.map(data["AWSGroups"], function(group, idx) { return `<option value="${group}"> ${group} </option>` });
         $("#awsGroupComponents").html(optionArray.join(""));
+
+        if(!data["marker"]) {
+          $("#awsNextPageToken").val("")
+        }
+        else{
+          $("#awsNextPageToken").val(data["marker"])
+        }
       });
     }
+
+    $(document).on("click", "#awsNextPageToken", () => {
+      next_marker = $("#awsNextPageToken").val()
+      populateAWSGroups(next_marker)
+    })
 
     function awsAccountChanged() {
       $('#aws-groups-form-div').removeClass('d-none');
@@ -123,17 +138,18 @@
     function updateAccessLabel(){
       let awsAccount = getSelectedAWSAccount();
       let awsGroups = getSelectedAWSGroups();
-      let labelData = {
-        "action": "GroupAccess",
-        "account": awsAccount,
-        "groups": awsGroups,
-      };
-      let labels = JSON.parse($('#awsAccessLabel').val());
-      if(!labels.length) {
-        labels = [labelData]
+      updatedLabels = []
+      for(group of awsGroups) {
+        updatedLabels.push({
+          "action": "GroupAccess",
+          "account": awsAccount,
+          "group": group
+        })
       }
-      labels[0] = labelData
+      let labels = JSON.parse($('#awsAccessLabel').val());
+      labels = updatedLabels
       $('#awsAccessLabel').val(JSON.stringify(labels));
+      $('#awsAccessTest').html(JSON.stringify(labels))
     }
 
     function registerEventsOnLoad(){
@@ -157,6 +173,7 @@
           afterMoveToLeft: updateAccessLabel,
         });
       });
+      $("#awsGroupComponents_to").html('');
       updateAccessLabel();
     }
 

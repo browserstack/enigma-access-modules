@@ -137,22 +137,22 @@ def test_AWSAccess(mocker):
     label_1 = {
         "action": constants.GROUP_ACCESS,
         "account": "test 1",
-        "groups": ["test 1"],
+        "group": "test 1",
     }
     label_2 = {
         "action": constants.GROUP_ACCESS,
         "account": "test 2",
-        "groups": ["test 2"],
+        "group": "test 2",
     }
     label_desc = aws_access.get_label_desc(access_label=label_1)
-    assert label_desc == "GroupAccess for groups: test 1"
+    assert label_desc == "GroupAccess for group: test 1"
 
     combined_label_desc = aws_access.combine_labels_desc(
         access_labels=[label_1, label_2]
     )
     assert (
         combined_label_desc
-        == "GroupAccess for groups: test 1, GroupAccess for groups: test 2"
+        == "GroupAccess for group: test 1, GroupAccess for group: test 2"
     )
 
     label_meta = aws_access.get_label_meta(access_label=label_1)
@@ -161,7 +161,7 @@ def test_AWSAccess(mocker):
     expected_combined_meta = {
         "action": label_1["action"] + ", " + label_2["action"],
         "account": label_1["account"] + ", " + label_2["account"],
-        "groups": str(label_1["groups"]) + ", " + str(label_2["groups"]),
+        "group": str(label_1["group"]) + ", " + str(label_2["group"]),
     }
     combined_label_meta = aws_access.combine_labels_meta(
         access_labels=[label_1, label_2]
@@ -181,10 +181,10 @@ def test_AWSAccess(mocker):
     )
 
     return_value = aws_access.approve(userMock, [label_1], None, requestMock)
-    assert return_value == True
+    assert return_value is True
 
     return_value = aws_access.revoke(userMock, label_1, requestMock)
-    assert return_value == True
+    assert return_value is True
 
 
 def test_get_aws_accounts(mocker):

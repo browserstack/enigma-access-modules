@@ -14,10 +14,10 @@ def get_aws_accounts(request):
 @login_required
 def get_aws_groups(request):
     data = request.GET
-    account = data["AWSAccount"]
-    if not helpers.aws_account_exists(account):
+    if "AWSAccount" not in data and not helpers.aws_account_exists(data["AWSAccount"]):
         response = {"error": constants.ERROR_MESSAGES["valid_account_required"]}
         return HttpResponseNotFound(json.dumps(response))
+    account = data["AWSAccount"]
     marker = None
     if data.get(
         "marker"
@@ -27,7 +27,7 @@ def get_aws_groups(request):
     data = []
     for group in aws_groups_data["Groups"]:
         data.append(group["GroupName"])
-    response = {"AWSGroups": data}
+    response = {"AWSGroups": data, "marker": None}
     if aws_groups_data.get("IsTruncated"):
         response["marker"] = aws_groups_data["Marker"]
     return JsonResponse(response)
