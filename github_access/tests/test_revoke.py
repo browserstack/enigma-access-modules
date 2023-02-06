@@ -30,8 +30,16 @@ def labels():
     form_label = {
         "action": "repository_access",
         "repository": "test-repo",
-        "access_level": "merge"}
+        "access_level": "merge",
+    }
     return form_label
+
+
+@pytest.fixture(autouse=True)
+def setup_test_config():
+    helpers.GITHUB_TOKEN = "test-token"
+    helpers.GITHUB_BASE_URL = "https://test-base-url.com"
+    helpers.GITHUB_ORG = "test-org"
 
 
 @given('A git username', target_fixture="user_name")
@@ -41,7 +49,7 @@ def user_name():
 
 @given('Access will be revoked')
 def access_revoked(requests_mock):
-    API_URL = 'https://api.github.com/repos/browserstack/test-repo/collaborators/test-username'
+    API_URL = 'https://test-base-url.com/repos/test-org/test-repo/collaborators/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.delete(
@@ -56,7 +64,7 @@ def access_revoked(requests_mock):
 
 @given('Access can not be revoked')
 def access_not_revoked(requests_mock):
-    API_URL = 'https://api.github.com/repos/browserstack/test-repo/collaborators/test-username'
+    API_URL = 'https://test-base-url.com/repos/test-org/test-repo/collaborators/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.delete(

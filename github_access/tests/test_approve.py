@@ -20,6 +20,13 @@ def context():
     return {}
 
 
+@pytest.fixture(autouse=True)
+def setup_test_config():
+    helpers.GITHUB_TOKEN = "test-token"
+    helpers.GITHUB_BASE_URL = "https://test-base-url.com"
+    helpers.GITHUB_ORG = "test-org"
+
+
 @scenario('features/approve.feature', 'Grant Merge Access Success')
 def test_grant_merge_access_success():
     pass
@@ -43,7 +50,7 @@ def user_name():
 @given('User exists on github')
 def user_already_exists(requests_mock):
 
-    API_URL = 'https://api.github.com/users/test-username'
+    API_URL = 'https://test-base-url.com/users/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -58,7 +65,7 @@ def user_already_exists(requests_mock):
 
 @given('User exists in git org')
 def user_exists_in_org(requests_mock):
-    API_URL = 'https://api.github.com/orgs/browserstack/members/test-username'
+    API_URL = 'https://test-base-url.com/orgs/test-org/members/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -73,7 +80,7 @@ def user_exists_in_org(requests_mock):
 
 @given('Repository exists on github')
 def repo_exists(requests_mock):
-    API_URL = 'https://api.github.com/repos/test-repo'
+    API_URL = 'https://test-base-url.com/repos/test-repo'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -89,7 +96,7 @@ def repo_exists(requests_mock):
 @given('Access cannot be granted to user for push')
 def access_grant_push_fail(requests_mock, context):
     requests_mock.put(
-        'https://api.github.com/repos/test-repo/collaborators/test-username',
+        'https://test-base-url.com/repos/test-repo/collaborators/test-username',
         headers={'Authorization': 'token test-token'},
         status_code=404,
     )
@@ -101,7 +108,7 @@ def access_grant_push_fail(requests_mock, context):
 @given('Access can be granted to user for push')
 def access_grant_push(requests_mock):
     requests_mock.put(
-        'https://api.github.com/repos/test-repo/collaborators/test-username',
+        'https://test-base-url.com/repos/test-repo/collaborators/test-username',
         headers={'Authorization': 'token test-token'},
         json=json.dumps({'permission': "push"}),
     )
@@ -113,7 +120,7 @@ def access_grant_push(requests_mock):
 def access_grant_merge(requests_mock):
 
     requests_mock.get(
-        'https://api.github.com/repos/test-repo/branches/master/protection/restrictions/users',
+        'https://test-base-url.com/repos/test-repo/branches/master/protection/restrictions/users',
         headers={'Authorization': 'token test-token',
                  'Accept': 'application/vnd.github.v3+json',
                  'Content-Type': 'application/json'},
@@ -122,7 +129,7 @@ def access_grant_merge(requests_mock):
     )
 
     requests_mock.get(
-        'https://api.github.com/repos/test-repo/branches/master/protection',
+        'https://test-base-url.com/repos/test-repo/branches/master/protection',
         headers={'Authorization': 'token test-token',
                  'Accept': 'application/vnd.github.v3+json'},
         status_code=200,
@@ -131,13 +138,15 @@ def access_grant_merge(requests_mock):
                 "url": "test-url-1",
                 "require_code_owner_reviews": True,
                 "required_approving_review_count": 2,
-                "require_last_push_approval": True},
-            "restrictions": {"url": "test-url-2"}
-        },
+                "require_last_push_approval": True
+            },
+            "restrictions": {
+                "url": "test-url-2",
+            }},
     )
 
     requests_mock.post(
-        'https://api.github.com/repos/test-repo/branches/master/protection/restrictions/users',
+        'https://test-base-url.com/repos/test-repo/branches/master/protection/restrictions/users',
         headers={
             'Authorization': 'token test-token',
             'Accept': 'application/vnd.github.v3+json',

@@ -21,9 +21,16 @@ def test_view_validates_request():
     pass
 
 
+@pytest.fixture(autouse=True)
+def setup_test_config():
+    helpers.GITHUB_TOKEN = "test-token"
+    helpers.GITHUB_BASE_URL = "https://test-base-url.com"
+    helpers.GITHUB_ORG = "test-org"
+
+
 @given('Orgs repo list exists')
 def get_org_repo_list_success(requests_mock):
-    API_URL = 'https://api.github.com/orgs/browserstack/repos'
+    API_URL = 'https://test-base-url.com/orgs/test-org/repos'
     expected_headers = {
         'Authorization': 'token test-token',
         'Accept': 'application/vnd.github.v3+json'}
@@ -50,7 +57,7 @@ def get_org_repo_list_success(requests_mock):
 
 @given('Orgs repo list does not exist')
 def get_org_repo_list_fail(requests_mock):
-    API_URL = 'https://api.github.com/orgs/browserstack/repos'
+    API_URL = 'https://test-base-url.com/orgs/test-org/repos'
     expected_headers = {
         'Authorization': 'token test-token',
         'Accept': 'application/vnd.github.v3+json'}

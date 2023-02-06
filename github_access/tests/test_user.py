@@ -6,6 +6,13 @@ from .. import access
 from .. import helpers
 
 
+@pytest.fixture(autouse=True)
+def setup_test_config():
+    helpers.GITHUB_TOKEN = "test-token"
+    helpers.GITHUB_BASE_URL = "https://test-base-url.com"
+    helpers.GITHUB_ORG = "test-org"
+
+
 @scenario('features/user.feature', 'User does not exist on github')
 def test_user_does_not_exist_on_github():
     pass
@@ -64,7 +71,7 @@ def user_name():
 @given('User exists on github')
 def user_already_exists(requests_mock):
 
-    API_URL = 'https://api.github.com/users/test-username'
+    API_URL = 'https://test-base-url.com/users/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -79,7 +86,7 @@ def user_already_exists(requests_mock):
 
 @given('User does not exist on github')
 def user_does_not_exist(requests_mock, context):
-    API_URL = 'https://api.github.com/users/test-username'
+    API_URL = 'https://test-base-url.com/users/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -96,7 +103,7 @@ def user_does_not_exist(requests_mock, context):
 @given('User does not exist in git org')
 def user_does_not_exist_in_org(requests_mock):
 
-    API_URL = 'https://api.github.com/orgs/browserstack/members/test-username'
+    API_URL = 'https://test-base-url.com/orgs/test-org/members/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -111,7 +118,7 @@ def user_does_not_exist_in_org(requests_mock):
 
 @given('User exists in git org')
 def user_exists_in_org(requests_mock):
-    API_URL = 'https://api.github.com/orgs/browserstack/members/test-username'
+    API_URL = 'https://test-base-url.com/orgs/test-org/members/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -126,7 +133,7 @@ def user_exists_in_org(requests_mock):
 
 @given('User is invited to org')
 def user_invited(requests_mock, context):
-    API_URL = 'https://api.github.com/orgs/browserstack/invitations'
+    API_URL = 'https://test-base-url.com/orgs/test-org/invitations'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -145,7 +152,7 @@ def user_invited(requests_mock, context):
 @given('User is not invited to org')
 def user_not_invited(requests_mock):
 
-    API_URL = 'https://api.github.com/orgs/browserstack/invitations'
+    API_URL = 'https://test-base-url.com/orgs/test-org/invitations'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
@@ -162,7 +169,7 @@ def user_not_invited(requests_mock):
 @given('User cannot be added to the org')
 def cannot_add_user_to_org(requests_mock, context):
 
-    API_URL = 'https://api.github.com/orgs/browserstack/memberships/test-username'
+    API_URL = 'https://test-base-url.com/orgs/test-org/memberships/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.put(
@@ -179,7 +186,7 @@ def cannot_add_user_to_org(requests_mock, context):
 @given('User can be added to the org')
 def add_user_to_org(requests_mock, context):
 
-    API_URL = 'https://api.github.com/orgs/browserstack/memberships/test-username'
+    API_URL = 'https://test-base-url.com/orgs/test-org/memberships/test-username'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.put(
@@ -196,7 +203,7 @@ def add_user_to_org(requests_mock, context):
 
 @given('Repository does not exist on github')
 def repo_does_not_exist(requests_mock, context):
-    API_URL = 'https://api.github.com/repos/test-repo'
+    API_URL = 'https://test-base-url.com/repos/test-repo'
     expected_headers = {'Authorization': 'token test-token'}
 
     requests_mock.get(
