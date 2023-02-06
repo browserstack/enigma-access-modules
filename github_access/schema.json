@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "GITHUB_TOKEN": {
+      "type": "string"
+    },
+    "GITHUB_BASE_URL": {
+      "type": "string"
+    },
+    "GITHUB_ORG": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "GITHUB_TOKEN",
+    "GITHUB_BASE_URL",
+    "GITHUB_ORG"
+  ]
+}

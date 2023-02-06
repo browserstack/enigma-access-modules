@@ -8,123 +8,140 @@ from Access.access_modules.github_access.helpers import (get_org,
                                                          grant_access,
                                                          put_user,
                                                          revoke_access)
+from . import constants
 from bootprocess.general import emailSES
-from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL
+from django.template import loader
 from django.shortcuts import render
 
 logger = logging.getLogger(__name__)
 
+
 class GithubAccess(BaseEmailAccess):
+    ACCESS_LABEL = "repository_access"
 
     def email_targets(self, user):
-      return [ user.email ] + self.grant_owner()
-
-    def grant_owner(self):
-      return [ ACCESS_APPROVE_EMAIL ]
-
-    def revoke_owner(self):
-      return [ ACCESS_APPROVE_EMAIL ]
-
-    def access_mark_revoke_permission(self, access_type):
-      return [ ACCESS_APPROVE_EMAIL ]
+        return [user.email] + self.grant_owner()
 
     def revoke(self, user, label, request):
-      user_name = user.gitusername
-      result = revoke_access(user_name, label["repository"])
-      label_desc = self.get_label_desc(label)
-      email_targets = self.email_targets(user)
-      email_subject = ""
-      email_body = ""
+        user_name = user.gitusername
+        result = revoke_access(user_name, label["repository"])
+        label_desc = self.get_label_desc(label)
+        email_targets = self.email_targets(user)
+        email_subject = constants.REVOKE_REQUEST % (label_desc, user.email)
+        email_body = ""
 
-      if result:
-          logger.debug("Revoked access for user "+user_name+" to repo "+label["repository"])
-          email_subject = "Revoke Request: %s for %s" % (label_desc, user.email)
-          email_body = "Successfully revoked access for %s to %s." % (user.email, label["repository"])
-      else:
-          logger.error("Failed revoking access for user "+user_name+" to repo "+label["repository"])
-          email_subject = "Revoke Request: %s for %s" % (label_desc, user.email)
-          email_body = "Failed revoking access for %s to %s." % (user.email, label["repository"])
+        if result:
+            logger.debug(constants.REVOKE_SUCCESS % (user.email, label["repository"]))
+            email_body = constants.REVOKE_SUCCESS % (user.email, label["repository"])
+        else:
+            logger.error(constants.REVOKE_FAILED % (user.email, label["repository"]))
+            email_body = constants.REVOKE_FAILED % (user.email, label["repository"])
 
-      try:
-          emailSES(email_targets, email_subject, email_body)
-          return True
-      except Exception as e:
-          logger.error("Could not send email for error %s", str(e))
-          return False
+        try:
+            emailSES(email_targets, email_subject, email_body)
+            return True
+        except Exception as e:
+            logger.error("Could not send email for error %s", str(e))
+            return False
 
     def offboard_github(self, github_username):
         return revoke_access(github_username)
 
     available = True
 
-    def approve(self, user, labels, approver, request_id, is_group=False, auto_approve_rules = None):
+    def approve(self, user, labels, approver, request_id, is_group=False, auto_approve_rules=None):
         return_value = True
         error_message = ""
         label = labels[0]
         user_name = user.gitusername
         if not get_user(user_name):
-          logger.error("Username "+user_name+" not present on github!")
-          error_message = "Username "+user_name+" not present on github!"
-          return_value = False
+            logger.error(constants.USER_NOT_FOUND % user_name)
+            error_message = constants.USER_NOT_FOUND % user_name
+            return_value = False
 
         if return_value and not get_org(user_name):
             if not get_org_invite(user_name):
                 if put_user(user_name):
-                    logger.debug("Added "+user_name+" to github org")
-                    error_message = "Invited "+user_name+" to join github org. Access can be granted post inivation acceptance."
+                    logger.debug("Invited %s to join github organisation" % user_name)
+                    error_message = constants.INVITE_USER_SUCCESS % user_name
                     return_value = False
                 else:
-                    logger.error("Failed adding user "+user_name+" to github org")
-                    error_message ="Failed adding user "+user_name+" to github org"
+                    logger.error(constants.INVITE_USER_FAILED % user_name)
+                    error_message = constants.INVITE_USER_FAILED % user_name
                 return_value = False
             else:
-                error_message = "Already invited "+user_name+" to join github org. Please accept the invite first."
+                error_message = "User %s has already been invited to join github org. \
+                    Accept invite to continue.." % user_name
                 return_value = False
 
-        if return_value and label["action"] == "repository_access":
-          if not get_repo(label["repository"]):
-            logger.error("repository "+ label["repository"] +" does not exist")
-            error_message ="repository "+ label["repository"] +" does not exist"
-            return_value = False
-          else:
-            if return_value and grant_access(label["repository"], label["access_level"], user_name):
-              logger.debug("Added "+label["access_level"]+"access for user "+user_name+" to repo "+label["repository"])
+        if return_value and label["action"] == self.ACCESS_LABEL:
+            if not get_repo(label["repository"]):
+                logger.error(constants.REPO_NOT_FOUND % label["repository"])
+                error_message = constants.REPO_NOT_FOUND % label["repository"]
+                return_value = False
             else:
-              logger.error("Failed adding access for user "+user_name+" to repo "+label["repository"])
-              error_message ="Failed adding access for user "+user_name+" to repo "+label["repository"]
-              return_value = False
+                if return_value and \
+                        grant_access(label["repository"], label["access_level"], user_name):
+                    logger.debug("Added %s access to user %s for repo %s" % (
+                        label["access_level"],
+                        user_name,
+                        label["repository"]))
+                else:
+                    logger.error(constants.GRANT_ACCESS_FAILED % (
+                        user_name,
+                        label["repository"]))
+                    error_message = constants.GRANT_ACCESS_FAILED % (
+                        user_name,
+                        label["repository"])
+                    return_value = False
 
         label_desc = self.combine_labels_desc(labels)
-        email_targets = []
-        email_targets = self.email_targets(user)
-        email_subject = ""
-        email_body = ""
 
-        if return_value:
-            email_subject = "Access Granted: %s for access to %s for user %s" % ( request_id, self.access_desc(), user.email )
-
-            if auto_approve_rules:
-                email_body = "Access successfully granted for %s for %s to %s.<br>Request has been approved by %s. <br> Rules :- %s" % (label_desc, self.access_desc(), user.email, approver, ", ".join(auto_approve_rules))
-            else:
-                email_body = "Access successfully granted for %s for %s to %s.<br>Request has been approved by %s.<br>No futher action needed" % ( label_desc, self.access_desc(), user.email, approver)
-        else:
-            email_subject = "Access Grant Failed: %s for access to %s for user %s" % ( request_id, self.access_desc(), user.email )
-            email_body = "Access grant failed for %s for %s to %s.<br> Reason - %s" % ( label_desc, self.access_desc(), user.email, error_message)
         try:
-            emailSES(email_targets, email_subject, email_body)
+            self.__send_approve_email(
+                user, label_desc,
+                request_id, approver,
+                return_value, auto_approve_rules)
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
         return return_value, error_message
 
+    def __generate_string_from_template(self, filename, **kwargs):
+        template = loader.get_template(filename)
+        vals = {}
+        for key, value in kwargs.items():
+            vals[key] = value
+        return template.render(vals)
+
+    def __send_approve_email(self, user, label_desc, request_id, approver,
+                             grant_status, auto_approve_rules):
+        email_targets = self.email_targets(user)
+        email_subject = constants.GRANT_REQUEST % (
+            request_id,
+            self.access_desc(),
+            user.email)
+        email_body = self.__generate_string_from_template(
+            filename="access_email_template.html",
+            status=grant_status,
+            auto_approve=auto_approve_rules,
+            request_id=request_id,
+            user_email=user.email,
+            access_desc=self.access_desc(),
+            access_meta=label_desc,
+            approver=approver,
+        )
+
+        emailSES(email_targets, email_subject, email_body)
+
     def get_label_desc(self, access_label):
-      if access_label["action"] == "repository_access":
-          repository = access_label["repository"]
-          access_level = access_label["access_level"]
-          return access_level + ' access for github repo - ' + repository
+        if access_label["action"] == self.ACCESS_LABEL:
+            repository = access_label["repository"]
+            access_level = access_label["access_level"]
+            return access_level + ' access for github repo - ' + repository
 
-      return ""
+        return ""
 
-    def combine_labels_desc(self,access_labels):
+    def combine_labels_desc(self, access_labels):
         label_descriptions_set = set()
         for access_label in access_labels:
             label_desc = self.get_label_desc(access_label)
@@ -181,7 +198,7 @@ class GithubAccess(BaseEmailAccess):
             if len(repo_name) == 0:
                 raise Exception('Repo not found')
             valid_access_label = {}
-            valid_access_label["action"] = "repository_access"
+            valid_access_label["action"] = self.ACCESS_LABEL
             valid_access_label['access_level'] = access_level
 
             valid_access_label['repository'] = repo_name
@@ -190,7 +207,7 @@ class GithubAccess(BaseEmailAccess):
         return valid_access_label_array
 
     def match_keywords(self):
-        return  ['github','git']
+        return ['github', 'git']
 
 
 def get_object():
