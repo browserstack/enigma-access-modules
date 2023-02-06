@@ -68,7 +68,6 @@ def test_get_aws_credentails(*args, **kwargs):
 def test_grant_aws_access(
     mocker, test_name, user_email, label, expected_return_value, boto3_client
 ):
-
     userMock = mocker.MagicMock()
     userMock.email = user_email
 
