@@ -1,17 +1,19 @@
+from django.template import loader
+from requests.auth import HTTPBasicAuth
+import json
 import logging
 import requests
-from requests.auth import HTTPBasicAuth
-from django.template import loader
-import json
 
-from bootprocess.general import emailSES
 from Access.access_modules.base_email_access.access import BaseEmailAccess
 from BrowserStackAutomation.settings import ACCESS_MODULES
+from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)
 
 
 class Confluence(BaseEmailAccess):
+    urlpatterns = []
+
     def fetch_access_request_form_path(self):
         return "confluence/access_request_form.html"
 
