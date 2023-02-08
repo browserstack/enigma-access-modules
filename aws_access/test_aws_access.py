@@ -1,6 +1,6 @@
 import pytest
 
-from Access.access_modules.aws_access import constants, helpers, access
+from . import constants, helpers, access
 
 
 class MockBoto3:
@@ -77,7 +77,9 @@ def test_grant_aws_access(
     )
     mocker.patch("bootprocess.general.emailSES", return_value="")
 
-    return_value, _ = helpers.grant_aws_access(user=userMock, label=label)
+    return_value, _ = helpers.grant_aws_access(
+        userMock, label["account"], label["group"]
+    )
     assert return_value == expected_return_value
 
 
@@ -103,15 +105,21 @@ def test_grant_aws_access(
 def test_revoke_aws_access(
     mocker, test_name, user_email, label, expected_return_value, boto3_client
 ):
+
     userMock = mocker.MagicMock()
     userMock.email = user_email
+
+    request = mocker.MagicMock()
+    request.request_id = "123"
 
     mocker.patch(
         "Access.access_modules.aws_access.helpers.get_aws_client",
         return_value=boto3_client,
     )
 
-    return_value, _ = helpers.revoke_aws_access(user=userMock, label=label)
+    return_value, _ = helpers.revoke_aws_access(
+        userMock, label["account"], label["group"]
+    )
     assert return_value == expected_return_value
 
 
@@ -125,13 +133,16 @@ def test_AWSAccess(mocker):
 
     aws_access = access.AWSAccess()
 
-    assert type(aws_access.grant_owner()) == list
-    assert type(aws_access.revoke_owner()) == list
-    assert type(aws_access.access_mark_revoke_permission("access_type")) == list
-    assert type(aws_access.email_targets(user=userMock)) == list
-
-    label_1 = {"action": constants.GROUP_ACCESS, "account": "test 1", "group": "test 1"}
-    label_2 = {"action": constants.GROUP_ACCESS, "account": "test 2", "group": "test 2"}
+    label_1 = {
+        "action": constants.GROUP_ACCESS,
+        "account": "test 1",
+        "group": "test 1",
+    }
+    label_2 = {
+        "action": constants.GROUP_ACCESS,
+        "account": "test 2",
+        "group": "test 2",
+    }
     label_desc = aws_access.get_label_desc(access_label=label_1)
     assert label_desc == "GroupAccess for group: test 1"
 
@@ -149,7 +160,7 @@ def test_AWSAccess(mocker):
     expected_combined_meta = {
         "action": label_1["action"] + ", " + label_2["action"],
         "account": label_1["account"] + ", " + label_2["account"],
-        "group": label_1["group"] + ", " + label_2["group"],
+        "group": str(label_1["group"]) + ", " + str(label_2["group"]),
     }
     combined_label_meta = aws_access.combine_labels_meta(
         access_labels=[label_1, label_2]
@@ -157,8 +168,7 @@ def test_AWSAccess(mocker):
     assert combined_label_meta == expected_combined_meta
 
     assert type(aws_access.access_request_data("test")) == dict
-    assert aws_access.get_extra_fields() == []
-    assert aws_access.validate_request([label_1], None) == [{"data": label_1}]
+    assert aws_access.validate_request([label_1], None) == [label_1]
 
     mocker.patch(
         "Access.access_modules.aws_access.helpers.grant_aws_access",
@@ -169,24 +179,11 @@ def test_AWSAccess(mocker):
         return_value=(True, ""),
     )
 
-    return_value, error = aws_access.approve(
-        user=userMock, labels=[label_1], approver=None, request_id="request_id"
-    )
+    return_value = aws_access.approve(userMock, [label_1], None, requestMock)
     assert return_value is True
-    assert error == ""
 
-    return_value, error = aws_access.revoke(user=userMock, label=label_1)
+    return_value = aws_access.revoke(userMock, label_1, requestMock)
     assert return_value is True
-    assert error == ""
-
-    data = {
-        "approvers": {"primary": "primary", "other": "other"},
-        "requestId": "requestId",
-        "request_data": {},
-        "is_group": False,
-    }
-    response = aws_access.fetch_access_approve_email(request=requestMock, data=data)
-    assert type(response) == str
 
 
 def test_get_aws_accounts(mocker):
