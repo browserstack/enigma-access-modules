@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class GithubAccess(BaseEmailAccess):
     ACCESS_LABEL = "repository_access"
+    urlpatterns = []
 
     def email_targets(self, user):
         return [user.email] + self.grant_owner()
