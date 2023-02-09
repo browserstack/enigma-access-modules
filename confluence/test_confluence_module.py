@@ -66,22 +66,22 @@ class MockRequest:
             ]
         }
 
-    def updateMetaData(self, a, b):
+    def update_meta_data(self, param1, param2):
         return True
 
 
-def test_Confluence(mocker, requests_mock):
+def test_confluence(mocker, requests_mock):
     confluence_access = access.Confluence()
 
-    userMock = mocker.MagicMock()
-    userMock.email = "test@example.com"
-    userMock.username = "user"
-    userMock.confluenceId = "123"
+    user_mock = mocker.MagicMock()
+    user_mock.email = "test@example.com"
+    user_mock.username = "user"
+    user_mock.confluenceId = "123"
 
     request = MockRequest()
 
-    assert type(confluence_access.email_targets(userMock)) == list
-    assert type(confluence_access.auto_grant_email_targets(userMock)) == list
+    assert isinstance(confluence_access.email_targets(user_mock)) == list
+    assert isinstance(confluence_access.auto_grant_email_targets(user_mock)) == list
 
     form_label_1 = [
         {
@@ -96,8 +96,8 @@ def test_Confluence(mocker, requests_mock):
         }
     ]
 
-    label1 = confluence_access.validate_request(form_label_1, userMock, False)
-    label2 = confluence_access.validate_request(form_label_2, userMock, False)
+    label1 = confluence_access.validate_request(form_label_1, user_mock, False)
+    label2 = confluence_access.validate_request(form_label_2, user_mock, False)
 
     assert label1[0] == {
         "data": {"accessWorkspace": "test", "confluenceAccessType": "View Access"},
@@ -125,34 +125,32 @@ def test_Confluence(mocker, requests_mock):
 
     access_types = confluence_access.access_types()
 
-    assert type(access_types) == list
+    assert isinstance(access_types) == list
     assert access_types == [
         {"type": "View Access", "desc": "View Access"},
         {"type": "Edit Access", "desc": "Edit Access"},
         {"type": "Admin Access", "desc": "Admin Access"},
     ]
 
-    grant_url = "%s/wiki/rest/api/space/test/permission" % (
-        ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
-    )
+    base_url = ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
+
+    grant_url = f"{base_url}/wiki/rest/api/space/test/permission"
 
     requests_mock.post(
         grant_url,
         status_code=200,
         json={"id": 1234},
     )
-    revoke_url = "%s/wiki/rest/api/space/test/permission/1234" % (
-        ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
-    )
+    revoke_url = f"{base_url}/wiki/rest/api/space/test/permission/1234"
     requests_mock.delete(
         revoke_url,
         status_code=204,
     )
 
     mocker.patch("bootprocess.general.emailSES", return_value="")
-    resp = confluence_access.approve(userMock, label1, "1234", request)
+    resp = confluence_access.approve(user_mock, label1, "1234", request)
     assert resp is True
 
-    resp = confluence_access.revoke(userMock, label1[0], request)
+    resp = confluence_access.revoke(user_mock, label1[0], request)
 
     assert resp is True

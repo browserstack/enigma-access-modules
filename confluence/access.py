@@ -1,7 +1,7 @@
-from django.template import loader
-from requests.auth import HTTPBasicAuth
 import json
 import logging
+from django.template import loader
+from requests.auth import HTTPBasicAuth
 import requests
 
 from Access.access_modules.base_email_access.access import BaseEmailAccess
@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class Confluence(BaseEmailAccess):
+    """Confluence access module"""
+
     urlpatterns = []
 
     def fetch_access_request_form_path(self):
@@ -75,28 +77,27 @@ class Confluence(BaseEmailAccess):
                     "operation": permission,
                 }
             )
-            GRANT_URL = "%s/wiki/rest/api/space/%s/permission" % (
-                ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"],
-                space_key,
-            )
+            base_url = ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
+            grant_url = f"{base_url}/wiki/rest/api/space/{space_key}/permission"
             response = requests.request(
-                "POST", GRANT_URL, data=payload, headers=headers, auth=auth
+                "POST", grant_url, data=payload, headers=headers, auth=auth
             )
 
             if response.status_code == 200:
                 return str(json.loads(response.text)["id"])
-            elif response.status_code == 400:
+            if response.status_code == 400:
                 return json.loads(response.text)["message"].split(" ")[-1]
-            else:
-                logger.error(
-                    f"""
-                    Could not approve permission {str(permission)} for response {str(response.text)}
-                    """
-                )
-                return False
-        except Exception as e:
             logger.error(
-                f"Could not approve permission {str(permission)} for error {str(e)}"
+                "Could not approve permission %s for response %s",
+                {str(permission)},
+                {str(response.text)},
+            )
+            return False
+        except Exception as ex:
+            logger.error(
+                "Could not approve permission %s for error %s",
+                {str(permission)},
+                {str(ex)},
             )
             return False
 
@@ -106,20 +107,21 @@ class Confluence(BaseEmailAccess):
                 ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"],
                 ACCESS_MODULES["confluence_module"]["API_TOKEN"],
             )
-            REVOKE_URL = "%s/wiki/rest/api/space/%s/permission/%s" % (
-                ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"],
-                space_key,
-                permission_id,
+            base_url = ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
+            revoke_url = (
+                f"{base_url}/wiki/rest/api/space/{space_key}/permission/{permission_id}"
             )
-            response = requests.request("DELETE", REVOKE_URL, auth=auth)
+            response = requests.request("DELETE", revoke_url, auth=auth)
             if response.status_code != 204:
                 return False
 
             return True
 
-        except Exception as e:
+        except Exception as ex:
             logger.error(
-                f"Could not approve permission {str(permission_id)} for error {str(e)}"
+                "Could not approve permission %s for error %s",
+                {str(permission_id)},
+                {str(ex)},
             )
             return False
 
@@ -161,13 +163,13 @@ class Confluence(BaseEmailAccess):
         return available_spaces
 
     def __get_accesses_with_type(self, access_type):
-        VIEW_PERMISSIONS = [
+        view_permissions = [
             {"key": "read", "target": "space"},
             {"key": "delete", "target": "space"},
             {"key": "create", "target": "comment"},
             {"key": "delete", "target": "comment"},
         ]
-        EDIT_PERMISSIONS = VIEW_PERMISSIONS + [
+        edit_permissions = view_permissions + [
             {"key": "create", "target": "page"},
             {"key": "create", "target": "blogpost"},
             {"key": "create", "target": "attachment"},
@@ -175,18 +177,17 @@ class Confluence(BaseEmailAccess):
             {"key": "delete", "target": "blogpost"},
             {"key": "delete", "target": "attachment"},
         ]
-        ADMIN_PERMISSIONS = EDIT_PERMISSIONS + [
+        admin_permissions = edit_permissions + [
             {"key": "export", "target": "space"},
             {"key": "administer", "target": "space"},
             {"key": "archive", "target": "page"},
             {"key": "restrict_content", "target": "space"},
         ]
         if access_type == "Admin Access":
-            return ADMIN_PERMISSIONS
-        elif access_type == "Edit Access":
-            return EDIT_PERMISSIONS
-        else:
-            return VIEW_PERMISSIONS
+            return admin_permissions
+        if access_type == "Edit Access":
+            return edit_permissions
+        return view_permissions
 
     def approve(
         self, user, labels, approver, request, is_group=False, auto_approve_rules=None
@@ -220,13 +221,13 @@ class Confluence(BaseEmailAccess):
                     {"permission": permission, "permission_id": response}
                 )
 
-            request.updateMetaData("confluence", approve_result)
+            request.update_meta_data("confluence", approve_result)
 
         try:
             self.__send_approve_email(user, request.request_id, access_type, approver)
             return True
-        except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+        except Exception as ex:
+            logger.error("Could not send email for error %s", str(ex))
             return False
 
     def __send_approve_email(self, user, request_id, access_type, approver):
