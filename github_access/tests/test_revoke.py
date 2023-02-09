@@ -7,12 +7,12 @@ from .. import access
 from .. import helpers
 
 
-@scenario('features/revoke.feature', 'Revoke User Access to a repository fails')
+@scenario("features/revoke.feature", "Revoke User Access to a repository fails")
 def test_revoke_user_access_to_a_repository_fails():
     pass
 
 
-@scenario('features/revoke.feature', 'Revoke User Access to a repository success')
+@scenario("features/revoke.feature", "Revoke User Access to a repository success")
 def test_revoke_user_access_to_a_repository_success():
     pass
 
@@ -42,15 +42,17 @@ def setup_test_config():
     helpers.GITHUB_ORG = "test-org"
 
 
-@given('A git username', target_fixture="user_name")
+@given("A git username", target_fixture="user_name")
 def user_name():
     return "test-username"
 
 
-@given('Access will be revoked')
+@given("Access will be revoked")
 def access_revoked(requests_mock):
-    API_URL = 'https://test-base-url.com/repos/test-org/test-repo/collaborators/test-username'
-    expected_headers = {'Authorization': 'token test-token'}
+    API_URL = (
+        "https://test-base-url.com/repos/test-org/test-repo/collaborators/test-username"
+    )
+    expected_headers = {"Authorization": "token test-token"}
 
     requests_mock.delete(
         API_URL,
@@ -62,10 +64,12 @@ def access_revoked(requests_mock):
     assert return_value is True
 
 
-@given('Access can not be revoked')
+@given("Access can not be revoked")
 def access_not_revoked(requests_mock):
-    API_URL = 'https://test-base-url.com/repos/test-org/test-repo/collaborators/test-username'
-    expected_headers = {'Authorization': 'token test-token'}
+    API_URL = (
+        "https://test-base-url.com/repos/test-org/test-repo/collaborators/test-username"
+    )
+    expected_headers = {"Authorization": "token test-token"}
 
     requests_mock.delete(
         API_URL,
@@ -77,13 +81,13 @@ def access_not_revoked(requests_mock):
     assert return_value is False
 
 
-@when('I pass revoke request', target_fixture="context_output")
+@when("I pass revoke request", target_fixture="context_output")
 def revoke_request(user, labels, mocker):
     github_access = access.get_object()
     return github_access.revoke(user, labels, mocker.Mock())
 
 
-@then('Email will be sent')
+@then("Email will be sent")
 def success_message(context_output):
     return_value = context_output
     assert return_value is True

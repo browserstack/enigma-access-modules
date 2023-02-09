@@ -1,13 +1,16 @@
 import logging
 
 from Access.access_modules.base_email_access.access import BaseEmailAccess
-from Access.access_modules.github_access.helpers import (get_org,
-                                                         get_org_invite,
-                                                         get_org_repo_list,
-                                                         get_repo, get_user,
-                                                         grant_access,
-                                                         put_user,
-                                                         revoke_access)
+from Access.access_modules.github_access.helpers import (
+    get_org,
+    get_org_invite,
+    get_org_repo_list,
+    get_repo,
+    get_user,
+    grant_access,
+    put_user,
+    revoke_access,
+)
 from . import constants
 from bootprocess.general import emailSES
 from django.template import loader
@@ -50,7 +53,15 @@ class GithubAccess(BaseEmailAccess):
 
     available = True
 
-    def approve(self, user, labels, approver, request_id, is_group=False, auto_approve_rules=None):
+    def approve(
+        self,
+        user,
+        labels,
+        approver,
+        request_id,
+        is_group=False,
+        auto_approve_rules=None,
+    ):
         return_value = True
         error_message = ""
         label = labels[0]
@@ -71,8 +82,10 @@ class GithubAccess(BaseEmailAccess):
                     error_message = constants.INVITE_USER_FAILED % user_name
                 return_value = False
             else:
-                error_message = "User %s has already been invited to join github org. \
-                    Accept invite to continue.." % user_name
+                error_message = (
+                    "User %s has already been invited to join github org. "
+                    "Accept invite to continue.." % user_name
+                )
                 return_value = False
 
         if return_value and label["action"] == self.ACCESS_LABEL:
@@ -81,28 +94,29 @@ class GithubAccess(BaseEmailAccess):
                 error_message = constants.REPO_NOT_FOUND % label["repository"]
                 return_value = False
             else:
-                if return_value and \
-                        grant_access(label["repository"], label["access_level"], user_name):
-                    logger.debug("Added %s access to user %s for repo %s" % (
-                        label["access_level"],
-                        user_name,
-                        label["repository"]))
+                if return_value and grant_access(
+                    label["repository"], label["access_level"], user_name
+                ):
+                    logger.debug(
+                        "Added %s access to user %s for repo %s"
+                        % (label["access_level"], user_name, label["repository"])
+                    )
                 else:
-                    logger.error(constants.GRANT_ACCESS_FAILED % (
-                        user_name,
-                        label["repository"]))
+                    logger.error(
+                        constants.GRANT_ACCESS_FAILED % (user_name, label["repository"])
+                    )
                     error_message = constants.GRANT_ACCESS_FAILED % (
                         user_name,
-                        label["repository"])
+                        label["repository"],
+                    )
                     return_value = False
 
         label_desc = self.combine_labels_desc(labels)
 
         try:
             self.__send_approve_email(
-                user, label_desc,
-                request_id, approver,
-                return_value, auto_approve_rules)
+                user, label_desc, request_id, approver, return_value, auto_approve_rules
+            )
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
         return return_value, error_message
@@ -114,13 +128,15 @@ class GithubAccess(BaseEmailAccess):
             vals[key] = value
         return template.render(vals)
 
-    def __send_approve_email(self, user, label_desc, request_id, approver,
-                             grant_status, auto_approve_rules):
+    def __send_approve_email(
+        self, user, label_desc, request_id, approver, grant_status, auto_approve_rules
+    ):
         email_targets = self.email_targets(user)
         email_subject = constants.GRANT_REQUEST % (
             request_id,
             self.access_desc(),
-            user.email)
+            user.email,
+        )
         email_body = self.__generate_string_from_template(
             filename="access_email_template.html",
             status=grant_status,
@@ -138,7 +154,7 @@ class GithubAccess(BaseEmailAccess):
         if access_label["action"] == self.ACCESS_LABEL:
             repository = access_label["repository"]
             access_level = access_label["access_level"]
-            return access_level + ' access for github repo - ' + repository
+            return access_level + " access for github repo - " + repository
 
         return ""
 
@@ -163,30 +179,34 @@ class GithubAccess(BaseEmailAccess):
         return "Github Access"
 
     def tag(self):
-        return 'github_access'
+        return "github_access"
 
     def fetch_access_request_form_path(self):
-        return 'github_access/access_request_form.html'
+        return "github_access/access_request_form.html"
 
     def access_request_data(self, request, is_group=False):
         repo_data = [repo for repo in get_org_repo_list()]
-        data = {'githubRepoList': repo_data}
+        data = {"githubRepoList": repo_data}
         return data
 
     def fetch_access_approve_email(self, request, data):
         context_details = {
-            'approvers': {
-                'primary': data['approvers']['primary'],
-                'other': data['approvers']['other']
+            "approvers": {
+                "primary": data["approvers"]["primary"],
+                "other": data["approvers"]["other"],
             },
-            'requestId': data['requestId'],
-            'user': request.user,
-            'requestData': data['request_data'],
-            'accessType': self.tag(),
-            'accessDesc': self.access_desc(),
-            'isGroup': data['is_group']
+            "requestId": data["requestId"],
+            "user": request.user,
+            "requestData": data["request_data"],
+            "accessType": self.tag(),
+            "accessDesc": self.access_desc(),
+            "isGroup": data["is_group"],
         }
-        return str(render(request, 'base_email_access/accessApproveEmail.html', context_details))
+        return str(
+            render(
+                request, "base_email_access/accessApproveEmail.html", context_details
+            )
+        )
 
     def validate_request(self, access_labels_data, request_user, is_group=False):
         valid_access_label_array = []
@@ -197,18 +217,18 @@ class GithubAccess(BaseEmailAccess):
             access_level = access_labels_data[0]["accessLevel"]
 
             if len(repo_name) == 0:
-                raise Exception('Repo not found')
+                raise Exception("Repo not found")
             valid_access_label = {}
             valid_access_label["action"] = self.ACCESS_LABEL
-            valid_access_label['access_level'] = access_level
+            valid_access_label["access_level"] = access_level
 
-            valid_access_label['repository'] = repo_name
+            valid_access_label["repository"] = repo_name
             valid_access_label_array.append(valid_access_label)
 
         return valid_access_label_array
 
     def match_keywords(self):
-        return ['github', 'git']
+        return ["github", "git"]
 
 
 def get_object():
