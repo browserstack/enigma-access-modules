@@ -1,15 +1,17 @@
+from django.template import loader
+import logging
+
+from . import constants, helpers, urls
 from Access.access_modules.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
-from django.template import loader
-from . import helpers
-from . import constants
-import logging
+
 
 logger = logging.getLogger(__name__)
 
 
 class GCPAccess(BaseEmailAccess):
     GROUP_ACCESS = "GroupAccess"
+    urlpatterns = urls.urlpatterns
 
     def email_targets(self, user):
         return [user.email] + self.grant_owner()

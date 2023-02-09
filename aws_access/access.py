@@ -1,13 +1,18 @@
+from django.shortcuts import render
 from django.template import loader
-from . import helpers, constants
-from Access.access_modules.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 import logging
+
+from . import helpers, constants, urls
+from Access.access_modules.base_email_access.access import BaseEmailAccess
+from BrowserStackAutomation.settings import ACCESS_APPROVE_EMAIL
+from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)
 
 
 class AWSAccess(BaseEmailAccess):
+    urlpatterns = urls.urlpatterns
+
     def email_targets(self, user):
         return [user.email] + self.grant_owner()
 
