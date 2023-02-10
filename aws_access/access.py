@@ -46,7 +46,7 @@ class AWSAccess(BaseEmailAccess):
         is_group=False,
         auto_approve_rules=None,
     ):
-        """_summary_
+        """approves a users access request
 
         Args:
             user (User): User whose access is being approved
@@ -308,5 +308,5 @@ class AWSAccess(BaseEmailAccess):
 
 
 def get_object():
-    """returns AWS Access Module Object"""
+    """returns instance of AWS Access Module"""
     return AWSAccess()
