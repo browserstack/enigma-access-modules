@@ -10,6 +10,7 @@ from Access.access_modules.github_access.helpers import (
     grant_access,
     put_user,
     revoke_access,
+    get_user_by_email,
 )
 from . import constants
 from bootprocess.general import emailSES
@@ -226,6 +227,17 @@ class GithubAccess(BaseEmailAccess):
             valid_access_label_array.append(valid_access_label)
 
         return valid_access_label_array
+
+    def get_identity_template(self):
+        return 'github_access/identity_form.html'
+
+    def verify_identity(self, request, email):
+        user_name = request['name']
+        if not get_user_by_email(user_name, email):
+            logger.error(constants.USER_IDENTITY_NOT_FOUND % user_name)
+            return {}
+
+        return {'username': user_name}
 
     def match_keywords(self):
         return ["github", "git"]

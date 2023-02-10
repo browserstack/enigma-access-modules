@@ -1,6 +1,7 @@
 import json
 import requests
 import logging
+from . import constants
 from BrowserStackAutomation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
@@ -231,3 +232,19 @@ def _revoke_github_user(username, repo):
         return False
     else:
         return True
+
+
+def get_user_by_email(username, email):
+    headers = {'Authorization': 'token %s' % GITHUB_TOKEN}
+    GET_USER_URL = '%s/users/%s' % (GITHUB_BASE_URL, username)
+    response = requests.get(GET_USER_URL, headers=headers)
+    if response.status_code == 200:
+        if "email" in response.json(constants.GET_USER_BY_EMAIL_FAILED):
+            user_email = str(json.loads(response.text)["email"])
+            print(user_email)
+            if user_email is not None and user_email == email:
+                return True
+            else:
+                logger.error()
+                return False
+    return False
