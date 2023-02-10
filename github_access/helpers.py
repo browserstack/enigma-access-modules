@@ -241,7 +241,6 @@ def get_user_by_email(username, email):
     if response.status_code == 200:
         if "email" in response.json(constants.GET_USER_BY_EMAIL_FAILED):
             user_email = str(json.loads(response.text)["email"])
-            print(user_email)
             if user_email is not None and user_email == email:
                 return True
             else:
