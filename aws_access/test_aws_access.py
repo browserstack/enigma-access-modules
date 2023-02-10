@@ -1,16 +1,19 @@
+"""aws access module unit tests"""
 import pytest
 
 from . import constants, helpers, access
 
 
 class MockBoto3:
-    def add_user_to_group(self, GroupName, UserName):
-        pass
+    """"Mock for boto3"""
+    def add_user_to_group(self, group_name, user_name):
+        """mock method"""
 
-    def remove_user_from_group(self, GroupName, UserName):
-        pass
+    def remove_user_from_group(self, group_name, user_name):
+        """mock method"""
 
-    def list_groups(Marker=None):
+    def list_groups(self, marker=None):
+        """mock method returns group list"""
         return {
             "Groups": [
                 {
@@ -34,16 +37,20 @@ class MockBoto3:
 
 
 class MockBoto3withException(MockBoto3):
-    def add_user_to_group(GroupName, UserName):
+    """"Mock for Boto3 exception"""
+    def add_user_to_group(self, group_name, user_name):
+        """"mock method raises exception"""
         raise Exception
 
-    def remove_user_from_group(GroupName, UserName):
+    def remove_user_from_group(self, group_name, user_name):
+        """"mock method raises exception"""
         raise Exception
 
 
 def test_get_aws_credentails(*args, **kwargs):
+    """"mock function raises exception"""
     value = helpers._get_aws_credentails("test")
-    assert type(value) == dict
+    assert isinstance(value) == dict
 
 
 @pytest.mark.parametrize(
@@ -68,8 +75,9 @@ def test_get_aws_credentails(*args, **kwargs):
 def test_grant_aws_access(
     mocker, test_name, user_email, label, expected_return_value, boto3_client
 ):
-    userMock = mocker.MagicMock()
-    userMock.email = user_email
+    """unit test for grant_aws_access"""
+    user_mock = mocker.MagicMock()
+    user_mock.email = user_email
 
     mocker.patch(
         "Access.access_modules.aws_access.helpers.get_aws_client",
@@ -78,7 +86,7 @@ def test_grant_aws_access(
     mocker.patch("bootprocess.general.emailSES", return_value="")
 
     return_value, _ = helpers.grant_aws_access(
-        userMock, label["account"], label["group"]
+        user_mock, label["account"], label["group"]
     )
     assert return_value == expected_return_value
 
@@ -105,8 +113,9 @@ def test_grant_aws_access(
 def test_revoke_aws_access(
     mocker, test_name, user_email, label, expected_return_value, boto3_client
 ):
-    userMock = mocker.MagicMock()
-    userMock.email = user_email
+    """unit test for revoke_aws_access"""
+    user_mock = mocker.MagicMock()
+    user_mock.email = user_email
 
     request = mocker.MagicMock()
     request.request_id = "123"
@@ -117,18 +126,19 @@ def test_revoke_aws_access(
     )
 
     return_value, _ = helpers.revoke_aws_access(
-        userMock, label["account"], label["group"]
+        user_mock, label["account"], label["group"]
     )
     assert return_value == expected_return_value
 
 
-def test_AWSAccess(mocker):
-    userMock = mocker.MagicMock()
-    userMock.email = "test@example.com"
-    userMock.username = "user"
+def test_aws_access(mocker):
+    """unit test for aws access module methods"""
+    user_mock = mocker.MagicMock()
+    user_mock.email = "test@example.com"
+    user_mock.username = "user"
 
-    requestMock = mocker.MagicMock()
-    requestMock.user = userMock
+    request_mock = mocker.MagicMock()
+    request_mock.user = user_mock
 
     aws_access = access.AWSAccess()
 
@@ -166,7 +176,7 @@ def test_AWSAccess(mocker):
     )
     assert combined_label_meta == expected_combined_meta
 
-    assert type(aws_access.access_request_data("test")) == dict
+    assert isinstance(aws_access.access_request_data("test")) == dict
     assert aws_access.validate_request([label_1], None) == [label_1]
 
     mocker.patch(
@@ -178,19 +188,21 @@ def test_AWSAccess(mocker):
         return_value=(True, ""),
     )
 
-    return_value = aws_access.approve(userMock, [label_1], None, requestMock)
+    return_value = aws_access.approve(user_mock, [label_1], None, request_mock)
     assert return_value is True
 
-    return_value = aws_access.revoke(userMock, label_1, requestMock)
+    return_value = aws_access.revoke(user_mock, label_1, request_mock)
     assert return_value is True
 
 
-def test_get_aws_accounts(mocker):
+def test_get_aws_accounts():
+    """unit test for get_aws_accounts"""
     accounts = helpers.get_aws_accounts()
-    assert type(accounts) == list
+    assert isinstance(accounts) == list
 
 
 def test_get_aws_groups(mocker):
+    """"unit test for get_aws_groups"""
     mocker.patch(
         "Access.access_modules.aws_access.helpers.get_aws_client",
         return_value=MockBoto3(),
