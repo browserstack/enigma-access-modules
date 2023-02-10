@@ -1,3 +1,4 @@
+"""Confluence Access Module"""
 import json
 import logging
 from django.template import loader
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class Confluence(BaseEmailAccess):
-    """Confluence access module"""
+    """Class representing the Confluence access module"""
 
     urlpatterns = []
 
@@ -297,11 +298,8 @@ class Confluence(BaseEmailAccess):
     def __send_approve_email(self, user, request_id, access_type, approver):
         """generates and sends email in access grant"""
         targets = self.email_targets(user)
-        subject = "Approved Access: %s for access to %s for user %s" % (
-            request_id,
-            self.access_desc(),
-            user.email,
-        )
+        subject = f"""Approved Access: {request_id} for access to
+        {self.access_desc()} for user {user.email}"""
 
         body = self.__generate_string_from_template(
             filename="approve_email.html",
@@ -321,12 +319,12 @@ class Confluence(BaseEmailAccess):
     def __send_revoke_email(self, user, label_desc):
         """generates and sends email in for access revoke"""
         email_targets = self.email_targets(user)
-        email_subject = "Revoke Request: %s for %s" % (label_desc, user.email)
+        email_subject = f"Revoke Request: {label_desc} for {user.email}"
         email_body = ""
         emailSES(email_targets, email_subject, email_body)
 
     def revoke(self, user, label, request):
-        """revoke access to AWS Group
+        """Revoke confluence workspace access
 
         Args:
             user (User): User whose access is to be revoked
@@ -350,8 +348,8 @@ class Confluence(BaseEmailAccess):
         try:
             self.__send_revoke_email(user, label_desc)
             return True
-        except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+        except Exception as ex:
+            logger.error("Could not send email for error %s", str(ex))
             return False
 
     def access_desc(self):
@@ -363,7 +361,7 @@ class Confluence(BaseEmailAccess):
         return "Confluence Access Module"
 
     def tag(self):
-        """returns aws access tag"""
+        """returns confluence access tag"""
         return "confluence_module"
 
 

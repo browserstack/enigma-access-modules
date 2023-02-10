@@ -1,8 +1,10 @@
+"""unit tests for the confluence acces module"""
 from . import access
 from BrowserStackAutomation.settings import ACCESS_MODULES
 
 
 class MockRequest:
+    """Mock HTTP Request for confluence"""
     def __init__(self):
         self.request_id = ""
         self.meta_data = {
@@ -67,10 +69,12 @@ class MockRequest:
         }
 
     def update_meta_data(self, param1, param2):
+        """mock method that defaults to True"""
         return True
 
 
 def test_confluence(mocker, requests_mock):
+    """unit test for the confluence access module methods"""
     confluence_access = access.Confluence()
 
     user_mock = mocker.MagicMock()
