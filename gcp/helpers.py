@@ -7,6 +7,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_gcp_domain_details(domain_id):
+    """Gets the GCP domains details.
+
+    Args:
+        domain_id (str): Domain ID of the GCP account.
+
+    Returns:
+        dict: GCP Domain.
+    """
     for domain in ACCESS_MODULES["gcp_access"]["domains"]:
         if domain["domain_id"] == domain_id:
             return domain
@@ -15,6 +23,14 @@ def get_gcp_domain_details(domain_id):
 
 
 def get_gcp_client(domain_id):
+    """Gets GCP client for api access.
+
+    Args:
+        domain_id (str): GCP Domain ID.
+
+    Returns:
+        client: GCP Session client.
+    """
     domain = get_gcp_domain_details(domain_id)
     SCOPES = ["https://www.googleapis.com/auth/admin.directory.group"]
 
@@ -26,6 +42,16 @@ def get_gcp_client(domain_id):
 
 
 def grant_gcp_access(group_id, domain_id, user_email):
+    """Make GCP API call to grant access to user to a group.
+
+    Args:
+        group_id (str): GroupID of the GCP group.
+        domain_id (str): Domain ID of the GCP domain.
+        user_email (str): Email Address of the user.
+
+    Returns:
+        bool: True if access grant succeeds. False if access grant fails.
+    """
     try:
         client = get_gcp_client(domain_id)
         client.members().insert(
@@ -45,6 +71,16 @@ def grant_gcp_access(group_id, domain_id, user_email):
 
 
 def revoke_gcp_access(group_id, domain_id, user_email):
+    """Make AWS API call to revoke access to a user to a group.
+
+    Args:
+        group_id (str): GroupID of the GCP group.
+        domain_id (str): Domain ID of the GCP domain.
+        user_email (str): Email Address of the user.
+
+    Returns:
+        bool: True if the revoke succeeds. False if the revoke fails
+    """
     try:
         client = get_gcp_client(domain_id)
         client.members().delete(groupKey=group_id, memberKey=user_email).execute()
@@ -56,6 +92,15 @@ def revoke_gcp_access(group_id, domain_id, user_email):
 
 
 def get_gcp_groups(domain_id, page_token=None):
+    """Gets the list of GCP Groups.
+
+    Args:
+        domain_id (str): Domain ID of the GCP domain.
+        page_token (str, optional): Page Token. Defaults to None.
+
+    Returns:
+        list: List of the GCP groups.
+    """
     client = get_gcp_client(domain_id)
     try:
         result = (
@@ -69,10 +114,19 @@ def get_gcp_groups(domain_id, page_token=None):
         logger.exception(
             "Something went wrong while fetching the GCP groups: " + str(e)
         )
-        return False, False
+        return None, False
 
 
 def gcp_group_exists(domain_id, group_id):
+    """Checks if the GCP group exists.
+
+    Args:
+        domain_id (str): GCP Domain ID.
+        group_id (str): GCP Group ID.
+
+    Returns:
+        bool: Returns True if the Group exists, False if the Group does not exists.
+    """
     client = get_gcp_client(domain_id)
     try:
         client.groups().get(groupKey=group_id).execute()
@@ -84,6 +138,11 @@ def gcp_group_exists(domain_id, group_id):
 
 
 def get_gcp_domains():
+    """Get the list of GCP domains.
+
+    Returns:
+        dict: Gets the list of GCP domains.
+    """
     domains = []
     for account in ACCESS_MODULES["gcp_access"]["domains"]:
         domains.append(account["domain_id"])

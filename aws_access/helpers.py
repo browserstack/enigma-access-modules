@@ -10,14 +10,14 @@ logger = logging.getLogger(__name__)
 
 
 def aws_account_exists(account):
-    """checks if aws account exists
+    """Checks if AWS Account exists.
 
     Args:
-        account (str): accountname
+        account (str): AWS Account Name.
 
     Returns:
         bool: True if account exists.
-              False if account does not exist
+              False if account does not exist.
     """
     if not _get_aws_credentails(account):
         return False
@@ -25,15 +25,15 @@ def aws_account_exists(account):
 
 
 def aws_group_exists(account, group):
-    """checks if aws group exists
+    """Checks if aws group exists.
 
     Args:
-        account (str): account name
-        group (str): aws group name
+        account (str): AWS Account name.
+        group (str): AWS Group name.
 
     Returns:
         str: True if AWS Group exists.
-             False if AWS Group does not exists
+             False if AWS Group does not exists.
     """
     client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
     try:
@@ -45,7 +45,7 @@ def aws_group_exists(account, group):
 
 
 def _get_aws_credentails(account):
-    """get aws API credentials"""
+    """Get AWS API credentials."""
     accounts = ACCESS_MODULES["aws_access"].get("aws_accounts", [])
     for account_data in accounts:
         if account_data["account"] == account:
@@ -59,29 +59,29 @@ def _get_aws_credentails(account):
 
 
 def get_aws_client(account, resource):
-    """gets aws client for api access
+    """Gets AWS client for api access.
 
     Args:
-        account (str): account name
-        resource (str): resource name
+        account (str): AWS Account Name.
+        resource (str): Resource Name.
 
     Returns:
-        client: aws session client
+        client: AWS Session client.
     """
     creds = _get_aws_credentails(account=account)
     return boto3.client(resource, **creds)
 
 
 def grant_aws_access(user, account, group):
-    """make aws api call to grant access to user to a group
+    """Make AWS API call to grant access to user to a group.
 
     Args:
-        user (str): aws user name
-        account (str): aws account name
-        group (str): aws group name
+        user (str): AWS User name.
+        account (str): AWS Account name.
+        group (str): AWS Group name.
 
     Returns:
-        bool: True if access grant succeeds. False if access grant fails
+        bool: True if access grant succeeds. False if access grant fails.
     """
     try:
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
@@ -93,15 +93,15 @@ def grant_aws_access(user, account, group):
 
 
 def revoke_aws_access(user, account, group):
-    """make aws api call to revoke access to a user to a group
+    """Make AWS API call to revoke access to a user to a group.
 
     Args:
-        user (str): aws user name
-        account (str): aws account name
-        group (str): aws group name
+        user (str): AWS User name.
+        account (str): AWS Account name.
+        group (str): AWS Group name.
 
     Returns:
-        bool: True if the revoke succeeds. False if the revoke fails
+        bool: True if the revoke succeeds. False if the revoke fails.
     """
     try:
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
@@ -113,10 +113,10 @@ def revoke_aws_access(user, account, group):
 
 
 def get_aws_accounts():
-    """gets the list of aws accounts
+    """Gets the list of AWS Accounts.
 
     Returns:
-        list: returns list of account names
+        list: Returns list of Account Names.
     """
     accounts = ACCESS_MODULES["aws_access"].get("aws_accounts", [])
     account_names = []
@@ -126,14 +126,14 @@ def get_aws_accounts():
 
 
 def get_aws_groups(account, marker):
-    """gets the list of aws groups
+    """Gets the list of AWS Groups.
 
     Args:
-        account (str): account name
-        marker (str): aws marker
+        account (str): AWS Account name.
+        marker (str): AWS API marker.
 
     Returns:
-        list: returns list of aws groups
+        list: Returns list of AWS Groups.
     """
     client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
     if marker:
