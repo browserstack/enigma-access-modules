@@ -10,7 +10,7 @@ from Access.access_modules.github_access.helpers import (
     grant_access,
     put_user,
     revoke_access,
-    get_user_by_email,
+    is_email_valid,
 )
 from . import constants
 from bootprocess.general import emailSES
@@ -233,7 +233,7 @@ class GithubAccess(BaseEmailAccess):
 
     def verify_identity(self, request, email):
         user_name = request['name']
-        if not get_user_by_email(user_name, email):
+        if not is_email_valid(user_name, email):
             logger.error(constants.USER_IDENTITY_NOT_FOUND % user_name)
             return {}
 
