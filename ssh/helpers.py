@@ -7,12 +7,12 @@ from fabric import Connection
 logger = logging.getLogger(__name__)
 
 # get user from the config.json file
-with open("ssh/config.json", "r") as f:
+with open("Access/access_modules/ssh/config.json", "r") as f:
     global enigma_ssh_root_user
     enigma_ssh_root_user = json.load(f)["enigma_root_user"]
 
 
-with open("ssh/inventory.csv", "r") as f:
+with open("Access/access_modules/ssh/inventory.csv", "r") as f:
     global ssh_machine_list
     ssh_machine_list = {}
     # convert inventory.csv file to dictionary with hostname as key and ip as value
