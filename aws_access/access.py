@@ -124,7 +124,7 @@ class AWSAccess(BaseEmailAccess):
         emailSES(email_targets, email_subject, "")
 
     def get_label_desc(self, access_label):
-        """gets the access label descrption
+        """gets the access label description
 
         Args:
             access_label (str): json string representing the access label
