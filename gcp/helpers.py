@@ -71,7 +71,7 @@ def grant_gcp_access(group_id, domain_id, user_email):
 
 
 def revoke_gcp_access(group_id, domain_id, user_email):
-    """Make AWS API call to revoke access to a user to a group.
+    """Make GCP API call to revoke access to a user to a group.
 
     Args:
         group_id (str): GroupID of the GCP group.
