@@ -1,0 +1,13 @@
+<div class="form-group">
+    <label for="name">Git Username</label>
+    <input type="hidden" name="modname" value="github_access">
+    {% if module.identity.username %}
+    <input placeholder="Github UserName " type="text" class="form-control" id="name" name="name" required
+        style="background-color:white;color:black" value="{{ module.identity.username }}">
+    {% else %}
+    <input placeholder="Github UserName " type="text" class="form-control" id="name" name="name" required
+        style="background-color:white;color:black">
+    {% endif %}
+    <p>Add @Browserstack as the company on your github profile. Required for verification.<br>
+        Go to your github profile > edit profile > add @Browserstack in company.</p>
+</div>
