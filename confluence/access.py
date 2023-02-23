@@ -32,7 +32,7 @@ class Confluence(BaseEmailAccess):
             user (User): User whose access is being changed.
 
         Returns:
-            arr: Email address of the User and the module owners
+            arr: Email address of the User and the module owners.
         """
         return [user.email] + self.grant_owner()
 

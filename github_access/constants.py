@@ -9,3 +9,7 @@ REVOKE_REQUEST = "Revoke Request: %s for %s"
 REVOKE_SUCCESS = "Successfully revoked access for user %s to %s repository."
 REVOKE_FAILED = "Failed to revoke access for user %s to %s repository."
 GRANT_REQUEST = "Access Request: %s for access to %s for user %s"
+GET_USER_BY_EMAIL_FAILED = "Failed to read user email address from github. \
+        Please chnage visibility to public for email address from Github Profile"
+USER_IDENTITY_NOT_FOUND = "Failed to verify identity for user %s. \
+        User does not exist OR invalid details entered."
