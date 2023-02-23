@@ -13,40 +13,40 @@ logger = logging.getLogger(__name__)
 
 
 class Confluence(BaseEmailAccess):
-    """Class representing the Confluence access module"""
+    """Class representing the Confluence access module."""
 
     urlpatterns = []
 
     def fetch_access_request_form_path(self):
-        """returns the html form template for filling access path
+        """Returns the html form template for filling access path.
 
         Returns:
-            str: path of the html template
+            str: Path of the html template.
         """
         return "confluence/access_request_form.html"
 
     def email_targets(self, user):
-        """returns email targets
+        """Returns email targets.
 
         Args:
-            user (User): User whose access is being changed
+            user (User): User whose access is being changed.
 
         Returns:
-            array: email address of the User and the module owners
+            arr: Email address of the User and the module owners.
         """
         return [user.email] + self.grant_owner()
 
     def validate_request(self, access_labels_data, request_user, is_group=False):
-        """validates the access request
+        """Validates the access request.
 
         Args:
-            access_labels_data (str): access label representing the access requested
+            access_labels_data (str): Access label representing the access requested.
             request_user (User): User requesting the access
             is_group (bool, optional): Whether the access is being requested for a group.
             Defaults to False.
 
         Returns:
-            arr: array of the access labels for the request access
+            arr: Array of the access labels for the request access.
         """
         access_workspace = access_labels_data[0]["accessWorkspace"]
         access_type = access_labels_data[0]["confluenceAccessType"]
@@ -60,13 +60,13 @@ class Confluence(BaseEmailAccess):
         return valid_access_label_array
 
     def get_label_desc(self, access_label):
-        """gets the access label descrption
+        """Gets the access label descrption.
 
         Args:
-            access_label (str): json string representing the access label
+            access_label (str): JSON string representing the access label.
 
         Returns:
-            str: access label description
+            str: Access label description.
         """
         access_workspace = access_label["access_workspace"]
         access_type = access_label["access_type"]
@@ -78,13 +78,13 @@ class Confluence(BaseEmailAccess):
         )
 
     def combine_labels_desc(self, access_labels):
-        """combines multiple access_labels
+        """Combines multiple access_labels.
 
         Args:
-            access_labels (array): array of access labels
+            access_labels (array): Array of access labels.
 
         Returns:
-            str: comma seperated access labels
+            str: Comma seperated access labels.
         """
         label_descriptions_set = set()
         for access_label in access_labels:
@@ -94,7 +94,7 @@ class Confluence(BaseEmailAccess):
         return ", ".join(label_descriptions_set)
 
     def access_types(self):
-        """returns different types of access for a workspace"""
+        """Returns different types of access for a workspace."""
         return [
             {"type": "View Access", "desc": "View Access"},
             {"type": "Edit Access", "desc": "Edit Access"},
@@ -104,7 +104,7 @@ class Confluence(BaseEmailAccess):
     def __approve_space_access(
         self, space_key, permission, subject_identifier, subject_type="user"
     ):
-        """makes confluence API calls and approves access to a confluence space"""
+        """Makes confluence API calls and approves access to a confluence space."""
         try:
             auth = HTTPBasicAuth(
                 ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"],
@@ -142,7 +142,7 @@ class Confluence(BaseEmailAccess):
             return False
 
     def __revoke_space_access(self, space_key, permission_id):
-        """makes confluence API calls and revokes access to a confluence space"""
+        """Makes confluence API calls and revokes access to a confluence space."""
         try:
             auth = HTTPBasicAuth(
                 ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"],
@@ -167,15 +167,15 @@ class Confluence(BaseEmailAccess):
             return False
 
     def access_request_data(self, request, is_group=False):
-        """creates a dictionary of confluence workspaces
+        """Creates a dictionary of confluence workspaces.
 
         Args:
-            request (dict): a request form representing the http form request
-            is_group (bool, optional): whether the access is requested
+            request (dict): A request form representing the http form request.
+            is_group (bool, optional): Whether the access is requested.
             for an Enigma Group. Defaults to False.
 
         Returns:
-            dict: dictionary of enigma workspace
+            dict: Dictionary of enigma workspace
         """
         available_spaces = {}
         available_spaces["spaces"] = []
@@ -243,7 +243,7 @@ class Confluence(BaseEmailAccess):
     def approve(
         self, user, labels, approver, request, is_group=False, auto_approve_rules=None
     ):
-        """approves a users access request
+        """Approves a users access request.
 
         Args:
             user (User): User whose access is being approved
@@ -296,7 +296,7 @@ class Confluence(BaseEmailAccess):
             return False
 
     def __send_approve_email(self, user, request_id, access_type, approver):
-        """generates and sends email in access grant"""
+        """Generates and sends email in access grant."""
         targets = self.email_targets(user)
         subject = f"""Approved Access: {request_id} for access to
         {self.access_desc()} for user {user.email}"""
@@ -317,7 +317,7 @@ class Confluence(BaseEmailAccess):
         return template.render(vals)
 
     def __send_revoke_email(self, user, label_desc):
-        """generates and sends email in for access revoke"""
+        """Generates and sends email in for access revoke."""
         email_targets = self.email_targets(user)
         email_subject = f"Revoke Request: {label_desc} for {user.email}"
         email_body = ""
@@ -327,12 +327,12 @@ class Confluence(BaseEmailAccess):
         """Revoke confluence workspace access
 
         Args:
-            user (User): User whose access is to be revoked
-            label (str): Access label representing the access to be revoked
-            request (UserAccessMapping): UserAccessMapping representing the access
+            user (User): User whose access is to be revoked.
+            label (str): Access label representing the access to be revoked.
+            request (UserAccessMapping): UserAccessMapping representing the access.
 
         Returns:
-            bool: True is the revoke is success. False if the revoke Fails
+            bool: True is the revoke is success. False if the revoke Fails.
         """
         permissions = request.meta_data["confluence"]
 
@@ -353,18 +353,18 @@ class Confluence(BaseEmailAccess):
             return False
 
     def access_desc(self):
-        """description of the access module
+        """Description of the access module.
 
         Returns:
-            str: description of the confluence access module
+            str: Description of the confluence access module.
         """
         return "Confluence Access Module"
 
     def tag(self):
-        """returns confluence access tag"""
+        """Returns confluence access tag."""
         return "confluence_module"
 
 
 def get_object():
-    """returns instance Confluence Access Module"""
+    """Returns instance Confluence Access Module."""
     return Confluence()
