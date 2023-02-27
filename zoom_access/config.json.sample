@@ -1,0 +1,6 @@
+{
+  "ZOOM_BASE_URL": "https://api.zoom.us/v2/",
+  "ZOOM_CLIENT_SECRET": "test-secret",
+  "ZOOM_API_KEY": "test-api"
+}
+
