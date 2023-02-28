@@ -177,7 +177,7 @@ def is_email_valid(user_email, email):
         "Authorization": "Bearer " + zoom_jwt_token,
     }
     url = ZOOM_BASE_URL + "users/" + user_email
-    response = requests.get(url, headers=headers, timeout=TIMEOUT_VALUE)
+    response = requests.get(url, headers=headers, timeout=constants.TIMEOUT_VALUE)
     if response.status_code == 200:
         if "status" in response.json():
             usr_status = str(json.loads(response.text)["status"])

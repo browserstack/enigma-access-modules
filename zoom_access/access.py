@@ -40,7 +40,7 @@ class Zoom(BaseEmailAccess):
     def access_types(self):
         """Returns types of zoom access.
         Returns:
-            array of json object: type of access type and descryption of access type.
+            array of json object: type of access type and description of access type.
         """
         return [
             {"type": "Standard License", "desc": "Standard License"},
@@ -48,11 +48,11 @@ class Zoom(BaseEmailAccess):
         ]
 
     def get_label_desc(self, access_label):
-        """Returns access label descryption.
+        """Returns access label description.
         Args:
             access_label: access label whose access to be requested.
         Returns:
-            string: Descryption of access label.
+            string: Description of access label.
         """
         if access_label["action"] == self.ACCESS_LABEL:
             access_type = access_label["access_type"]
@@ -183,7 +183,7 @@ class Zoom(BaseEmailAccess):
         return {"user_email": user_email}
 
     def access_desc(self):
-        """Returns zoom access descryption."""
+        """Returns zoom access description."""
         return "Zoom Meeting Access"
 
     def tag(self):
