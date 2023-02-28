@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "ZOOM_BASE_URL": {
+      "type": "string"
+    },
+    "ZOOM_CLIENT_SECRET": {
+      "type": "string"
+    },
+    "ZOOM_API_KEY": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "ZOOM_BASE_URL",
+    "ZOOM_CLIENT_SECRET",
+    "ZOOM_API_KEY"
+  ]
+}

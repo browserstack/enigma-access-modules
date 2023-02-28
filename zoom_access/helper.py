@@ -6,14 +6,12 @@ from datetime import datetime
 import requests
 from requests.auth import HTTPBasicAuth
 import jwt
-from BrowserStackAutomation.settings import (
-    ZOOM_API_KEY,
-    ZOOM_CLIENT_SECRET,
-    ZOOM_BASE_URL,
-)
 from BrowserStackAutomation.settings import ACCESS_MODULES
 from . import constants
-from constants import RETRY_LIMIT, TIMEOUT_VALUE
+
+ZOOM_API_KEY = ACCESS_MODULES["zoom_access"]["ZOOM_API_KEY"]
+ZOOM_BASE_URL = ACCESS_MODULES["zoom_access"]["GITHUB_BASE_URL"]
+ZOOM_CLIENT_SECRET = ACCESS_MODULES["zoom_access"]["ZOOM_CLIENT_SECRET"]
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +51,7 @@ def make_request(url, request_type="GET", data=None):
                     "Content-Type": "application/json",
                     "Authorization": "Bearer " + zoom_jwt_token,
                 },
-                timeout=TIMEOUT_VALUE,
+                timeout=constants.TIMEOUT_VALUE,
             )
         elif request_type == "PATCH":
             response = requests.patch(
@@ -63,7 +61,7 @@ def make_request(url, request_type="GET", data=None):
                     "Content-Type": "application/json",
                     "Authorization": "Bearer " + zoom_jwt_token,
                 },
-                timeout=TIMEOUT_VALUE,
+                timeout=constants.TIMEOUT_VALUE,
             )
         elif request_type == "DELETE":
             response = requests.delete(
@@ -73,7 +71,7 @@ def make_request(url, request_type="GET", data=None):
                     "Content-Type": "application/json",
                     "Authorization": "Bearer " + zoom_jwt_token,
                 },
-                timeout=TIMEOUT_VALUE,
+                timeout=constants.TIMEOUT_VALUE,
             )
         else:
             response = requests.post(
@@ -83,9 +81,12 @@ def make_request(url, request_type="GET", data=None):
                     "Content-Type": "application/json",
                     "Authorization": "Bearer " + zoom_jwt_token,
                 },
-                timeout=TIMEOUT_VALUE,
+                timeout=constants.TIMEOUT_VALUE,
             )
-        success = response.status_code in [200, 201, 204] or retry_count >= RETRY_LIMIT
+        success = (
+            response.status_code in [200, 201, 204]
+            or retry_count >= constants.RETRY_LIMIT
+        )
         if not success:
             sleep(2**retry_count)
             continue

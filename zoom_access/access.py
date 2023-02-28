@@ -13,7 +13,7 @@ class Zoom(BaseEmailAccess):
     """Zoom Access module."""
 
     urlpatterns = []
-    ACCESS_LABLE = "zoom_access"
+    ACCESS_LABEL = "zoom_access"
 
     def fetch_access_request_form_path(self):
         """Returns path to zoom module access request form."""
@@ -54,7 +54,7 @@ class Zoom(BaseEmailAccess):
         Returns:
             string: Descryption of access lable.
         """
-        if access_label["action"] == self.ACCESS_LABLE:
+        if access_label["action"] == self.ACCESS_LABEL:
             access_type = access_label["access_type"]
             return " Zoom access for Meeting.  Access Type : " + access_type
         return ""
@@ -84,7 +84,7 @@ class Zoom(BaseEmailAccess):
             if access_lable_data not in ("Standard License", "Pro License"):
                 raise Exception(constants.ERROR_MESSAGES["invalid_type"])
             valid_access_lable = {}
-            valid_access_lable["action"] = self.ACCESS_LABLE
+            valid_access_lable["action"] = self.ACCESS_LABEL
             valid_access_lable["access_type"] = access_lable_data
             valid_access_lable_array.append(valid_access_lable)
         return valid_access_lable_array
