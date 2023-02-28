@@ -48,11 +48,11 @@ class Zoom(BaseEmailAccess):
         ]
 
     def get_label_desc(self, access_label):
-        """Returns access lable descryption.
+        """Returns access label descryption.
         Args:
-            access_label: access lable whose access to be requested.
+            access_label: access label whose access to be requested.
         Returns:
-            string: Descryption of access lable.
+            string: Descryption of access label.
         """
         if access_label["action"] == self.ACCESS_LABEL:
             access_type = access_label["access_type"]
@@ -75,19 +75,19 @@ class Zoom(BaseEmailAccess):
     def validate_request(self, access_labels_data, request_user, is_group=False):
         """Combines multiple access_labels.
         Args:
-            access_labels_data (array): Array of access lables types.
+            access_labels_data (array): Array of access labels types.
         Returns:
-            array (json objects): key value pair of access lable and it's access type.
+            array (json objects): key value pair of access label and it's access type.
         """
-        valid_access_lable_array = []
-        for access_lable_data in access_labels_data:
-            if access_lable_data not in ("Standard License", "Pro License"):
+        valid_access_label_array = []
+        for access_label_data in access_labels_data:
+            if access_label_data not in ("Standard License", "Pro License"):
                 raise Exception(constants.ERROR_MESSAGES["invalid_type"])
-            valid_access_lable = {}
-            valid_access_lable["action"] = self.ACCESS_LABEL
-            valid_access_lable["access_type"] = access_lable_data
-            valid_access_lable_array.append(valid_access_lable)
-        return valid_access_lable_array
+            valid_access_label = {}
+            valid_access_label["action"] = self.ACCESS_LABEL
+            valid_access_label["access_type"] = access_label_data
+            valid_access_label_array.append(valid_access_label)
+        return valid_access_label_array
 
     def approve(
         self, user, labels, approver, requestId, is_group=False, auto_approve_rules=None
