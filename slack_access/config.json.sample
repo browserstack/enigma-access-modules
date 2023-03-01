@@ -1,0 +1,7 @@
+"slack_module": {
+  "AUTH_TOKEN" : "",
+  "workspace_name": {
+    "API_TOKEN" : "test-token",
+    "DEFAULT_CHANNEL": "channel_name"
+  }
+}
