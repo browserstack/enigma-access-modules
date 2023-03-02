@@ -32,7 +32,7 @@ def make_request(url, request_type="GET", data=None):
     Args:
         url (str): requested API endpoint
         request_type(str): type of request
-        data: data which is reqired for the request
+        data : data which is reqired for the request
 
     Returns:
         response details (array): array of response code and response data
@@ -102,7 +102,7 @@ def make_request(url, request_type="GET", data=None):
 def get_user(email):
     """Gets user details
     Args:
-        email: email of the user to be created
+        email (str): email of the user to be created
     Returns:
         details of user
     """
@@ -115,7 +115,7 @@ def get_user(email):
 def delete_user(email):
     """Deletes offboarded or offboarding user
     Args:
-        email: email of the user to be created
+        email (str): email of the user to be created
     Returns:
         userdetails of deleted user
     """
@@ -151,8 +151,8 @@ def create_user(email, name, type):
 def update_user(email, type):
     """Updates user email
     Args:
-        email: email of the user to be updated
-        type: login types
+        email (str): email of the user to be updated
+        type : login types
     Returns:
         userdetails of updated user
     """
@@ -166,8 +166,8 @@ def update_user(email, type):
 def is_email_valid(user_email, email):
     """Checks email validation
     Args:
-        user_email: new email to be updated
-        email: email of the user to be validated
+        user_email (str): new email to be updated
+        email (str): email of the user to be validated
     Returns:
        true if user_email is active on zoom or false if not active.
     """

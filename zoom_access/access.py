@@ -75,9 +75,10 @@ class Zoom(BaseEmailAccess):
     def validate_request(self, access_labels_data, request_user, is_group=False):
         """Combines multiple access_labels.
         Args:
-            access_labels_data (array): Array of access labels types.
+            access_labels_data (array): Array of access lables types.
+            request_user (UserAccessMaping): Object of UserAccessMapping represents requested user. 
         Returns:
-            array (json objects): key value pair of access label and it's access type.
+            array (json objects): key value pair of access lable and it's access type.
         """
         valid_access_label_array = []
         for access_label_data in access_labels_data:
@@ -90,21 +91,20 @@ class Zoom(BaseEmailAccess):
         return valid_access_label_array
 
     def approve(
-        self, user, labels, approver, requestId, is_group=False, auto_approve_rules=None
+        self, user_identity, labels, approver, request, is_group=False, auto_approve_rules=None
     ):
         """Approves a users access request.
         Args:
-            user (User): User whose access is being approved.
+            user_identity (User): User identity object represents user whose access is being approved.
             labels (str): Access Label that respesents the access to be approved.
             approver (User): User who is approving the access.
-            requestId (UserAccessMapping): Access mapping that repesents the User Access.
+            request (UserAccessMapping): Access mapping that repesents the User Access.
             is_group (bool, optional): Whether the access is requested for a User or a Group.
                                        Defaults to False.
             auto_approve_rules (str, optional): Rules for auto approval. Defaults to None.
         Returns:
             bool: True if the access approval is success, False in case of failure with error string.
         """
-
         label_desc = self.combine_labels_desc(labels)
         type = 1
         if "Pro License" in label_desc:
@@ -113,46 +113,49 @@ class Zoom(BaseEmailAccess):
             accesses = UserAccessMapping.objects.filter(
                 status__in=["Approved"],
                 access__access_tag="zoom_access",
-                user=user,
+                user_identity=user_identity,
                 access__access_label__data="Pro License",
             )
             if len(accesses) > 0:
                 type = 2
         try:
-            user_details = helper.get_user(user.email)
+            user_details = helper.get_user(user_identity.identity["user_email"])
             if user_details[0] == 200:
-                response = helper.update_user(user.email, type)
+                response = helper.update_user(user_identity.identity["user_email"], type)
                 if response[0] != 204:
                     return False, "User updation failed" + str(response)
             else:
-                response = helper.create_user(user.email, user.name, type)
+                response = helper.create_user(user_identity.identity["user_email"], type)
                 if response[0] != 200 or response[0] != 201:
                     return False, "User creation failed" + str(response)
-            return BaseEmailAccess.approve(
-                self, user, labels, approver, requestId, is_group, auto_approve_rules
-            )
+            email_targets = self.email_targets(user_identity.user)
+            email_subject = "Zoom access approve success for user " + user_identity.identity["user_email"]
+            email_body = response
+            emailSES(email_targets, email_subject, email_body)
+            return True,""
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
             return False, str(e)
 
-    def revoke(self, user, label):
+    def revoke(self, user,user_identity, access_label,request):
         """Revoke access to Zoom.
         Args:
             user (User): User whose access is to be revoked.
-            label (str): Access label representing the access to be revoked.
+            user_identity (UserIdentity): User Identity object represents identity of user.
+            access_label (str): Access label representing the access to be revoked.
             request (UserAccessMapping): UserAccessMapping representing the access.
         Returns:
             bool: True if revoke succeed. False if revoke fails.
-            response: (array): Array of user details
+            response: (array): Array of user details.
         """
         if user.state == 1:
-            response = helper.update_user(user.email, 1)
+            response = helper.update_user(user_identity.identity["user_email"], 1)
         else:
-            response = helper.delete_user(user.email)
+            response = helper.delete_user(user_identity.identity["user_email"])
         if response[0] == 204:
             return True, ""
         email_targets = self.email_targets(user)
-        email_subject = "Zoom access revoke failed for user " + user.email
+        email_subject = "Zoom access revoke failed for user " + user_identity.identity["user_email"]
         email_body = response
         emailSES(email_targets, email_subject, email_body)
         return False, response
