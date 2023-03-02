@@ -76,7 +76,7 @@ class Zoom(BaseEmailAccess):
         """Combines multiple access_labels.
         Args:
             access_labels_data (array): Array of access lables types.
-            request_user (UserAccessMaping): Object of UserAccessMapping represents requested user. 
+            request_user (UserAccessMaping): Object of UserAccessMapping represents requested user.
         Returns:
             array (json objects): key value pair of access lable and it's access type.
         """
@@ -91,7 +91,13 @@ class Zoom(BaseEmailAccess):
         return valid_access_label_array
 
     def approve(
-        self, user_identity, labels, approver, request, is_group=False, auto_approve_rules=None
+        self,
+        user_identity,
+        labels,
+        approver,
+        request,
+        is_group=False,
+        auto_approve_rules=None,
     ):
         """Approves a users access request.
         Args:
@@ -105,39 +111,45 @@ class Zoom(BaseEmailAccess):
         Returns:
             bool: True if the access approval is success, False in case of failure with error string.
         """
+
         label_desc = self.combine_labels_desc(labels)
         type = 1
         if "Pro License" in label_desc:
             type = 2
-        else:
-            accesses = UserAccessMapping.objects.filter(
-                status__in=["Approved"],
-                access__access_tag="zoom_access",
-                user_identity=user_identity,
-                access__access_label__data="Pro License",
-            )
-            if len(accesses) > 0:
-                type = 2
+        elif (
+            request.status in ["Approved"]
+            and request.access.access_tag in ["zoom_access"]
+            and request.access.access_label["access_type"] in ["Pro License"]
+        ):
+            type = 2
+
         try:
             user_details = helper.get_user(user_identity.identity["user_email"])
             if user_details[0] == 200:
-                response = helper.update_user(user_identity.identity["user_email"], type)
+                response = helper.update_user(
+                    user_identity.identity["user_email"], type
+                )
                 if response[0] != 204:
                     return False, "User updation failed" + str(response)
             else:
-                response = helper.create_user(user_identity.identity["user_email"], type)
+                response = helper.create_user(
+                    user_identity.identity["user_email"], type
+                )
                 if response[0] != 200 or response[0] != 201:
                     return False, "User creation failed" + str(response)
             email_targets = self.email_targets(user_identity.user)
-            email_subject = "Zoom access approve success for user " + user_identity.identity["user_email"]
+            email_subject = (
+                "Zoom access approve success for user "
+                + user_identity.identity["user_email"]
+            )
             email_body = response
             emailSES(email_targets, email_subject, email_body)
-            return True,""
+            return True, ""
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
             return False, str(e)
 
-    def revoke(self, user,user_identity, access_label,request):
+    def revoke(self, user, user_identity, access_label, request):
         """Revoke access to Zoom.
         Args:
             user (User): User whose access is to be revoked.
@@ -155,7 +167,9 @@ class Zoom(BaseEmailAccess):
         if response[0] == 204:
             return True, ""
         email_targets = self.email_targets(user)
-        email_subject = "Zoom access revoke failed for user " + user_identity.identity["user_email"]
+        email_subject = (
+            "Zoom access revoke failed for user " + user_identity.identity["user_email"]
+        )
         email_body = response
         emailSES(email_targets, email_subject, email_body)
         return False, response
