@@ -10,7 +10,7 @@ from BrowserStackAutomation.settings import ACCESS_MODULES
 from . import constants
 
 ZOOM_API_KEY = ACCESS_MODULES["zoom_access"]["ZOOM_API_KEY"]
-ZOOM_BASE_URL = ACCESS_MODULES["zoom_access"]["GITHUB_BASE_URL"]
+ZOOM_BASE_URL = ACCESS_MODULES["zoom_access"]["ZOOM_BASE_URL"]
 ZOOM_CLIENT_SECRET = ACCESS_MODULES["zoom_access"]["ZOOM_CLIENT_SECRET"]
 
 logger = logging.getLogger(__name__)
