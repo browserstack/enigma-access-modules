@@ -28,15 +28,6 @@ class Zoom(BaseEmailAccess):
         """
         return [user.email] + self.grant_owner()
 
-    def auto_grant_email_targets(self, user):
-        """
-        Args:
-            user (User): User whose access is being changed.
-        Returns:
-            array: Email address of the User and the module owners.
-        """
-        return [user.email] + self.grant_owner()
-
     def access_types(self):
         """Returns types of zoom access.
         Returns:
