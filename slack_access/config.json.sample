@@ -1,0 +1,8 @@
+{
+  "slack_module": {
+    "AUTH_TOKEN": "",
+    "workspace_name": {
+      "DEFAULT_CHANNEL": "channel_name"
+    }
+  }
+}
