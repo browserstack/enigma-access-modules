@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "OPSGENIE_TOKEN": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "OPSGENIE_TOKEN"
+  ]
+}
