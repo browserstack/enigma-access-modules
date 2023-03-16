@@ -1,0 +1,12 @@
+<div class="form-group">
+  <label for="name">Confluence ID</label>
+  <input type="hidden" name="modname" value="confluence_module">
+  {% if module.identity.username %}
+  <input placeholder="Confluence ID" type="text" class="form-control" id="confluence_id" name="confluence_id" required
+      style="background-color:white;color:black" value="{{ module.identity.id }}">
+  {% else %}
+  <input placeholder="Confluence ID" type="text" class="form-control" id="confluence_id" name="confluence_id" required
+      style="background-color:white;color:black">
+  {% endif %}
+  <p>Click your Profile menu in the upper-right, then select "Profile". In the URL after /people/ is your account ID<br>
+</div>

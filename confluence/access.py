@@ -17,6 +17,9 @@ class Confluence(BaseEmailAccess):
 
     urlpatterns = []
 
+    def can_auto_approve(self):
+        return False
+
     def fetch_access_request_form_path(self):
         """Returns the html form template for filling access path.
 
@@ -241,7 +244,7 @@ class Confluence(BaseEmailAccess):
         return view_permissions
 
     def approve(
-        self, user, labels, approver, request, is_group=False, auto_approve_rules=None
+        self, user_identity, labels, approver, request, is_group=False, auto_approve_rules=None
     ):
         """Approves a users access request.
 
@@ -276,7 +279,7 @@ class Confluence(BaseEmailAccess):
                 response = self.__approve_space_access(
                     label["access_workspace"],
                     permission,
-                    user.confluenceId,
+                    user_identity.identity["id"],
                     subject_type="user",
                 )
                 if response is False:
@@ -289,7 +292,7 @@ class Confluence(BaseEmailAccess):
             request.update_meta_data("confluence", approve_result)
 
         try:
-            self.__send_approve_email(user, request.request_id, access_type, approver)
+            self.__send_approve_email(user_identity.user, request.request_id, access_type, approver)
             return True
         except Exception as ex:
             logger.error("Could not send email for error %s", str(ex))
@@ -323,7 +326,7 @@ class Confluence(BaseEmailAccess):
         email_body = ""
         emailSES(email_targets, email_subject, email_body)
 
-    def revoke(self, user, label, request):
+    def revoke(self, user, user_identity, label, request):
         """Revoke confluence workspace access
 
         Args:
@@ -359,6 +362,42 @@ class Confluence(BaseEmailAccess):
             str: Description of the confluence access module.
         """
         return "Confluence Access Module"
+    
+    def get_identity_template(self):
+        return "confluence/identity_form.html"
+
+    def __is_valid_identity(self, id, email):
+        auth = HTTPBasicAuth(
+            ACCESS_MODULES["confluence_module"]["ADMIN_EMAIL"],
+            ACCESS_MODULES["confluence_module"]["API_TOKEN"],
+        )
+
+        headers = {
+            "Accept": "application/json"
+        }
+
+        query = {
+            'accountId': id
+        }
+        
+        base_url = ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
+        user_url = f"{base_url}/wiki/rest/api/user"
+        response = requests.request(
+            "GET", user_url, headers=headers, params=query, auth=auth
+        )
+        user = json.loads(response.text)
+        if(response.status_code != 200 or user["email"] != email):
+            return False
+        
+        return True
+
+    def verify_identity(self, request, email):
+        id = request["confluence_id"]
+        if not self.__is_valid_identity(id, email):
+            return None
+
+        return {"id": id}
+
 
     def tag(self):
         """Returns confluence access tag."""
