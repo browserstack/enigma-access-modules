@@ -1,3 +1,4 @@
+"""access module for GCP"""
 from django.template import loader
 import logging
 
@@ -10,39 +11,90 @@ logger = logging.getLogger(__name__)
 
 
 class GCPAccess(BaseEmailAccess):
-    GROUP_ACCESS = "GroupAccess"
+    """GCP Access module."""
+
+    group_access = "GroupAccess"
     urlpatterns = urls.urlpatterns
 
     def email_targets(self, user):
+        """Returns email targets.
+
+        Args:
+            user (User): User whose access is being changed.
+
+        Returns:
+            array: Email Address of the User and the module owners.
+        """
         return [user.email] + self.grant_owner()
 
     def fetch_access_request_form_path(self):
+        """Returns the html form template for filling access path.
+
+        Returns:
+            str: Path of the html template.
+        """
         return "gcp_access/accessRequest.html"
 
     def access_types(self):
+        """Not Implemented."""
         return []
 
     def get_label_desc(self, access_label):
-        if access_label["action"] == self.GROUP_ACCESS:
+        """Gets the access label descrption.
+
+        Args:
+            access_label (str): JSON string representing the access label.
+
+        Returns:
+            str: Access Label description.
+        """
+        if access_label["action"] == self.group_access:
             return access_label["action"] + " for group: " + (access_label["group"])
         return ""
 
     def combine_labels_desc(self, access_labels):
+        """Combines multiple access_labels.
+
+        Args:
+            access_labels (array): Array of access labels.
+
+        Returns:
+            str: Comma seperated access labels.
+        """
         label_desc_array = [
             self.get_label_desc(access_label) for access_label in access_labels
         ]
         return ", ".join(label_desc_array)
 
     def get_label_meta(self, access_label):
+        """Returns metadata for the access label.
+
+        Args:
+            access_label (str): JSON string representing access label.
+
+        Returns:
+            str: Access label metadata.
+        """
         return access_label
 
     def validate_request(self, access_labels_data, request_user, is_group=False):
+        """Validates the access request.
+
+        Args:
+            access_labels_data (str): Access Label representing the access requested.
+            request_user (User): User requesting the access.
+            is_group (bool, optional): Whether the access is being requested for a group.
+            Defaults to False.
+
+        Returns:
+            arr: Array of the access labels for the request access.
+        """
         # try:
         valid_access_label_array = []
         for access_label_data in access_labels_data:
             if (
                 not access_label_data.get("action")
-                and access_label_data["action"] != constants.GROUP_ACCESS
+                and access_label_data["action"] != constants.group_access
             ):
                 raise Exception(constants.VALID_ACTION_REQUIRED_ERROR)
             if not access_label_data.get(
@@ -65,6 +117,20 @@ class GCPAccess(BaseEmailAccess):
     def approve(
         self, user, labels, approver, request, is_group=False, auto_approve_rules=None
     ):
+        """Approves a users access request.
+
+        Args:
+            user (User): User whose access is being approved.
+            labels (str): Access Label that respesents the access to be approved.
+            approver (User): User who is approving the access.
+            request (UserAccessMapping): Access mapping that repesents the User Access.
+            is_group (bool, optional): Whether the access is requested for a User or a Group.
+                                       Defaults to False.
+            auto_approve_rules (str, optional): Rules for auto approval. Defaults to None.
+
+        Returns:
+            bool: True if the access approval is success, False in case of failure.
+        """
         label_desc = self.combine_labels_desc(labels)
         for label in labels:
             result, exception = helpers.grant_gcp_access(
@@ -85,6 +151,7 @@ class GCPAccess(BaseEmailAccess):
             return False
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
+        """Generates and sends email in access grant."""
         email_targets = self.email_targets(user)
         email_subject = "Approved Access: %s for access to %s for user %s" % (
             request_id,
@@ -101,6 +168,7 @@ class GCPAccess(BaseEmailAccess):
         emailSES(email_targets, email_subject, body)
 
     def __send_revoke_email(self, user, label_desc, request_id):
+        """Generates and sends email in for access revoke."""
         email_targets = self.email_targets(user)
         email_subject = "Revoke Request: %s for access to %s for user %s" % (
             request_id,
@@ -119,6 +187,16 @@ class GCPAccess(BaseEmailAccess):
         return template.render(vals)
 
     def revoke(self, user, label, request):
+        """Revoke access to GCP Group.
+
+        Args:
+            user (User): User whose access is to be revoked.
+            label (str): Access label representing the access to be revoked.
+            request (UserAccessMapping): UserAccessMapping representing the access.
+
+        Returns:
+            bool: True is the revoke is success. False if the revoke Fails.
+        """
         result, exception = helpers.revoke_gcp_access(
             label["group"], label["domain"], user.email
         )
@@ -138,14 +216,32 @@ class GCPAccess(BaseEmailAccess):
             return False
 
     def access_request_data(self, request, is_group=False):
+        """Creates a dictionary of GCP accounts.
+
+        Args:
+            request (dict): A request form representing the http form request.
+            is_group (bool, optional): whether the access is requested
+            for an Enigma Group. Defaults to False.
+
+        Returns:
+            dict: Dictionary of GCP accounts.
+        """
         return {"domains": helpers.get_gcp_domains()}
 
     def access_desc(self):
+        """Description of the access module.
+
+        Returns:
+            str: Description of the GCP access module.
+        """
+
         return "GCP Group Access"
 
     def tag(self):
+        """Returns gcp access tag."""
         return constants.GCP_ACCESS_TAG
 
 
 def get_object():
+    """Returns instance of GCP Access Module."""
     return GCPAccess()
