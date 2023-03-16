@@ -1,7 +1,7 @@
 <div class="form-group">
   <label for="name">Confluence ID</label>
   <input type="hidden" name="modname" value="confluence_module">
-  {% if module.identity.username %}
+  {% if module.identity %}
   <input placeholder="Confluence ID" type="text" class="form-control" id="confluence_id" name="confluence_id" required
       style="background-color:white;color:black" value="{{ module.identity.id }}">
   {% else %}
