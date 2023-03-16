@@ -39,7 +39,7 @@ class AWSAccess(BaseEmailAccess):
 
     def approve(
         self,
-        user,
+        user_identity,
         labels,
         approver,
         request,
@@ -64,13 +64,13 @@ class AWSAccess(BaseEmailAccess):
         label_meta = self.combine_labels_meta(labels)
         for label in labels:
             granted_access, exception = helpers.grant_aws_access(
-                user, label["account"], label["group"]
+                user_identity.idnetity["email"], label["account"], label["group"]
             )
 
             if not granted_access:
                 logger.error(
                     "Something when wrong while adding %s to group %s: %s",
-                    user.email,
+                    user_identity.idnetity["email"],
                     label["group"],
                     str(exception),
                 )
@@ -81,7 +81,7 @@ class AWSAccess(BaseEmailAccess):
                 auto_approve_rules,
                 request.request_id,
                 label_desc,
-                user,
+                user_identity.user,
                 approver,
                 label_meta,
             )
@@ -191,7 +191,7 @@ class AWSAccess(BaseEmailAccess):
         """
         return dict({"accounts": helpers.get_aws_accounts()})
 
-    def revoke(self, user, label, request):
+    def revoke(self, user, user_identity, label, request):
         """Revoke access to AWS Group.
 
         Args:
@@ -203,7 +203,7 @@ class AWSAccess(BaseEmailAccess):
             bool: True is the revoke is success. False if the revoke Fails.
         """
         is_revoked, exception = helpers.revoke_aws_access(
-            user, label["account"], label["group"]
+            user_identity.identity["email"], label["account"], label["group"]
         )
 
         if not is_revoked:
@@ -305,6 +305,16 @@ class AWSAccess(BaseEmailAccess):
     def access_types(self):
         """Not Implemented."""
         return {}
+        
+    def get_identity_template(self):
+        return 'aws_access/identity_form.html'
+
+    def verify_identity(self, request, email):
+        aws_email = request["aws_email"]
+        if not helpers.is_valid_identity(aws_email, email):
+            logger.error(constants.USER_IDENTITY_NOT_FOUND % aws_email)
+            return None
+        return {"email": aws_email}
 
 
 def get_object():

@@ -1,0 +1,12 @@
+<div class="form-group">
+  <label for="name">AWS Identity</label>
+  <input type="hidden" name="modname" value="aws_access">
+  {% if module.identity.email %}
+  <input placeholder="AWS Identity" type="text" class="form-control" id="aws_email" name="aws_email" required
+      style="background-color:white;color:black" value="{{ module.identity.email }}">
+  {% else %}
+  <input placeholder="AWS Identity " type="text" class="form-control" id="aws_email" name="aws_email" required
+      style="background-color:white;color:black">
+  {% endif %}
+  <p>Add the email associated with the AWS account.</p>
+</div>

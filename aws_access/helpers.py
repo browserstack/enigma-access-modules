@@ -139,3 +139,18 @@ def get_aws_groups(account, marker):
     if marker:
         return client.list_groups(Marker=marker)
     return client.list_groups()
+
+def is_valid_identity(aws_email, user_email):
+    accounts = get_aws_accounts()
+    for account in accounts:
+        client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
+        try:
+            user = client.get_user(UserName=aws_email)
+            if not user or user.UserName != user_email:
+                return False
+            
+        except Exception as e:
+            logger.exception("Finding user failed for account"+account+": "+str(e))
+            return False
+
+    return True
