@@ -54,23 +54,24 @@ class Slack(BaseEmailAccess):
             bool: True if the access approval is success, False in case of failure with error string.
         """
         label = labels[0]
-        access_workspace = label["access_workspace"]
-        team_info_list, error_message = get_info(access_workspace)
-        if not team_info_list:
-            logger.error(
-                f"Error ocurred while gathering information for requested workspace {access_workspace}: {error_message}"
-            )
-            return False
-        if not invite_user(
-            user_identity.identity["user_email"],
-            team_info_list["team_id"][0],
-            team_info_list["channel_id"][0],
-            access_workspace,
-        ):
-            logger.error(
-                f"Could not invite user to requested workspace {access_workspace}. Please contact Admin."
-            )
-            return False
+        for label in labels:
+            access_workspace = label["access_workspace"]
+            team_info_list, error_message = get_info(access_workspace)
+            if not team_info_list:
+                logger.error(
+                    f"Error ocurred while gathering information for requested workspace {access_workspace}: {error_message}"
+                )
+                return False
+            if not invite_user(
+                user_identity.identity["user_email"],
+                team_info_list["team_id"][0],
+                team_info_list["channel_id"][0],
+                access_workspace,
+            ):
+                logger.error(
+                    f"Could not invite user to requested workspace {access_workspace}. Please contact Admin."
+                )
+                return False
 
         email_targets = self.email_targets(user_identity.user)
         email_subject = "Approved Access: %s for access to Slack Access for user %s" % (
