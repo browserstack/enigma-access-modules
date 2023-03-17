@@ -1,5 +1,6 @@
 <div class="form-group">
   <label for="ssh_pub_key" class="col-sm-3 control-label">SSH Public Key(Only rsa format key)</label>
+  <input type="hidden" name="modname" value="ssh">
   {% if module.identity %}
   <textarea class="form-control" rows ="5" placeholder=" Paste your SSH Public Key. Run the command 'ssh-keygen -b 2048 -t rsa'
   " id="ssh_pub_key"  name="ssh_pub_key" required style="background-color:white;color:black">{{ request.user.user.ssh_public_key.key }}</textarea>
