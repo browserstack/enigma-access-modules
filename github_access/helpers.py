@@ -2,7 +2,7 @@ import json
 import requests
 import logging
 from . import constants
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 default_branch = ["master", "main"]
