@@ -2,7 +2,7 @@
 import logging
 from Access.access_modules.base_email_access.access import BaseEmailAccess
 from Access.models import UserAccessMapping
-from BrowserStackAutomation.settings import MAIL_APPROVER_GROUPS
+from EnigmaAutomation.settings import MAIL_APPROVER_GROUPS
 from bootprocess.general import emailSES
 from . import helper, constants
 
