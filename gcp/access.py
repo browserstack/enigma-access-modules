@@ -115,7 +115,7 @@ class GCPAccess(BaseEmailAccess):
         return valid_access_label_array
 
     def approve(
-        self, user, labels, approver, request, is_group=False, auto_approve_rules=None
+        self, user_identity, labels, approver, request, is_group=False, auto_approve_rules=None
     ):
         """Approves a users access request.
 
@@ -131,6 +131,7 @@ class GCPAccess(BaseEmailAccess):
         Returns:
             bool: True if the access approval is success, False in case of failure.
         """
+        user = user_identity.user
         label_desc = self.combine_labels_desc(labels)
         for label in labels:
             result, exception = helpers.grant_gcp_access(
@@ -186,7 +187,7 @@ class GCPAccess(BaseEmailAccess):
             vals[key] = value
         return template.render(vals)
 
-    def revoke(self, user, label, request):
+    def revoke(self, user, user_identity, label, request):
         """Revoke access to GCP Group.
 
         Args:
@@ -236,6 +237,15 @@ class GCPAccess(BaseEmailAccess):
         """
 
         return "GCP Group Access"
+    
+    def get_identity_template(self):
+        return ''
+
+    def verify_identity(self, request, email):
+        return {}
+
+    def can_auto_approve(self):
+        return False
 
     def tag(self):
         """Returns gcp access tag."""
