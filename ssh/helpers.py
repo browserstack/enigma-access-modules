@@ -138,22 +138,3 @@ def add_key_existing_user(hostname, ssh_key, username):
     # Close the connection
     c.close()
 
-"""
-# Path: ssh/main.py
-ssh_key = (
-    "ssh-rsa"
-    " AAAAB3NzaC1yc2EAAAADAQABAAABAQDNFh6NsQLEgteLgEFKEaH3DI3mW8h0x0pM3LoGDYXmnYyhavw5r3jS3Mhx6tsnyxsbBxVpbP51uY0CawR0BnOqrGGUOQnd/gdZmXXx5ef8xGwYX4xapFXGJH5mM0KN8EJoH/rwf7K9ufqHqtNWmUKLJhZdJgr0NH8xDOntwtAVD/Qz9TmQegrv7MSJjvLyzzA8kQF65QcgBCw+g2wWZKrfW1e1N0Ts9URDvRQBZ0GZzJjoNnNtBv2UE6lse/pXMxEi8zgNnGsrladk3WTl/oG1Bw/FPRDcqyRRPaJ01msPt89ea1BMqWfvuTuSkdkfLPZtguxAKRjhZ3whwC6FlXbN"
-    " khushhal@Khushhals-MacBook-Pro.local"
-)
-# revoke_user_access("test_machine", ssh_key, "test1")
-# add_user("test_machine", ssh_key, "test1", True)
-# replace_user_key("test_machine", "123", ssh_key, "test1")
-# add_key_existing_user("test_machine", ssh_key, "test1")
-# remove_user("test_machine", "test1")
-
-# add_key_existing_user("test_machine", ssh_key, "test1")
-# revoke_user_access("test_machine", ssh_key, "test1")
-
-add_user("test_machine", ssh_key, "test3", False)
-add_user("test_machine", ssh_key, "test3", False)
-"""
