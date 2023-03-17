@@ -6,7 +6,7 @@ from datetime import datetime
 import requests
 from requests.auth import HTTPBasicAuth
 import jwt
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 from . import constants
 
 ZOOM_API_KEY = ACCESS_MODULES["zoom_access"]["ZOOM_API_KEY"]
