@@ -6,7 +6,7 @@ from requests.auth import HTTPBasicAuth
 import requests
 
 from Access.access_modules.base_email_access.access import BaseEmailAccess
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)

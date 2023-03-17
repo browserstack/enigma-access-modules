@@ -2,7 +2,7 @@
 import logging
 import boto3
 
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 from . import constants
 
 

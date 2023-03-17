@@ -1,6 +1,6 @@
 """unit tests for the confluence acces module"""
 from . import access
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 
 
 class MockRequest:

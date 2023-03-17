@@ -1,7 +1,7 @@
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import logging
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 
