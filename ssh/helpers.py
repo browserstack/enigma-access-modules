@@ -5,11 +5,7 @@ import logging
 from fabric import Connection
 
 logger = logging.getLogger(__name__)
-
-# get user from the config.json file
-with open("Access/access_modules/ssh/config.json", "r") as f:
-    global enigma_ssh_root_user
-    enigma_ssh_root_user = json.load(f)["enigma_root_user"]
+from BrowserStackAutomation.settings import ACCESS_MODULES
 
 
 with open("Access/access_modules/ssh/inventory.csv", "r") as f:
@@ -28,7 +24,7 @@ def get_conn_to_host(hostname):
     ip = get_ip_from_hostname(hostname)
 
     # Connect to the remote machine
-    c = Connection(user=enigma_ssh_root_user, host=ip)
+    c = Connection(user=ACCESS_MODULES["ssh"]["enigma_root_user"], host=ip)
     print(c)
 
     # check whether authentication is successful or not
@@ -41,12 +37,12 @@ def get_conn_to_host(hostname):
         return
 
 
-def sshHelper(labels, user, action):
+def sshHelper(labels, user_identity, user, action):
     for label in labels:
         access_level = label["access_level"]
         hostname = label["hostname"]
         username = user.username
-        ssh_key = user.ssh_public_key.key
+        ssh_key = user_identity.identity["ssh_public_key"]
 
         if action == "grant":
             return add_user(hostname, ssh_key, username, access_level)

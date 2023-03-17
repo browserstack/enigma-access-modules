@@ -27,7 +27,7 @@ class SSHAccess(BaseEmailAccess):
 
     def approve(
         self,
-        user,
+        user_identity,
         labels,
         approver,
         request_id,
@@ -51,8 +51,9 @@ class SSHAccess(BaseEmailAccess):
             bool: True if the request is approved, False otherwise
         """
         label_desc = self.get_label_desc(labels)
+        user = user_identity.user
 
-        return_value, error_message = helpers.sshHelper(labels, user, "grant")
+        return_value, error_message = helpers.sshHelper(labels, user_identity, user, "grant")
 
         if not return_value:
             logger.error(
@@ -172,7 +173,7 @@ class SSHAccess(BaseEmailAccess):
         data = {'machineList': machineList}
         return data
 
-    def revoke(self, user, label, request):
+    def revoke(self, user, user_identity, label, request):
         """revokes the access for the user to the resource specified in the label and
         sends an email to the user and the module owners with the details of the access.
         If the user does not have access to the resource, the request is rejected.
@@ -185,7 +186,7 @@ class SSHAccess(BaseEmailAccess):
         Returns:
             bool: True if the request is approved, False otherwise
         """
-        is_revoked, error_message = helpers.sshHelper(label, user, "revoke")
+        is_revoked, error_message = helpers.sshHelper(label, user_identity, user, "revoke")
 
         if not is_revoked:
             logger.error(
@@ -263,6 +264,16 @@ class SSHAccess(BaseEmailAccess):
             str: tag for the SSH access module
         """
         return "ssh"
+    
+    def get_identity_template(self):
+        return 'ssh/identity_form.html'
+
+    def verify_identity(self, request, email):
+        ssh_public_key = request["ssh_pub_key"]
+        return {"ssh_public_key": ssh_public_key}
+    
+    def can_auto_approve(self):
+        return False
 
     def access_types(self):
         return []
