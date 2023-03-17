@@ -67,7 +67,7 @@ def test_grant_gcp_access(
     expected_return_value,
     google_client,
 ):
-    mocker.patch("gcp.helpers.get_gcp_client", return_value=google_client)
+    mocker.patch("Access.access_modules.gcp.helpers.get_gcp_client", return_value=google_client)
     result, _ = helpers.grant_gcp_access(group_id, domain_id, user_email)
     assert result == expected_return_value
 
@@ -102,7 +102,7 @@ def test_revoke_gcp_access(
     expected_return_value,
     google_client,
 ):
-    mocker.patch("gcp.helpers.get_gcp_client", return_value=google_client)
+    mocker.patch("Access.access_modules.gcp.helpers.get_gcp_client", return_value=google_client)
     result, _ = helpers.revoke_gcp_access(group_id, domain_id, user_email)
     assert result == expected_return_value
 
@@ -137,7 +137,7 @@ def test_GCPAccess(mocker):
     combine_label_desc = gcp_access.combine_labels_desc(label)
     assert combine_label_desc == "GroupAccess for group: " + form_label[0]["group"]
 
-    mocker.patch("gcp.helpers.get_gcp_client", return_value=MockGoogleClient())
+    mocker.patch("Access.access_modules.gcp.helpers.get_gcp_client", return_value=MockGoogleClient())
     result = gcp_access.approve(userMock, label, "test", request)
     assert result is True
 

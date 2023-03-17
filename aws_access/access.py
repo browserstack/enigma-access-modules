@@ -178,7 +178,10 @@ class AWSAccess(BaseEmailAccess):
             combined_meta = {"action": "", "account": "", "group": ""}
             for label in access_labels:
                 for key, value in label.items():
-                    combined_meta[key] = str(combined_meta[key]) + f", {str(value)}"
+                    if str(combined_meta[key]) != "":
+                        combined_meta[key] = ", ".join([str(combined_meta[key]), str(value)])
+                    else:
+                        combined_meta[key] = str(value)
             return combined_meta
         return {}
 
