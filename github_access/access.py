@@ -84,8 +84,7 @@ class GithubAccess(BaseEmailAccess):
                 return_value = False
             else:
                 error_message = (
-                    "User %s has already been invited to join github org. "
-                    "Accept invite to continue.." % user_name
+                    "User %s has already been invited to join github org. Accept invite to continue.." % user_name
                 )
                 return_value = False
 

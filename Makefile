@@ -13,7 +13,7 @@ down:
 ## Run tests with coverage
 .PHONY: test
 test:
-	@if [ $$(docker ps -a -f name=test | wc -l) -eq 2 ]; then \
+	@if [ $$(docker ps -f name=test | wc -l) -eq 2 ]; then \
 			docker exec test python -m pytest --version; \
 	else \
 		echo "No containers running.. Starting runserver:"; \
