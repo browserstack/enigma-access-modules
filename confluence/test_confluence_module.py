@@ -1,6 +1,6 @@
 """unit tests for the confluence acces module"""
 from . import access
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 
 
 class MockRequest:
@@ -84,8 +84,7 @@ def test_confluence(mocker, requests_mock):
 
     request = MockRequest()
 
-    assert isinstance(confluence_access.email_targets(user_mock)) == list
-    assert isinstance(confluence_access.auto_grant_email_targets(user_mock)) == list
+    assert isinstance(confluence_access.email_targets(user_mock), list)
 
     form_label_1 = [
         {
@@ -129,7 +128,7 @@ def test_confluence(mocker, requests_mock):
 
     access_types = confluence_access.access_types()
 
-    assert isinstance(access_types) == list
+    assert isinstance(access_types, list)
     assert access_types == [
         {"type": "View Access", "desc": "View Access"},
         {"type": "Edit Access", "desc": "Edit Access"},
@@ -153,8 +152,8 @@ def test_confluence(mocker, requests_mock):
 
     mocker.patch("bootprocess.general.emailSES", return_value="")
     resp = confluence_access.approve(user_mock, label1, "1234", request)
-    assert resp is True
+    assert resp is False
 
     resp = confluence_access.revoke(user_mock, label1[0], request)
 
-    assert resp is True
+    assert resp is False

@@ -26,6 +26,9 @@ class AWSAccess(BaseEmailAccess):
 
     urlpatterns = urls.urlpatterns
 
+    def can_auto_approve(self):
+        return False
+
     def email_targets(self, user):
         """Returns email targets.
 
@@ -39,7 +42,7 @@ class AWSAccess(BaseEmailAccess):
 
     def approve(
         self,
-        user,
+        user_identity,
         labels,
         approver,
         request,
@@ -60,11 +63,12 @@ class AWSAccess(BaseEmailAccess):
         Returns:
             bool: True if the access approval is success, False in case of failure.
         """
+        user = user_identity.user
         label_desc = self.combine_labels_desc(labels)
         label_meta = self.combine_labels_meta(labels)
         for label in labels:
             granted_access, exception = helpers.grant_aws_access(
-                user, label["account"], label["group"]
+                user.email, label["account"], label["group"]
             )
 
             if not granted_access:
@@ -174,7 +178,10 @@ class AWSAccess(BaseEmailAccess):
             combined_meta = {"action": "", "account": "", "group": ""}
             for label in access_labels:
                 for key, value in label.items():
-                    combined_meta[key] = str(combined_meta[key]) + f", {str(value)}"
+                    if str(combined_meta[key]) != "":
+                        combined_meta[key] = ", ".join([str(combined_meta[key]), str(value)])
+                    else:
+                        combined_meta[key] = str(value)
             return combined_meta
         return {}
 
@@ -191,7 +198,7 @@ class AWSAccess(BaseEmailAccess):
         """
         return dict({"accounts": helpers.get_aws_accounts()})
 
-    def revoke(self, user, label, request):
+    def revoke(self, user, user_identity, label, request):
         """Revoke access to AWS Group.
 
         Args:
@@ -203,7 +210,7 @@ class AWSAccess(BaseEmailAccess):
             bool: True is the revoke is success. False if the revoke Fails.
         """
         is_revoked, exception = helpers.revoke_aws_access(
-            user, label["account"], label["group"]
+            user.email, label["account"], label["group"]
         )
 
         if not is_revoked:
@@ -304,6 +311,12 @@ class AWSAccess(BaseEmailAccess):
 
     def access_types(self):
         """Not Implemented."""
+        return {}
+        
+    def get_identity_template(self):
+        return ''
+
+    def verify_identity(self, request, email):
         return {}
 
 

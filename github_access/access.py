@@ -27,8 +27,8 @@ class GithubAccess(BaseEmailAccess):
     def email_targets(self, user):
         return [user.email] + self.grant_owner()
 
-    def revoke(self, user, label, request):
-        user_name = user.gitusername
+    def revoke(self, user, user_identity, label, request):
+        user_name = user_identity.identity["username"]
         result = revoke_access(user_name, label["repository"])
         label_desc = self.get_label_desc(label)
         email_targets = self.email_targets(user)
@@ -56,17 +56,17 @@ class GithubAccess(BaseEmailAccess):
 
     def approve(
         self,
-        user,
+        user_identity,
         labels,
         approver,
-        request_id,
+        request,
         is_group=False,
         auto_approve_rules=None,
     ):
         return_value = True
         error_message = ""
         label = labels[0]
-        user_name = user.gitusername
+        user_name = user_identity.identity["username"]
         if not get_user(user_name):
             logger.error(constants.USER_NOT_FOUND % user_name)
             error_message = constants.USER_NOT_FOUND % user_name
@@ -84,8 +84,7 @@ class GithubAccess(BaseEmailAccess):
                 return_value = False
             else:
                 error_message = (
-                    "User %s has already been invited to join github org. "
-                    "Accept invite to continue.." % user_name
+                    "User %s has already been invited to join github org. Accept invite to continue.." % user_name
                 )
                 return_value = False
 
@@ -116,7 +115,7 @@ class GithubAccess(BaseEmailAccess):
 
         try:
             self.__send_approve_email(
-                user, label_desc, request_id, approver, return_value, auto_approve_rules
+                user_identity.user, label_desc, request.request_id, approver, return_value, auto_approve_rules
             )
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
@@ -209,11 +208,12 @@ class GithubAccess(BaseEmailAccess):
             )
         )
 
+    def get_extra_fields(self):
+        return ["repoList"]
+
     def validate_request(self, access_labels_data, request_user, is_group=False):
         valid_access_label_array = []
-
         valid_access_label = {}
-
         for repo_name in access_labels_data[0]["repoList"]:
             access_level = access_labels_data[0]["accessLevel"]
 

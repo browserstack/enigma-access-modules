@@ -52,7 +52,7 @@ class MockBoto3withException(MockBoto3):
 def test_get_aws_credentails(*args, **kwargs):
     """mock function raises exception"""
     value = helpers._get_aws_credentails("test")
-    assert isinstance(value) == dict
+    assert isinstance(value, dict)
 
 
 @pytest.mark.parametrize(
@@ -178,7 +178,7 @@ def test_aws_access(mocker):
     )
     assert combined_label_meta == expected_combined_meta
 
-    assert isinstance(aws_access.access_request_data("test")) == dict
+    assert isinstance(aws_access.access_request_data("test"), dict)
     assert aws_access.validate_request([label_1], None) == [label_1]
 
     mocker.patch(
@@ -200,7 +200,7 @@ def test_aws_access(mocker):
 def test_get_aws_accounts():
     """unit test for get_aws_accounts"""
     accounts = helpers.get_aws_accounts()
-    assert isinstance(accounts) == list
+    assert isinstance(accounts, list)
 
 
 def test_get_aws_groups(mocker):
