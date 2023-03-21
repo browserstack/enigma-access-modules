@@ -2,7 +2,7 @@
 import json
 import logging
 from time import sleep
-from datetime import datetime
+import datetime
 import requests
 from requests.auth import HTTPBasicAuth
 import jwt
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def get_token():
     """Returns the zoom token created using ZOOM API KEY and ZOOM CLIENT SECRET"""
-    curr_dt = datetime.now() + datetime.timedelta(hours=1)
+    curr_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
     encoded_jwt = jwt.encode(
         {"iss": ZOOM_API_KEY, "exp": curr_dt.timestamp()},
         ZOOM_CLIENT_SECRET,
@@ -129,7 +129,7 @@ def delete_user(email):
     return [204]
 
 
-def create_user(email, name, type):
+def create_user(email, type, name=None):
     """Creates new user
     Args:
         email: email of the user to be created
