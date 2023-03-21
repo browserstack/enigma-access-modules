@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "workspace_name": {
+      "type": "object",
+      "AUTH TOKEN": {
+        "type": "string"
+      },
+      "DEFAULT_CHANNEL": {
+        "type": "list"
+      }
+    }
+  },
+  "required": [
+    "workspace_name",
+    "AUTH TOKEN",
+    "DEFAULT_CHANNEL"
+  ]
+}
