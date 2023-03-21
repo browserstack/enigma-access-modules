@@ -1,8 +1,7 @@
 """access module for zoom"""
 import logging
+from django.template import loader
 from Access.access_modules.base_email_access.access import BaseEmailAccess
-from Access.models import UserAccessMapping
-from EnigmaAutomation.settings import MAIL_APPROVER_GROUPS
 from bootprocess.general import emailSES
 from . import helper, constants
 
@@ -104,43 +103,71 @@ class Zoom(BaseEmailAccess):
         """
 
         label_desc = self.combine_labels_desc(labels)
+        user = user_identity.user
         type = 1
         if "Pro License" in label_desc:
             type = 2
-        elif (
-            request.status in ["Approved"]
-            and request.access.access_tag in ["zoom_access"]
-            and request.access.access_label["access_type"] in ["Pro License"]
-        ):
-            type = 2
+        elif "Standard License" in label_desc:
+            type = 1
 
         try:
-            user_details = helper.get_user(user_identity.identity["user_email"])
+            user_details = helper.get_user(user.email)
             if user_details[0] == 200:
                 response = helper.update_user(
-                    user_identity.identity["user_email"], type
+                    user.email, type
                 )
                 if response[0] != 204:
                     return False, "User updation failed" + str(response)
             else:
                 response = helper.create_user(
-                    user_identity.identity["user_email"], type
+                    user.email, type
                 )
                 if response[0] != 200 or response[0] != 201:
                     return False, "User creation failed" + str(response)
-            email_targets = self.email_targets(user_identity.user)
-            email_subject = (
-                "Zoom access approve success for user "
-                + user_identity.identity["user_email"]
-            )
-            email_body = response
-            emailSES(email_targets, email_subject, email_body)
+            self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True, ""
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
             return False, str(e)
+    
+    def __send_approve_email(self, user, label_desc, request_id, approver):
+        """Generates and sends email in access grant."""
+        email_targets = self.email_targets(user)
+        email_subject = "Approved Access: %s for access to %s for user %s" % (
+            request_id,
+            label_desc,
+            user.email,
+        )
+        body = self.__generate_string_from_template(
+            filename="approve_email.html",
+            label_desc=label_desc,
+            user_email=user.email,
+            approver=approver,
+        )
 
-    def revoke(self, user, user_identity, access_label, request):
+        emailSES(email_targets, email_subject, body)
+    
+    def __generate_string_from_template(self, filename, **kwargs):
+        template = loader.get_template(filename)
+        vals = {}
+        for key, value in kwargs.items():
+            vals[key] = value
+        return template.render(vals)
+
+    def __send_revoke_email(self, user, label_desc, request_id):
+        """Generates and sends email in for access revoke."""
+        email_targets = self.email_targets(user)
+        email_subject = "Revoke Request: %s for access to %s for user %s" % (
+            request_id,
+            label_desc,
+            user.email,
+        )
+        email_body = ""
+
+        emailSES(email_targets, email_subject, email_body)
+    
+
+    def revoke(self, user, user_identity, label, request):
         """Revoke access to Zoom.
         Args:
             user (User): User whose access is to be revoked.
@@ -152,18 +179,19 @@ class Zoom(BaseEmailAccess):
             response: (array): Array of user details.
         """
         if user.state == 1:
-            response = helper.update_user(user_identity.identity["user_email"], 1)
+            response = helper.update_user(user.email, 1)
         else:
-            response = helper.delete_user(user_identity.identity["user_email"])
-        if response[0] == 204:
+            response = helper.delete_user(user.email)
+        if response[0] != 204:
+            return False, response
+        
+        label_desc = self.get_label_desc(label)
+        try:
+            self.__send_revoke_email(user, label_desc, request.request_id)
             return True, ""
-        email_targets = self.email_targets(user)
-        email_subject = (
-            "Zoom access revoke failed for user " + user_identity.identity["user_email"]
-        )
-        email_body = response
-        emailSES(email_targets, email_subject, email_body)
-        return False, response
+        except Exception as e:
+            logger.error("Could not send email for error %s", str(e))
+            return False, str(e)
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.
@@ -174,7 +202,7 @@ class Zoom(BaseEmailAccess):
 
     def get_identity_template(self):
         """Returns path to user identity form template"""
-        return "zoom_access/identity_form.html"
+        return ""
 
     def verify_identity(self, request, email):
         """Verifying user Identity.
@@ -184,11 +212,7 @@ class Zoom(BaseEmailAccess):
         Returns:
             json object: Empty if it fails to verify user identity or new email of user.
         """
-        user_email = request["user_email"]
-        if not helper.is_email_valid(user_email, email):
-            logger.error(constants.USER_IDENTITY_NOT_FOUND, user_email)
-            return {}
-        return {"user_email": user_email}
+        return {}
 
     def access_desc(self):
         """Returns zoom access description."""
