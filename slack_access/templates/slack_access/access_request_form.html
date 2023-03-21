@@ -33,7 +33,7 @@
       onchange="slackWorkspaceChange(this)">
       <option hidden disabled selected value> -- select -- </option>
       {% for workspace in each_access.accessRequestData.slackWorkspaceList %}
-      <option value="{{workspace}}">{{workspace}}</option>
+      <option value="{{workspace}}">{{workspace.workspacename}}</option>
       {% endfor %}
     </select>
   </div>

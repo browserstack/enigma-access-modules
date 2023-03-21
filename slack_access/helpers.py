@@ -5,95 +5,67 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# from Access.access_modules.slack_access.helpers import get_info
-def get_info(workspace):
-    info_list = {}
-    team_id, error_message = _get_team_id(workspace)
-    if not team_id:
-        logger.error(
-            f"Could not get information for requested workspace {workspace}. Error ocurred: {error_message}"
-        )
-        return None, error_message
-
-    channel_id, error_message = _get_channel_id(workspace)
-    if not channel_id:
-        logger.error(
-            f"Could not get channels for requested workspace {workspace}. Error ocurred: {error_message} "
-        )
-        return None, error_message
-
-    info_list["team_id"] = team_id
-    info_list["channel_id"] = channel_id
-    return info_list, None
-
-
 def _get_team_id(workspace):
-    client = WebClient(token=ACCESS_MODULES["slack_access"]["AUTH_TOKEN"])
-
+    client = WebClient(token=ACCESS_MODULES["slack_access"][workspace]["AUTH_TOKEN"])
     response = client.admin_teams_list()  # team:read
-    print(response)
+    res = None
     if response["ok"]:
-        res = [response["id"] for response in response["teams"]]
-
-    if not res:
+        for response in response["teams"]:
+            if response["name"] == workspace:
+                res = response["id"]
+        return res, None
+ 
+    else:
         return None, response["error"]
 
-    return res, None
-
-
-def _get_channel_id(workspace):
-    client = WebClient(token=ACCESS_MODULES["slack_access"]["AUTH_TOKEN"])
+    
+def _get_channel_ids(workspace):
+    
+    client = WebClient(token=ACCESS_MODULES["slack_access"][workspace]["AUTH_TOKEN"])
     response = client.admin_conversations_search()  # admin.conversations:read
     if response["ok"]:
-        return [
-            channel["id"]
-            for channel in response["conversations"]
-            if (
-                channel["name"]
-                == ACCESS_MODULES["slack_access"][workspace]["DEFAULT_CHANNEL"]
-            )
-        ], None
-
+       channel_ids=[]    
+       for channel in response["conversations"]:
+        if (channel["name"] in ACCESS_MODULES["slack_access"][workspace]["DEFAULT_CHANNEL"]):
+            channel_ids.append(channel["id"])
+       return channel_ids , None
+        
     return None, response["error"]
 
 
-def invite_user(email, team_id, channel_id, workspace):
-    if not _invite_user(email, team_id, channel_id, workspace):
-        return False
-    return True
 
-
-def _invite_user(email, team_id, channel_id, workspace):
+def invite_user(email, team_id, workspace):
     try:
-        client = WebClient(token=ACCESS_MODULES["slack_access"]["AUTH_TOKEN"])
+        channel_ids ,error = _get_channel_ids(workspace)
+        if error is not None:
+            logger.error(
+            f"Could not get channels for requested workspace {workspace}. Error ocurred: {error} "
+             )
+            
+        client = WebClient(token=ACCESS_MODULES["slack_access"][workspace]["AUTH_TOKEN"])
         response = client.admin_users_invite(
-            team_id=team_id, email=email, channel_ids=channel_id
+            team_id=team_id, email=email, channel_ids=channel_ids
         )  # admin.users:write
+      
         if response["ok"]:
             return True
     except Exception as e:
-        print("error-->", e)
+        logger.error(
+            f"Could not invite user from workspace {workspace}. Error ocurred: {e}"
+        )
     return False
 
 
 # from Access.access_modules.slack_access.helpers import remove_user
-def remove_user(email, workspace):
-    user_id, error_message = _get_user_id(email)
+def remove_user(email, workspace,team_id):
+    user_id, error_message = _get_user_id(email,workspace)
     if not user_id:
         logger.error(
             f"Could not remove user from workspace {workspace}. Error ocurred: {error_message}"
         )
         return False, error_message
 
-    team_id, error_message = _get_team_id(workspace)
-    print("team-id", team_id)
-    print("user-id", user_id)
-    if not team_id:
-        logger.error(
-            f"Could not remove user from workspace {workspace}. Error ocurred: {error_message}"
-        )
-        return False, error_message
-    if not _remove_user(user_id, team_id[0], workspace):
+    if not _remove_user(user_id, team_id, workspace):
         return (
             False,
             "Error ocurred while removing user from workspace. Please contact Admin",
@@ -102,9 +74,9 @@ def remove_user(email, workspace):
     return True, None
 
 
-def _get_user_id(email):
+def _get_user_id(email,workspace):
     try:
-        client = WebClient(token=ACCESS_MODULES["slack_access"]["AUTH_TOKEN"])
+        client = WebClient(token=ACCESS_MODULES["slack_access"][workspace]["AUTH_TOKEN"])
         response = client.users_lookupByEmail(
             email=email
         )  # users:read.email users:read
@@ -113,20 +85,15 @@ def _get_user_id(email):
         return None, response["error"]
 
     except Exception as e:
-        return None, e
+           logger.error(
+            f"Could not get user_id from workspace {workspace}. Error ocurred: {e}"
+        )
 
-
-def is_email_valid(email):
-    user_id, error_message = _get_user_id(email)
-    if error_message is None:
-        print("user-id-->", user_id)
-        return True
-    return False
 
 
 def _remove_user(user_id, team_id, workspace):
     try:
-        client = WebClient(token=ACCESS_MODULES["slack_access"]["AUTH_TOKEN"])
+        client = WebClient(token=ACCESS_MODULES["slack_access"][workspace]["AUTH_TOKEN"])
         response = client.admin_users_remove(
             team_id=team_id, user_id=user_id
         )  # admin.users:write
@@ -134,21 +101,20 @@ def _remove_user(user_id, team_id, workspace):
             return True
         return False
     except Exception as e:
-        print("error-->", e)
-        return False
+         logger.error(
+            f"Could not remove from workspace {workspace}. Error ocurred: {e}"
+        )
 
 
 def get_workspace_list():
     workspaceList = []
-    client = WebClient(token=ACCESS_MODULES["slack_access"]["AUTH_TOKEN"])
-    response = client.admin_teams_list()  # admin.teams:read
-    print(response)
-    if response["ok"]:
-        for teams in response["teams"]:
-            if "name" in teams:
-                workspaceList.append(teams["name"])
-        logger.debug("Collected All Workspaces")
-        return workspaceList
+    for workspace in ACCESS_MODULES['slack_access']:
+        workspace_id , error = _get_team_id(workspace)
+        if workspace_id is not None:
+            workspaceList.append({
+                "workspacename":workspace,
+                "workspace-id":workspace_id
+            })
+    
+    return workspaceList
 
-    print(response["eror"])
-    return []

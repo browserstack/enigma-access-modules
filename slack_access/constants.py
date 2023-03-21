@@ -1,9 +1,8 @@
 """Contant values"""
 
 ERROR_MESSAGES = {
-    "invalid_type": "Invalid Access Type",
+  "valid workspace is require for the request"
 }
-USER_IDENTITY_NOT_FOUND = "Failed to verify identity for user %s. \
-        User does not exist OR invalid details entered."
 
-GET_USER_BY_EMAIL_FAILED = "Failed to read user email address from slack"
+VALID_WORKSPACE_REQUIRED_ERROR = "Valid workspace is require for the request."
+VALID__WORKSPACE_ID_REQUIRED_ERROR = "Valid workspace id is required for the request."

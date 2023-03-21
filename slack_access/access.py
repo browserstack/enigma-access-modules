@@ -1,14 +1,16 @@
 import logging
+import json
 from Access.access_modules.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 from .helpers import (
-    get_info,
     invite_user,
     remove_user,
     get_workspace_list,
-    is_email_valid,
+
 )
+
 from . import constants
+from django.template import loader
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,42 @@ class Slack(BaseEmailAccess):
             array: Email address of the User and the module owners.
         """
         return [user.email] + self.grant_owner()
+    
+    def _generate_string_from_template(self, filename, **kwargs):
+        template = loader.get_template(filename)
+        vals = {}
+        for key, value in kwargs.items():
+            vals[key] = value
+        return template.render(vals)
+
+    def __send_approve_email(self, user, label_desc, request_id, approver):
+        """Generates and sends email in access grant."""
+        email_targets = self.email_targets(user)
+        email_subject = "Approved Access: %s for access to %s for user %s" % (
+            request_id,
+            label_desc,
+            user.email,
+        )
+        body = self._generate_string_from_template(
+            filename="approve_email.html",
+            label_desc=label_desc,
+            user_email=user.email,
+            approver=approver,
+        )
+
+        emailSES(email_targets, email_subject, body)
+
+    def __send_revoke_email(self, user, label_desc, request_id):
+        """Generates and sends email in for access revoke."""
+        email_targets = self.email_targets(user)
+        email_subject = "Revoke Request: %s for access to %s for user %s" % (
+            request_id,
+            label_desc,
+            user.email,
+        )
+        email_body = ""
+
+        emailSES(email_targets, email_subject, email_body)
 
     def approve(
         self,
@@ -41,6 +79,8 @@ class Slack(BaseEmailAccess):
         is_group=False,
         auto_approve_rules=None,
     ):
+        
+
         """Approves a users access request.
         Args:
             user_identity (User): User identity object represents user whose access is being approved.
@@ -53,44 +93,27 @@ class Slack(BaseEmailAccess):
         Returns:
             bool: True if the access approval is success, False in case of failure with error string.
         """
-        label = labels[0]
+
+        user = user_identity.user
+        label_desc = self.combine_labels_desc(labels)
         for label in labels:
-            access_workspace = label["access_workspace"]
-            team_info_list, error_message = get_info(access_workspace)
-            if not team_info_list:
-                logger.error(
-                    f"Error ocurred while gathering information for requested workspace {access_workspace}: {error_message}"
-                )
-                return False
+            access_workspace = label['access_workspace']
             if not invite_user(
-                user_identity.identity["user_email"],
-                team_info_list["team_id"][0],
-                team_info_list["channel_id"][0],
+                user_identity.user.email,
+                label['workspace'],
                 access_workspace,
             ):
                 logger.error(
                     f"Could not invite user to requested workspace {access_workspace}. Please contact Admin."
                 )
-                return False
-
-        email_targets = self.email_targets(user_identity.user)
-        email_subject = "Approved Access: %s for access to Slack Access for user %s" % (
-            request,
-            user_identity.user.email,
-        )
-        email_body = (
-            "Access successfully granted for slack: Standard Access for Slack Access to %s.<br>Request has been approved by %s."
-            % (user_identity.identity["user_email"], approver)
-        )
+        
         try:
-            emailSES(email_targets, email_subject, email_body)
+            self.__send_approve_email(user, label_desc, request.request_id, approver)
+            return True
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
-        return True
+            return False
 
-    def get_identity_template(self):
-        """Returns path to user identity form template"""
-        return "slack_access/identity_form.html"
 
     def revoke(self, user, user_identity, access_label, request):
         """Revoke access to Slack.
@@ -105,7 +128,7 @@ class Slack(BaseEmailAccess):
         """
         access_workspace = access_label["access_workspace"]
         response, error_message = remove_user(
-            user_identity["user_email"], access_workspace
+            user_identity.user.email, access_workspace,access_label["workspace"]
         )
         if not response:
             logger.error(
@@ -114,11 +137,8 @@ class Slack(BaseEmailAccess):
             return False
 
         label_desc = self.combine_labels_desc(access_label)
-        email_targets = self.email_targets(user)
-        email_subject = "Revoke Request: %s for %s" % (label_desc, user.email)
-        email_body = ""
         try:
-            emailSES(email_targets, email_subject, email_body)
+            self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
@@ -163,18 +183,33 @@ class Slack(BaseEmailAccess):
             array (json objects): key value pair of access lable and it's access type.
         """
         valid_access_label_array = []
+        
         for label in labels:
+            slack_workspace_data = label["slackAccessWorkspace"]
+            slack_workspace_data= json.loads(slack_workspace_data.replace("'", "\""))
+
+            if slack_workspace_data is None:
+                 raise Exception(constants.ERROR_MESSAGES)
+            
+            if not slack_workspace_data.get('workspacename'):
+                raise Exception(constants.VALID_WORKSPACE_REQUIRED_ERROR)
+
+            if not slack_workspace_data.get('workspace-id'):
+                raise Exception(constants.VALID__WORKSPACE_ID_REQUIRED_ERROR)
+
             valid_access_label = {
-                "access_workspace": label["slackAccessWorkspace"],
-                "access_type": label["slackAccessType"],
+              "action": "slackAccessWorkspace",
+              "workspace": slack_workspace_data['workspace-id'],
+              "access_workspace": slack_workspace_data['workspacename'],
+              "access_type": "Standard Access",
             }
+
             valid_access_label_array.append(valid_access_label)
 
         return valid_access_label_array
 
     def access_request_data(self, request, is_group=False):
         workspace_data = [workspace for workspace in get_workspace_list()]
-
         data = {"slackWorkspaceList": workspace_data}
         return data
 
@@ -187,9 +222,7 @@ class Slack(BaseEmailAccess):
             json object: Empty if it fails to verify user identity or new email of user.
         """
         user_email = request["user_email"]
-        if not is_email_valid(user_email):
-            logger.error(constants.USER_IDENTITY_NOT_FOUND, user_email)
-            return {}
+   
         return {"user_email": user_email}
 
     def can_auto_approve(self):
@@ -204,7 +237,7 @@ class Slack(BaseEmailAccess):
         Returns:
             array of json object: type of access type and description of access type.
         """
-        return [{"type": "StandardAccess", "desc": "Standard Access"}]
+        return []
 
     def access_desc(self):
         """Returns slack access description."""
