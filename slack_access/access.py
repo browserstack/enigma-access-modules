@@ -213,17 +213,6 @@ class Slack(BaseEmailAccess):
         data = {"slackWorkspaceList": workspace_data}
         return data
 
-    def verify_identity(self, request, email):
-        """Verifying user Identity.
-        Args:
-            request (UserAccessMapping): UserAccessMapping representing the access.
-            email: Email of user.
-        Returns:
-            json object: Empty if it fails to verify user identity or new email of user.
-        """
-        user_email = request["user_email"]
-   
-        return {"user_email": user_email}
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.
