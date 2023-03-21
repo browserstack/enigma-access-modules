@@ -102,28 +102,25 @@ class Zoom(BaseEmailAccess):
             bool: True if the access approval is success, False in case of failure with error string.
         """
 
-        label_desc = self.combine_labels_desc(labels)
         user = user_identity.user
-        type = 1
-        if "Pro License" in label_desc:
-            type = 2
-        elif "Standard License" in label_desc:
-            type = 1
+        label_desc = self.combine_labels_desc(labels)
+        for label in labels:
+            if "Pro License" in label["access_type"]:
+                type = 2
+            elif "Standard License" in label["access_type"]:
+                type = 1
+            
 
+            result, exception = helper.grant_access(user, type)
+
+            if not result:
+                logger.exception(
+                    "Something went wrong while giving %s access to the %s: %s"
+                    % (label["access_type"], user.email, str(exception))
+                )
+                return False, exception
+            
         try:
-            user_details = helper.get_user(user.email)
-            if user_details[0] == 200:
-                response = helper.update_user(
-                    user.email, type
-                )
-                if response[0] != 204:
-                    return False, "User updation failed" + str(response)
-            else:
-                response = helper.create_user(
-                    user.email, type
-                )
-                if response[0] != 200 or response[0] != 201:
-                    return False, "User creation failed" + str(response)
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True, ""
         except Exception as e:

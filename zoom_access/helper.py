@@ -98,6 +98,22 @@ def make_request(url, request_type="GET", data=None):
         raise Exception("Zoom Access token is Expired.")
     return [response.status_code, response_data]
 
+def grant_access(user, type):
+    user_details = get_user(user.email)
+    if user_details[0] == 200:
+        response = update_user(
+            user.email, type
+        )
+        if response[0] != 204:
+            return False, "User updation failed" + str(response)
+    else:
+        response = create_user(
+            user.email, type
+        )
+        if response[0] != 200 or response[0] != 201:
+            return False, "User creation failed" + str(response)
+    
+    return True, ""
 
 def get_user(email):
     """Gets user details
@@ -161,28 +177,3 @@ def update_user(email, type):
     user_details = make_request(url, "PATCH", data)
     logger.info("[ZOOM] update_user - %s", str(user_details))
     return user_details
-
-
-def is_email_valid(user_email, email):
-    """Checks email validation
-    Args:
-        user_email (str): new email to be updated
-        email (str): email of the user to be validated
-    Returns:
-       true if user_email is active on zoom or false if not active.
-    """
-    zoom_jwt_token = get_token()
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + zoom_jwt_token,
-    }
-    url = ZOOM_BASE_URL + "users/" + user_email
-    response = requests.get(url, headers=headers, timeout=constants.TIMEOUT_VALUE)
-    if response.status_code == 200:
-        if "status" in response.json():
-            usr_status = str(json.loads(response.text)["status"])
-            if usr_status is not None and usr_status == "active":
-                return True
-            logger.error(constants.GET_USER_BY_EMAIL_FAILED)
-            return False
-    return False
