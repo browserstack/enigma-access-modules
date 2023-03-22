@@ -1,19 +1,29 @@
 {
   "type": "object",
   "properties": {
-    "<workspace_name>": {
+    "slack_access": {
       "type": "object",
-      "AUTH TOKEN": {
-        "type": "string"
-      },
-      "DEFAULT_CHANNEL": {
-        "type": "list"
+      "<workspace-name>": {
+        "type": "object",
+        "properties": {
+          "AUTH_TOKEN": {
+            "type": "string"
+          },
+          "DEFAULT_CHANNELS": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "AUTH_TOKEN",
+          "DEFAULT_CHANNELS"
+        ]
       }
     }
   },
   "required": [
-    "workspace_name",
-    "AUTH TOKEN",
-    "DEFAULT_CHANNEL"
+    "slack_access"
   ]
 }

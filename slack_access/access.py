@@ -94,13 +94,13 @@ class Slack(BaseEmailAccess):
         user = user_identity.user
         label_desc = self.combine_labels_desc(labels)
         for label in labels:
-            access_workspace = label["workspace_name"]
+            workspace_name = label["workspace_name"]
             invite_user_resp = invite_user(
-                user.email, label["workspace_id"], access_workspace
+                user.email, label["workspace_id"], workspace_name
             )
             if not invite_user_resp:
                 logger.error(
-                    f"Could not invite user to requested workspace {access_workspace}. Please contact Admin."
+                    f"Could not invite user to requested workspace {workspace_name}. Please contact Admin."
                 )
                 return False
 
@@ -203,17 +203,17 @@ class Slack(BaseEmailAccess):
         data = {"slackWorkspaceList": workspace_data}
         return data
 
+    def get_identity_template(self):
+        """Returns path to user identity form template"""
+        return ""
+    
     def verify_identity(self, request, email):
         """Verifying user Identity.
-        Args:
-            request (UserAccessMapping): UserAccessMapping representing the access.
-            email: Email of user.
         Returns:
-            json object: Empty if it fails to verify user identity or new email of user.
+            json object: Empty.
         """
-        user_email = request["user_email"]
 
-        return {"user_email": user_email}
+        return {}
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.
