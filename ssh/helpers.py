@@ -47,7 +47,7 @@ def sshHelper(labels, user_identity, user, action):
             if access_level in ["sudo", "non sudo"]:
                 return add_user(hostname, ip, ssh_key, username, access_level)
             else:
-                return add_key_existing_user()
+                return add_key_existing_user(ip, ssh_key, access_level)
         elif action == "revoke":
             return revoke_user_access(hostname, ip, ssh_key, username)
 
