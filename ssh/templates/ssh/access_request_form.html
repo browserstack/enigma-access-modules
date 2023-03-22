@@ -38,6 +38,28 @@
                 return value.length > 1;
             }
         });
+        function getSelectedMachines() {
+          return $('#search-machine_to').children().map(function () { return $(this).val() }).get()
+        }
+        function getOtherIPs() {
+          return $('#otherMachines').val()
+        }
+        function machineListChange() {
+          labelComponents = JSON.parse($('#sshLabel').val());
+          if(!labelComponents.length){
+            labelComponents = [{}]
+          }
+          labelComponents[0]["selected_machines"] = getSelectedMachines()
+          labelComponents[0]["other_machines"] = getOtherIPs()
+          $('#sshLabel').val(JSON.stringify(labelComponents));
+        }
+        $("#search-machine").on("change", machineListChange)
+        $("#search-machine_to").on("change",machineListChange)
+        $("#search-machine_rightAll").on("click", machineListChange)
+        $("#search-machine_rightSelected").on("click", machineListChange)
+        $("#search-machine_leftSelected").on("click", machineListChange)
+        $("#search-machine_leftAll").on("click", machineListChange)
+        $("#otherMachines").on("input", machineListChange)
     });
 
 </script>

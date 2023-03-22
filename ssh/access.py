@@ -221,15 +221,26 @@ class SSHAccess(BaseEmailAccess):
         valid_access_label_array = []
 
         for label_data in access_labels_data:
-            machine = label_data["machine"]
-            env = label_data["environment"]
-            access_level = label_data["accessLevel"]
-            label = {
-                "machine": machine,
-                "access_level": access_level,
-                "environment": env,
-            }
-            valid_access_label_array.append(label_data)
+            for machine in label_data["selected_machines"]:
+                hostname = machine.split(",", 1)[0]
+                ip = machine.split(",", 1)[1]
+                label = {
+                    "machine": hostname,
+                    "access_level": label_data["accessLevel"],
+                    "ip": ip
+                }
+                valid_access_label_array.append(label)
+            
+            if label_data["other_machines"]:
+                label_data["other_machines"] = label_data["other_machines"].split(",")
+            
+            for other_machine in label_data["other_machines"]:
+                label = {
+                    "machine": "other",
+                    "access_level": label_data["accessLevel"],
+                    "ip": other_machine
+                }
+                valid_access_label_array.append(label)
 
         return valid_access_label_array
 

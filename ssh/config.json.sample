@@ -1,3 +1,5 @@
 {
-  "enigma_root_user": "enigma"
+  "engima_root_user": "enigma",
+  "app_user": "app",
+  "inventory_file_path":""
 }

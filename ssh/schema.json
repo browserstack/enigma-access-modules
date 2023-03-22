@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "engima_root_user": {
+      "type": "string"
+    },
+    "app_user": {
+      "type": "string"
+    },
+    "inventory_file_path": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "engima_root_user",
+    "app_user",
+    "inventory_file_path"
+  ]
+}

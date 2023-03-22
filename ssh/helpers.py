@@ -5,76 +5,103 @@ import logging
 from fabric import Connection
 
 logger = logging.getLogger(__name__)
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 
 
-with open("Access/access_modules/ssh/inventory.csv", "r") as f:
+with open(ACCESS_MODULES["ssh"]["inventory_file_path"], "r") as f:
     global ssh_machine_list
     ssh_machine_list = {}
     # convert inventory.csv file to dictionary with hostname as key and ip as value
     for line in f.readlines():
         ssh_machine_list[line.split(",")[0]] = line.split(",")[1].strip()
 
-
 def get_ip_from_hostname(hostname):
     return ssh_machine_list[hostname]
 
 
-def get_conn_to_host(hostname):
-    ip = get_ip_from_hostname(hostname)
+def get_connection_to_host(ip):
 
     # Connect to the remote machine
-    c = Connection(user=ACCESS_MODULES["ssh"]["enigma_root_user"], host=ip)
-    print(c)
+    connection = Connection(user=ACCESS_MODULES["ssh"]["engima_root_user"], host=ip)
+    logger.info(f"Connection to then remove machine with ip: {ip} has been formed")
 
     # check whether authentication is successful or not
     try:
-        c.open()
-        return c
+        connection.open()
+        return connection
     except Exception as e:
-        print(f"Authentication failed: {e}")
+        logger.exception(f"Authentication failed: {e}")
         traceback.print_exc()
-        return
+        return False
 
 
 def sshHelper(labels, user_identity, user, action):
     for label in labels:
         access_level = label["access_level"]
-        hostname = label["hostname"]
+        hostname = label["machine"]
+        ip = label["ip"]
         username = user.username
         ssh_key = user_identity.identity["ssh_public_key"]
 
         if action == "grant":
-            return add_user(hostname, ssh_key, username, access_level)
+            if access_level in ["sudo", "non sudo"]:
+                return add_user(hostname, ip, ssh_key, username, access_level)
+            else:
+                return add_key_existing_user()
         elif action == "revoke":
-            return replace_user_key(hostname, "", ssh_key, username)
+            return revoke_user_access(hostname, ip, ssh_key, username)
 
 
-def add_user(hostname, ssh_key, username, should_be_root):
-    c = get_conn_to_host(hostname)
+def add_key_existing_user(ip, ssh_key, access_level):
+    username = access_level
+    if access_level == "app":
+        username = ACCESS_MODULES["ssh"]["app_user"]
+    
+    connection = get_connection_to_host(ip)
+    if not connection:
+        return False, "Authentication failed to machine."
+
+    try:
+        connection.sudo(
+            'echo "{}" | sudo tee -a /home/{}/.ssh/authorized_keys > /dev/null'.format(
+                ssh_key, username
+            )
+        )
+    except Exception as e:
+        logger.exception("Exception while adding ssh key to {}: {}".format(username, str(e)))
+        return False, "Failed to add ssh to user"
+
+    connection.close()
+    return True, ""
+
+def add_user(hostname, ip, ssh_key, username, access_level):
+    connection = get_connection_to_host(ip)
+
+    if not connection:
+        return False, "Authentication failed to machine."
 
     # Check if the user already exists, if so, return and do nothing
-    if not c.sudo("id {}".format(username), warn=True).failed:
-        print("User already exists")
+    if not connection.sudo("id {}".format(username), warn=True).failed:
+        logger.info("User already exists")
         return False, "User already exists"
 
     try:
         # Create the user
-        c.sudo("useradd -m {}".format(username))
+        connection.sudo("useradd -m {}".format(username))
         # Set the password to nothing
-        c.sudo("passwd -d {}".format(username))
+        connection.sudo("passwd -d {}".format(username))
 
         # Check if the user should be a root user or a basic user
-        if should_be_root:
-            c.sudo("usermod -aG sudo {}".format(username))
+        if access_level == "sudo":
+            connection.sudo("usermod -aG sudo {}".format(username))
 
         # Create the .ssh directory
-        c.sudo("mkdir /home/{}/.ssh".format(username))
+        connection.sudo("mkdir /home/{}/.ssh".format(username))
         # Create the authorized_keys file
-        c.sudo("touch /home/{}/.ssh/authorized_keys".format(username))
+        connection.sudo("touch /home/{}/.ssh/authorized_keys".format(username))
 
         # Add the user's SSH key to the authorized_keys file on the remote machine
-        c.sudo(
+        connection.sudo(
             'echo "{}" | sudo tee -a /home/{}/.ssh/authorized_keys > /dev/null'.format(
                 ssh_key, username
             )
@@ -82,55 +109,47 @@ def add_user(hostname, ssh_key, username, should_be_root):
 
         # Change the permissions of the authorized_keys file to 600
         # (only the user can read and write)
-        c.sudo("chmod 600 /home/{}/.ssh/authorized_keys".format(username))
+        connection.sudo("chmod 600 /home/{}/.ssh/authorized_keys".format(username))
 
         # change the ownership of the /home/<username> directory to the user and
         # group of the user (username:username)
-        c.sudo("chown -R {}:{} /home/{}".format(username, username, username))
+        connection.sudo("chown -R {}:{} /home/{}".format(username, username, username))
     except Exception as e:
-        logger.error(str(e))
+        logger.error("Exception occured while adding user: "+str(e))
         traceback.print_exc()
-        return False, str(e)
+        return False, "Failed to add user"
 
     # Close the connection
-    c.close()
+    connection.close()
     return True, ""
 
 
-def revoke_user_access(hostname, ssh_key, username):
-    replace_user_key(hostname, "", ssh_key, username)
+def revoke_user_access(hostname, ip, ssh_key, username):
+    return replace_user_key(hostname, ip, "", ssh_key, username)
 
 
-def replace_user_key(hostname, new_ssh_key, old_ssh_key, username):
-    c = get_conn_to_host(hostname)
+def replace_user_key(hostname, ip, new_ssh_key, old_ssh_key, username):
+    connection = get_connection_to_host(ip)
+    if not connection:
+        return False, "Authentication failed to machine."
 
     # Replace the / with \/ in the old SSH key and the new SSH key so that it can
     # be used in the sed command below (sed command uses / as a delimiter)
     old_ssh_key = old_ssh_key.replace("/", "\/")
     new_ssh_key = new_ssh_key.replace("/", "\/")
 
-    # Replace the old SSH key with the new SSH key in the authorized_keys file on the remote machine
-    c.sudo(
-        'sed -i "s/{}/{}/g" /home/{}/.ssh/authorized_keys'.format(
-            old_ssh_key, new_ssh_key, username
+    try:
+        # Replace the old SSH key with the new SSH key in the authorized_keys file on the remote machine
+        connection.sudo(
+            'sed -i "s/{}/{}/g" /home/{}/.ssh/authorized_keys'.format(
+                old_ssh_key, new_ssh_key, username
+            )
         )
-    )
+    except Exception as e:
+        logger.exception("Exception while replacing the ssh Key: "+str(e))
+        return False, "Failed to replace ssh key"
 
     # Close the connection
-    c.close()
-
-
-def add_key_existing_user(hostname, ssh_key, username):
-    c = get_conn_to_host(hostname)
-
-    # Add the user's SSH key to the authorized_keys file on the remote machine
-    c.sudo(
-        'echo "{}" | sudo tee -a /home/{}/.ssh/authorized_keys > /dev/null'.format(
-            ssh_key, username
-        )
-    )
-    c.sudo("cat /home/{}/.ssh/authorized_keys".format(username))
-
-    # Close the connection
-    c.close()
+    connection.close()
+    return True, ""
 
