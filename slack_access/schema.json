@@ -1,7 +1,7 @@
 {
   "type": "object",
   "properties": {
-    "workspace_name": {
+    "<workspace_name>": {
       "type": "object",
       "AUTH TOKEN": {
         "type": "string"
