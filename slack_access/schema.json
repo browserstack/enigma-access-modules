@@ -3,7 +3,7 @@
   "properties": {
     "slack_access": {
       "type": "object",
-      "<workspace-name>": {
+      "additionalProperties": {
         "type": "object",
         "properties": {
           "AUTH_TOKEN": {
@@ -27,3 +27,5 @@
     "slack_access"
   ]
 }
+
+
