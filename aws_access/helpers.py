@@ -37,7 +37,7 @@ def aws_group_exists(account, group):
     """
     client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
     try:
-        client.get_group(group_name=group)
+        client.get_group(GroupName=group)
     except Exception as ex:
         logger.error(str(ex))
         return False
@@ -71,6 +71,9 @@ def get_aws_client(account, resource):
     creds = _get_aws_credentails(account=account)
     return boto3.client(resource, **creds)
 
+def __get_username(email):
+    return email.split("@")[0]
+
 
 def grant_aws_access(user, account, group):
     """Make AWS API call to grant access to user to a group.
@@ -85,7 +88,7 @@ def grant_aws_access(user, account, group):
     """
     try:
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
-        client.add_user_to_group(group_name=group, user_name=user.email)
+        client.add_user_to_group(GroupName=group, UserName=__get_username(user.email))
     except Exception as ex:
         logger.error(str(ex))
         return False, str(ex)
@@ -105,7 +108,7 @@ def revoke_aws_access(user, account, group):
     """
     try:
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
-        client.remove_user_from_group(group_name=group, user_name=user.email)
+        client.remove_user_from_group(GroupName=group, UserName=__get_username(user.email))
     except Exception as ex:
         logger.error(str(ex))
         return False, str(ex)
