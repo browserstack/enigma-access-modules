@@ -19,7 +19,7 @@ class Slack(BaseEmailAccess):
     """Slack Access module."""
 
     urlpatterns = []
-    ACCESS_LABEL = "slack_access"
+    labels = "slack_access"
 
     def fetch_access_request_form_path(self):
         """Returns path to slack module access request form."""
@@ -97,15 +97,13 @@ class Slack(BaseEmailAccess):
         user = user_identity.user
         label_desc = self.combine_labels_desc(labels)
         for label in labels:
-            access_workspace = label['access_workspace']
-            if not invite_user(
-                user_identity.user.email,
-                label['workspace'],
-                access_workspace,
-            ):
+            access_workspace = label['workspace-name']
+            invite_user_resp = invite_user(user.email,label["workspace-id"],access_workspace)
+            if not invite_user_resp:
                 logger.error(
                     f"Could not invite user to requested workspace {access_workspace}. Please contact Admin."
                 )
+                return False
         
         try:
             self.__send_approve_email(user, label_desc, request.request_id, approver)
@@ -115,20 +113,20 @@ class Slack(BaseEmailAccess):
             return False
 
 
-    def revoke(self, user, user_identity, access_label, request):
+    def revoke(self, user, user_identity, labels, request):
         """Revoke access to Slack.
         Args:
             user (User): User whose access is to be revoked.
             user_identity (UserIdentity): User Identity object represents identity of user.
-            access_label (str): Access label representing the access to be revoked.
+            labels (str): Access label representing the access to be revoked.
             request (UserAccessMapping): UserAccessMapping representing the access.
         Returns:
             bool: True if revoke succeed. False if revoke fails.
             response: (array): Array of user details.
         """
-        access_workspace = access_label["access_workspace"]
+        access_workspace = labels["workspace-name"]
         response, error_message = remove_user(
-            user_identity.user.email, access_workspace,access_label["workspace"]
+            user_identity.user.email, access_workspace,labels["workspace-id"]
         )
         if not response:
             logger.error(
@@ -136,7 +134,7 @@ class Slack(BaseEmailAccess):
             )
             return False
 
-        label_desc = self.combine_labels_desc(access_label)
+        label_desc = self.combine_labels_desc(labels)
         try:
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
@@ -144,45 +142,43 @@ class Slack(BaseEmailAccess):
             logger.error("Could not send email for error %s", str(e))
             return False
 
-    def get_label_desc(self, access_label):
+    def get_label_desc(self, labels):
         """Returns access label description.
         Args:
-            access_label: access label whose access to be requested.
+            labels: access label whose access to be requested.
         Returns:
             string: Description of access label.
         """
-        access_workspace = access_label["access_workspace"]
-        access_type = access_label["access_type"]
+        access_workspace = labels["workspace-name"]
+        
         return (
             "Slack access for Workspace: "
             + access_workspace
-            + ". Access Type: "
-            + access_type
         )
 
-    def combine_labels_desc(self, access_labels):
-        """Combines multiple access_labels.
+    def combine_labels_desc(self, labelss):
+        """Combines multiple labelss.
         Args:
-            access_labels (array): Array of access labels.
+            labelss (array): Array of access labels.
         Returns:
             str: Comma seperated access labels.
         """
         label_descriptions_set = set()
-        for access_label in access_labels:
-            label_desc = self.get_label_desc(access_label)
+        for labels in labelss:
+            label_desc = self.get_label_desc(labels)
             label_descriptions_set.add(label_desc)
 
         return ", ".join(label_descriptions_set)
 
     def validate_request(self, labels, user, is_group=False):
-        """Combines multiple access_labels.
+        """Combines multiple labelss.
         Args:
-            access_labels_data (array): Array of access lables types.
+            labelss_data (array): Array of access lables types.
             request_user (UserAccessMaping): Object of UserAccessMapping represents requested user.
         Returns:
             array (json objects): key value pair of access lable and it's access type.
         """
-        valid_access_label_array = []
+        valid_labels_array = []
         
         for label in labels:
             slack_workspace_data = label["slackAccessWorkspace"]
@@ -197,22 +193,32 @@ class Slack(BaseEmailAccess):
             if not slack_workspace_data.get('workspace-id'):
                 raise Exception(constants.VALID__WORKSPACE_ID_REQUIRED_ERROR)
 
-            valid_access_label = {
-              "action": "slackAccessWorkspace",
-              "workspace": slack_workspace_data['workspace-id'],
-              "access_workspace": slack_workspace_data['workspacename'],
-              "access_type": "Standard Access",
+            valid_labels = {
+              "action": "WorkspaceAccess",
+              "workspace-id": slack_workspace_data['workspace-id'],
+              "workspace-name": slack_workspace_data['workspacename']
             }
 
-            valid_access_label_array.append(valid_access_label)
+            valid_labels_array.append(valid_labels)
 
-        return valid_access_label_array
+        return valid_labels_array
 
     def access_request_data(self, request, is_group=False):
         workspace_data = [workspace for workspace in get_workspace_list()]
         data = {"slackWorkspaceList": workspace_data}
         return data
 
+    def verify_identity(self, request, email):
+        """Verifying user Identity.
+        Args:
+            request (UserAccessMapping): UserAccessMapping representing the access.
+            email: Email of user.
+        Returns:
+            json object: Empty if it fails to verify user identity or new email of user.
+        """
+        user_email = request["user_email"]
+   
+        return {"user_email": user_email}
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.
