@@ -1,6 +1,6 @@
 """access module for AWS"""
 from . import helpers, constants, urls
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 
 import logging

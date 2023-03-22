@@ -1,6 +1,6 @@
 """access module for zoom"""
 import logging
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from Access.models import UserAccessMapping
 from EnigmaAutomation.settings import MAIL_APPROVER_GROUPS
 from bootprocess.general import emailSES
