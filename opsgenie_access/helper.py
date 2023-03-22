@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_team(team_name):
+    """Getting the team id from the team name."""
     api_endpoint = "https://api.opsgenie.com/v2/teams"
     api_key = OPSGENIE_TOKEN
 
@@ -33,6 +34,7 @@ def get_team(team_name):
 
 
 def remove_user_from_team(team, user_email):
+    """Removing the user from the team."""
     return_value, team_id = get_team(team)
     if return_value is False:
         return False, str(team_id)
@@ -45,7 +47,6 @@ def remove_user_from_team(team, user_email):
     try:
         response = requests.delete(url, headers=headers)
         logger.debug(response, response.content)
-        print(response.json())
         return True, response
     except Exception as e:
         logger.error("Could not remove user from the team")
@@ -110,7 +111,6 @@ def delete_user(user_email):
     }
     try:
         response = requests.delete(url, headers=headers)
-        print(response.status_code, "delete_user")
         logger.debug(response, response.content)
         return response
     except Exception as e:
@@ -231,23 +231,7 @@ def add_user_to_team(user_name, user_email, team, role):
         response = requests.post(url, headers=headers, json=data)
         if response.status_code not in (200, 201):
             return False, "Could not add %s to opsgenie" % user_name
-        print(response.json())
         return True, "Successfully Added User to Opsgenie"
     except Exception as e:
         logger.error("Could not add user to opsgenie")
         return False, str(e)
-
-
-def create_team(teamname, desc):
-    url = "https://api.opsgenie.com/v2/teams"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
-    }
-    data = {
-        "name": teamname,
-        "description": desc,
-    }
-    response = requests.post(url, headers=headers, json=data)
-    print(response.json())
-    logger.debug(response, response.content)
