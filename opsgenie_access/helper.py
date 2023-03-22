@@ -128,7 +128,7 @@ def create_team_admin_role(team, user_email):
     try:
         check_admin = get_user(user_email)
         if check_admin is not None and check_admin.status_code in (200, 201):
-            role = response.json()["data"]["role"]["name"]
+            role = check_admin.json()["data"]["role"]["name"]
             if role == "Admin":
                 return False, "Admin role Alredy Exist for the %s" % user_email
     except Exception as e:
