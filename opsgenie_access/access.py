@@ -85,9 +85,7 @@ class OpsgenieAccess(BaseEmailAccess):
         user = user_identity.user
         username = user.name
         user_email = user.email
-        print("Labels--->", labels)
         for labels_data in labels:
-            print("Lables_data-->", labels_data)
             team, user_type = self.get_team_and_usertype(labels_data)
             value = True
             role = "user"
