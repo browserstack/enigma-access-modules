@@ -1,13 +1,13 @@
 import json, requests
 import logging
 from . import constants
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULE
 
 OPSGENIE_TOKEN = ACCESS_MODULES["opsgenie_access"]["OPSGENIE_TOKEN"]
 logger = logging.getLogger(__name__)
 
 
-def add_user_to_opsgenie(Username, Useremail):
+def add_user_to_opsgenie(user_name, user_email):
     """Adds/creates user to opagenie.
     Args:
         Username (str): fullname of user
@@ -20,31 +20,38 @@ def add_user_to_opsgenie(Username, Useremail):
         "Content-Type": "application/json",
         "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
     }
-    data = {"username": Useremail, "fullName": Username, "role": {"name": "org_user"}}
+    data = {"username": user_email, "fullName": user_name, "role": {"name": "org_user"}}
     logger.debug(data)
-    response = requests.post(url, headers=headers, json=data)
-    logger.debug(response, response.content)
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        logger.debug(response, response.content)
+        return response.status_code
+    except Exception as e:
+        logger.error("Could not add user to opsgenie")
 
 
-def get_user(username):
+def get_user(user_name):
     """Gets user details
     Args:
         username (str): email of the user
     Returns:
         details of user
     """
-    url = "https://api.opsgenie.com/v2/users/" + username
+    url = "https://api.opsgenie.com/v2/users/" + user_name
     headers = {
         "Content-Type": "application/json",
         "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
     }
-    response = requests.get(url, headers=headers)
-    logger.debug(response, response.content)
-    return response
+    try:
+        response = requests.get(url, headers=headers)
+        logger.debug(response, response.content)
+        return response
+    except Exception as e:
+        logger.error("Could not get an user")
+        return response
 
 
 def get_user_list():
-    """Returns Gets list of users"""
     url = "https://api.opsgenie.com/v2/users/"
     headers = {
         "Content-Type": "application/json",
@@ -54,30 +61,35 @@ def get_user_list():
     logger.debug(response, response.content)
 
 
-def delete_user(username):
+def delete_user(user_email):
     """Deletes offboarded or offboarding user
     Args:
         username (str): email of the user to be deleted
     Returns:
         userdetails of deleted user
     """
-    url = "https://api.opsgenie.com/v2/users/" + username
+    url = "https://api.opsgenie.com/v2/users/" + user_email
     headers = {
         "Content-Type": "application/json",
         "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
     }
-    response = requests.delete(url, headers=headers)
-    logger.debug(response, response.content)
+    try:
+        response = requests.delete(url, headers=headers)
+        logger.debug(response, response.content)
+        return response
+    except Exception as e:
+        logger.error("Could not delete user")
+        return None
 
 
-def create_team_admin_role(Team):
+def create_team_admin_role(team):
     """creates teamAdmin role
     Args:
         Team (str): name of team in which admin role needs to be created
     Returns:
         details of created TeamAdmin role.
     """
-    url = "https://api.opsgenie.com/v2/teams/" + Team + "/roles?teamIdentifierType=name"
+    url = "https://api.opsgenie.com/v2/teams/" + team + "/roles?teamIdentifierType=name"
     headers = {
         "Content-Type": "application/json",
         "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
@@ -115,9 +127,14 @@ def create_team_admin_role(Team):
             {"right": "subscription-to-services", "granted": "true"},
         ],
     }
-    response = requests.post(url, headers=headers, json=data)
-    logger.debug(response, response.content)
-    return response
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code not in (200, 201):
+            return False, "Could not create admin role for opsgenie"
+        return True, "Successfully created Admin role"
+    except Exception as e:
+        logger.error("Could not create admin role to opsgenie")
+        return False, "Could not create admin role for opsgenie"
 
 
 def teams_list():
@@ -127,17 +144,7 @@ def teams_list():
     teams_response = requests.get(url, headers=headers)
     teams_json = teams_response.json()
     all_teams = []
-    ignore_teams = [
-        "alertmanager-test-team",
-        "rails",
-        "test-team",
-        "emergency",
-        "catchall",
-        "tunnel",
-        "prod",
-        "dcops",
-        "nagiosteam",
-    ]
+    ignore_teams = []
     for team_index in range(len(teams_json["data"])):
         if teams_json["data"][team_index]["name"] in ignore_teams:
             continue
@@ -145,7 +152,7 @@ def teams_list():
     return all_teams
 
 
-def add_user_to_team(Username, Useremail, team, role):
+def add_user_to_team(user_name, user_email, team, role):
     """Add user to the team
     Args:
         username (str): fullname of the user
@@ -155,7 +162,16 @@ def add_user_to_team(Username, Useremail, team, role):
     Returns:
         details of added user
     """
-    add_user_to_opsgenie(Username, Useremail)
+    return_value = True
+    user_details = get_user(user_email)
+    if user_details.status_code not in (200, 201):
+        return_value = False
+
+    if return_value == False:
+        response_add_user_status_code = add_user_to_opsgenie(user_name, user_email)
+        if response_add_user_status_code not in (201, 200):
+            return False, "Could not add %s to opsgenie" % user_name
+
     url = (
         "https://api.opsgenie.com/v2/teams/" + team + "/members?teamIdentifierType=name"
     )
@@ -163,15 +179,12 @@ def add_user_to_team(Username, Useremail, team, role):
         "Content-Type": "application/json",
         "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
     }
-    data = {"user": {"username": Useremail}, "role": role}
-    response = requests.post(url, headers=headers, json=data)
-    logger.debug(response, response.content)
-    return response
-
-
-def is_email_valid(user_email, email):
-    """Returns that if user is already exist on Opgenie"""
-    response = get_user(user_email)
-    if "data" in response.json():
-        return True
-    return False
+    data = {"user": {"username": user_email}, "role": role}
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code not in (200, 201):
+            return False, "Could not add %s to opsgenie" % user_name
+        return True, "Successfully Added User to Opsgenie"
+    except Exception as e:
+        logger.error("Could not add user to opsgenie")
+        return False, str(e)

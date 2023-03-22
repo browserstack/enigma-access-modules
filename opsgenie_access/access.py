@@ -1,11 +1,9 @@
 from Access.access_modules.base_email_access.access import BaseEmailAccess
-from BrowserStackAutomation.settings import MAIL_APPROVER_GROUPS
-from Access.models import UserAccessMapping
-from bootprocess.general import emailSES
 from . import helper, constants
 import logging
 import json
-
+from django.template import loader
+from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)
 
@@ -14,15 +12,6 @@ class OpsgenieAccess(BaseEmailAccess):
     """Opsgenie Access module."""
 
     urlpatterns = []
-
-    def __init__(self):
-        try:
-            self.teams_list = helper.teams_list()
-            self.all_possible_accesses = {}
-            self.all_possible_accesses.update({team: team for team in self.teams_list})
-        except Exception as e:
-            logger.error(e)
-            self.teams_list = {}, {}, {}
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.
@@ -49,7 +38,16 @@ class OpsgenieAccess(BaseEmailAccess):
             array (json objects): key value pair of access lable and it's access type.
         """
         valid_access_label_array = []
+
+        total_teams_list = helper.teams_list()
+
         for access_label_data in access_labels_data[0]["teams_list"]:
+            if access_label_data not in total_teams_list:
+                raise Exception(constants.VALID_TEAM_REQUIRED_ERROR)
+
+            if access_labels_data[0]["UserType"] not in ("user", "team_admin"):
+                raise Exception(constants.VALID_USER_TYPE_REQUIRED_ERROR)
+
             valid_access_label = {
                 "team": access_label_data,
                 "usertype": access_labels_data[0]["UserType"],
@@ -84,48 +82,79 @@ class OpsgenieAccess(BaseEmailAccess):
         Returns:
             bool: True if the access approval is success, False in case of failure with error string.
         """
-        username = user_identity.identity["user_name"]
-        user_email = user_identity.identity["user_email"]
+
+        user = user_identity.user
+        username = user.name
+        user_email = user.email
         team, user_type = self.get_team_and_usertype(labels)
         email_targets = self.email_targets(user_identity.user)
+        value = True
         role = "user"
         if user_type == "team_admin":
-            response = helper.create_team_admin_role(team)
-            if "result" not in response.json():
-                return False, "Failed to create TeamAdmin role" + str(response)
+            response_return_value, response_message = helper.create_team_admin_role(
+                team
+            )
+            if response_return_value is False:
+                value = False
+                return False, "Failed to create TeamAdmin role" + str(response_message)
             role = "TeamAdmin"
-        return_value = helper.add_user_to_team(username, user_email, team, role)
-        if "result" not in return_value.json():
-            return False, "Failed to add user to Team" + str(return_value)
 
-        email_subject = (
-            "[Enigma][Access Management] Access Granted: %s for access to %s for user %s"
-            % (request.request_id, self.access_desc(), user_identity.user.email)
+        return_value, error_message = helper.add_user_to_team(
+            username, user_email, team, role
         )
-        if auto_approve_rules:
-            email_body = (
-                "Access successfully granted for opsgenie:Team %s for %s to %s.<br>Request has been approved by %s. <br> Rules :- %s"
-                % (
-                    team,
-                    self.access_desc(),
-                    user_identity.user.email,
-                    approver,
-                    ", ".join(auto_approve_rules),
-                )
-            )
-        else:
-            email_body = (
-                "Access successfully granted Opsgenie.<br>Request has been approved by %s"
-                % (approver)
-            )
+        if return_value is False:
+            value = False
+            return False, "Failed to add user to Team" + str(error_message)
 
-        email_body += "<br>Please follow the instructions from step 1 on this page "
-
+        access_description = self.access_desc()
         try:
-            emailSES(email_targets, email_subject, email_body)
+            self.__send_approve_email(
+                user_identity.user,
+                access_description,
+                request.request_id,
+                approver,
+                value,
+                auto_approve_rules,
+            )
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
         return True
+
+    def __generate_string_from_template(self, filename, **kwargs):
+        template = loader.get_template(filename)
+        vals = {}
+        for key, value in kwargs.items():
+            vals[key] = value
+        return template.render(vals)
+
+    def __send_approve_email(
+        self, user, label_desc, request_id, approver, grant_status, auto_approve_rules
+    ):
+        email_targets = self.email_targets(user)
+        email_subject = constants.GRANT_REQUEST % (
+            request_id,
+            self.access_desc(),
+            user.email,
+        )
+        email_body = self.__generate_string_from_template(
+            filename="access_email.html",
+            status=grant_status,
+            auto_approve=auto_approve_rules,
+            request_id=request_id,
+            user_email=user.email,
+            access_desc=self.access_desc(),
+            access_meta=label_desc,
+            approver=approver,
+        )
+
+        emailSES(email_targets, email_subject, email_body)
+
+    def __send_revoke_email(self, user, request_id, label_desc):
+        """Generates and sends email in for access revoke."""
+        email_targets = self.email_targets(user)
+        email_subject = f"""Revoke Request: {request_id}
+        for access to {label_desc} for user {user.email}"""
+        emailSES(email_targets, email_subject, "")
 
     def revoke(self, user, user_identity, access_label, request):
         """Revoke access to Opsgenie.
@@ -138,24 +167,37 @@ class OpsgenieAccess(BaseEmailAccess):
             bool: True if revoke succeed. False if revoke fails.
             response: (array): Array of user details.
         """
+        return_value = False
         if user.state in (2, 3):
-            response = helper.delete_user(user_identity.identity["user_email"])
+            response = helper.delete_user(user.email)
+            if response is not None and response.status_code not in (200, 201):
+                response = None
         else:
-            response = ""
+            response = None
         if response is not None and "result" in response.json():
             usr_result = str(json.loads(response.text)["result"])
             if usr_result is not None and usr_result == "Deleted":
-                return True, ""
-        email_targets = self.email_targets(user_identity.user)
-        email_subject = (
-            "Opsgenie access revoke failed for user Name: "
-            + user_identity.identity["user_name"]
-            + " Email :"
-            + user_identity.identity["user_email"]
-        )
-        email_body = response
-        emailSES(email_targets, email_subject, email_body)
-        return False, response
+                return_value = True
+        else:
+            logger.error("Something went wrong while removing %s from %s: %s", ())
+            return False
+
+        access_description = self.access_desc()
+        try:
+            self.__send_revoke_email(user, request.request_id, access_description)
+        except Exception as ex:
+            logger.error("Could not send email for error %s", str(ex))
+        return return_value, response
+
+    def all_possible_accesses(self):
+        try:
+            self.teams_list = helper.teams_list()
+            self.all_possible_access = {}
+            self.all_possible_access.update({team: team for team in self.teams_list})
+            return self.all_possible_access
+        except Exception as e:
+            logger.error(e)
+            self.teams_list = {}, {}, {}
 
     def access_request_data(self, request, is_group=False):
         """Creates a dictionary of Opsgenie access.
@@ -167,7 +209,7 @@ class OpsgenieAccess(BaseEmailAccess):
             dict: Dictionary of opsgenie access.
         """
         user_accesses = {}
-        user_accesses["opsgenie"] = self.all_possible_accesses
+        user_accesses["opsgenie"] = self.all_possible_accesses()
         return user_accesses
 
     def get_label_desc(self, access_label):
@@ -190,12 +232,7 @@ class OpsgenieAccess(BaseEmailAccess):
         Returns:
             json object: Empty if it fails to verify user identity or new email of user.
         """
-        user_email = request["user_email"]
-        user_name = request["user_name"]
-        if not helper.is_email_valid(user_email, email):
-            logger.error(constants.USER_IDENTITY_NOT_FOUND, user_email)
-            return {}
-        return {"user_email": user_email, "user_name": user_name}
+        return {}
 
     def get_label_meta(self, request_params):
         return {}
@@ -204,18 +241,18 @@ class OpsgenieAccess(BaseEmailAccess):
         return {}
 
     def access_types(self):
-        """Returns types of Opagenie access.
+        """Returns types of zoom access.
         Returns:
             array of json object: type of access type and descryption of access type.
         """
-        return [{"type": "opsgenieStandardUser", "desc": "opsgenie - Standard User"}]
+        return []
 
     def fetch_access_request_form_path(self):
         return "opsgenie_access/access_request_form.html"
 
     def get_identity_template(self):
         """Returns path to user identity form template"""
-        return "opsgenie_access/identity_form.html"
+        return ""
 
     def access_desc(self):
         """Returns Opsgenie access descryption."""
@@ -226,7 +263,7 @@ class OpsgenieAccess(BaseEmailAccess):
         return "opsgenie_access"
 
     def match_keywords(self):
-        """Returns Opagenie access tag."""
+        """Returns opsgenie access tag."""
         return ["opsgenie_access"]
 
 

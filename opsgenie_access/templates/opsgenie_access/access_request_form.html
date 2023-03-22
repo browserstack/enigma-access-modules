@@ -61,7 +61,6 @@ function isAdmin(opsgenieteamadmin) {
     for(var iter = 0; iter < allAccess.length; iter += 1) {
       if(allAccess[iter].checked) {
         teams_list.push(allAccess[iter].value);
-        console.log(teams_list)
       }
     }
     user_type = "user"
