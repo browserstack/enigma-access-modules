@@ -3,9 +3,13 @@
   "properties": {
     "OPSGENIE_TOKEN": {
       "type": "string"
+    },
+    "IGNORE_TEAMS": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
-  "required": [
-    "OPSGENIE_TOKEN"
-  ]
+  "required": ["OPSGENIE_TOKEN"]
 }

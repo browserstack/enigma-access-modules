@@ -38,7 +38,6 @@ class OpsgenieAccess(BaseEmailAccess):
             array (json objects): key value pair of access lable and it's access type.
         """
         valid_access_label_array = []
-
         total_teams_list = helper.teams_list()
 
         for access_label_data in access_labels_data[0]["teams_list"]:
@@ -59,7 +58,7 @@ class OpsgenieAccess(BaseEmailAccess):
         return str(access_labels[0]["team"]) + " " + str(access_labels[0]["usertype"])
 
     def get_team_and_usertype(self, access_labels):
-        return access_labels[0]["team"], access_labels[0]["usertype"]
+        return access_labels["team"], access_labels["usertype"]
 
     def approve(
         self,
@@ -86,25 +85,29 @@ class OpsgenieAccess(BaseEmailAccess):
         user = user_identity.user
         username = user.name
         user_email = user.email
-        team, user_type = self.get_team_and_usertype(labels)
-        email_targets = self.email_targets(user_identity.user)
-        value = True
-        role = "user"
-        if user_type == "team_admin":
-            response_return_value, response_message = helper.create_team_admin_role(
-                team
-            )
-            if response_return_value is False:
-                value = False
-                return False, "Failed to create TeamAdmin role" + str(response_message)
-            role = "TeamAdmin"
+        print("Labels--->", labels)
+        for labels_data in labels:
+            print("Lables_data-->", labels_data)
+            team, user_type = self.get_team_and_usertype(labels_data)
+            value = True
+            role = "user"
+            if user_type == "team_admin":
+                response_return_value, response_message = helper.create_team_admin_role(
+                    team, user_email
+                )
+                if response_return_value is False:
+                    value = False
+                    return False, "Failed to create TeamAdmin role because" + str(
+                        response_message
+                    )
+                role = "TeamAdmin"
 
-        return_value, error_message = helper.add_user_to_team(
-            username, user_email, team, role
-        )
-        if return_value is False:
-            value = False
-            return False, "Failed to add user to Team" + str(error_message)
+            return_value, error_message = helper.add_user_to_team(
+                username, user_email, team, role
+            )
+            if return_value is False:
+                value = False
+                return False, "Failed to add user to Team" + str(error_message)
 
         access_description = self.access_desc()
         try:
@@ -118,7 +121,7 @@ class OpsgenieAccess(BaseEmailAccess):
             )
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
-        return True
+        return True, ""
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
@@ -173,10 +176,15 @@ class OpsgenieAccess(BaseEmailAccess):
             if response is not None and response.status_code not in (200, 201):
                 response = None
         else:
-            response = None
+            team = access_label["team"]
+            return_value_remove, response_message = helper.remove_user_from_team(team)
+            if return_value_remove is False:
+                return False, "User cannot be revoked due to " + str(response_message)
+            else:
+                response = response_message
         if response is not None and "result" in response.json():
             usr_result = str(json.loads(response.text)["result"])
-            if usr_result is not None and usr_result == "Deleted":
+            if usr_result is not None and usr_result in ("Deleted", "Removed"):
                 return_value = True
         else:
             logger.error("Something went wrong while removing %s from %s: %s", ())
@@ -191,13 +199,13 @@ class OpsgenieAccess(BaseEmailAccess):
 
     def all_possible_accesses(self):
         try:
-            self.teams_list = helper.teams_list()
-            self.all_possible_access = {}
-            self.all_possible_access.update({team: team for team in self.teams_list})
-            return self.all_possible_access
+            teams_list = helper.teams_list()
+            all_possible_access = {}
+            all_possible_access.update({team: team for team in teams_list})
+            return all_possible_access
         except Exception as e:
             logger.error(e)
-            self.teams_list = {}, {}, {}
+            teams_list = {}, {}, {}
 
     def access_request_data(self, request, is_group=False):
         """Creates a dictionary of Opsgenie access.
@@ -232,6 +240,7 @@ class OpsgenieAccess(BaseEmailAccess):
         Returns:
             json object: Empty if it fails to verify user identity or new email of user.
         """
+
         return {}
 
     def get_label_meta(self, request_params):
