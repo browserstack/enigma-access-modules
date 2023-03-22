@@ -97,8 +97,8 @@ class Slack(BaseEmailAccess):
         user = user_identity.user
         label_desc = self.combine_labels_desc(labels)
         for label in labels:
-            access_workspace = label['workspace-name']
-            invite_user_resp = invite_user(user.email,label["workspace-id"],access_workspace)
+            access_workspace = label['workspace_name']
+            invite_user_resp = invite_user(user.email,label["workspace_id"],access_workspace)
             if not invite_user_resp:
                 logger.error(
                     f"Could not invite user to requested workspace {access_workspace}. Please contact Admin."
@@ -124,9 +124,9 @@ class Slack(BaseEmailAccess):
             bool: True if revoke succeed. False if revoke fails.
             response: (array): Array of user details.
         """
-        access_workspace = labels["workspace-name"]
+        access_workspace = labels["workspace_name"]
         response, error_message = remove_user(
-            user_identity.user.email, access_workspace,labels["workspace-id"]
+            user_identity.user.email, access_workspace,labels["workspace_id"]
         )
         if not response:
             logger.error(
@@ -149,7 +149,7 @@ class Slack(BaseEmailAccess):
         Returns:
             string: Description of access label.
         """
-        access_workspace = labels["workspace-name"]
+        access_workspace = labels["workspace_name"]
         
         return (
             "Slack access for Workspace: "
@@ -190,13 +190,13 @@ class Slack(BaseEmailAccess):
             if not slack_workspace_data.get('workspacename'):
                 raise Exception(constants.VALID_WORKSPACE_REQUIRED_ERROR)
 
-            if not slack_workspace_data.get('workspace-id'):
+            if not slack_workspace_data.get('workspace_id'):
                 raise Exception(constants.VALID__WORKSPACE_ID_REQUIRED_ERROR)
 
             valid_labels = {
               "action": "WorkspaceAccess",
-              "workspace-id": slack_workspace_data['workspace-id'],
-              "workspace-name": slack_workspace_data['workspacename']
+              "workspace_id": slack_workspace_data['workspace_id'],
+              "workspace_name": slack_workspace_data['workspacename']
             }
 
             valid_labels_array.append(valid_labels)

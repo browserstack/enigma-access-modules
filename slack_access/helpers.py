@@ -124,7 +124,7 @@ def get_workspace_list():
         if workspace_id is not None:
             workspaceList.append({
                 "workspacename":workspace,
-                "workspace-id":workspace_id
+                "workspace_id":workspace_id
             })
     
     return workspaceList
