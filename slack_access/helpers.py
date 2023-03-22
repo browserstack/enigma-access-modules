@@ -1,4 +1,4 @@
-from BrowserStackAutomation.settings import ACCESS_MODULES
+from EnigmaAutomation.settings import ACCESS_MODULES
 from slack_sdk import WebClient
 import logging
 
