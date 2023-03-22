@@ -1,7 +1,7 @@
 {
   "slack_access": {
     "<workspace_name>": {
-       "AUTH_TOKEN": "<auth-token>"
+       "AUTH_TOKEN": "<auth-token>",
        "DEFAULT_CHANNELS": ["general"]
     }
   }
