@@ -30,7 +30,7 @@ class SSHAccess(BaseEmailAccess):
         user_identity,
         labels,
         approver,
-        request_id,
+        request,
         is_group=False,
         auto_approve_rules=None,
     ):
@@ -50,7 +50,7 @@ class SSHAccess(BaseEmailAccess):
         Returns:
             bool: True if the request is approved, False otherwise
         """
-        label_desc = self.get_label_desc(labels)
+        label_desc = self.combine_labels_desc(labels)
         user = user_identity.user
 
         return_value, error_message = helpers.sshHelper(labels, user_identity, user, "grant")
@@ -63,7 +63,7 @@ class SSHAccess(BaseEmailAccess):
 
         try:
             self.__send_approve_email(
-                user, label_desc, request_id, approver, return_value, auto_approve_rules
+                user, label_desc, request.request_id, approver, return_value, auto_approve_rules
             )
         except Exception as e:
             logger.error(
@@ -139,8 +139,7 @@ class SSHAccess(BaseEmailAccess):
         else:
             machine = access_label["ip"]
         access_level = access_label["access_level"]
-        env = access_label["environment"]
-        return access_level + " ssh access for " + machine + "({})".format(env)
+        return access_level + " ssh access for " + machine
 
     def combine_labels_desc(self, access_labels):
         """combines multiple access_labels

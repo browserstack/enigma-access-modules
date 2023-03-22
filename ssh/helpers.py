@@ -40,7 +40,7 @@ def sshHelper(labels, user_identity, user, action):
         access_level = label["access_level"]
         hostname = label["machine"]
         ip = label["ip"]
-        username = user.username
+        username = user.user.username
         ssh_key = user_identity.identity["ssh_public_key"]
 
         if action == "grant":
