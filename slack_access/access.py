@@ -1,6 +1,6 @@
 import logging
 import json
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 from .helpers import (
     invite_user,

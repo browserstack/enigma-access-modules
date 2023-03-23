@@ -1,4 +1,4 @@
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from . import helper, constants
 import logging
 import json
