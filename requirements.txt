@@ -9,3 +9,4 @@ pytest-bdd==6.1.1
 google-api-python-client==2.71.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.8.0
+slack-sdk==3.20.2
