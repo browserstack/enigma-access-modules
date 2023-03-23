@@ -39,7 +39,8 @@ class OpsgenieAccess(BaseEmailAccess):
         """
         valid_access_label_array = []
         total_teams_list = helper.teams_list()
-
+        if total_teams_list is None:
+            raise Exception(constants.TEAM_LIST_ERROR)
         for access_label_data in access_labels_data[0]["teams_list"]:
             if access_label_data not in total_teams_list:
                 raise Exception(constants.VALID_TEAM_REQUIRED_ERROR)
@@ -54,11 +55,11 @@ class OpsgenieAccess(BaseEmailAccess):
             valid_access_label_array.append(valid_access_label)
         return valid_access_label_array
 
-    def combine_labels_desc(self, access_labels):
-        return str(access_labels[0]["team"]) + " " + str(access_labels[0]["usertype"])
+    def combine_labels_desc(self, labels):
+        return str(labels[0]["team"]) + " " + str(labels[0]["usertype"])
 
-    def get_team_and_usertype(self, access_labels):
-        return access_labels["team"], access_labels["usertype"]
+    def get_team_and_usertype(self, labels):
+        return labels["team"], labels["usertype"]
 
     def approve(
         self,
@@ -83,10 +84,10 @@ class OpsgenieAccess(BaseEmailAccess):
         """
 
         user = user_identity.user
-        username = user.name
+        username = user.user.username
         user_email = user.email
-        for labels_data in labels:
-            team, user_type = self.get_team_and_usertype(labels_data)
+        for label in labels:
+            team, user_type = self.get_team_and_usertype(label)
             value = True
             role = "user"
             if user_type == "team_admin":
@@ -195,7 +196,7 @@ class OpsgenieAccess(BaseEmailAccess):
             logger.error("Could not send email for error %s", str(ex))
         return return_value, response
 
-    def all_possible_accesses(self):
+    def __all_possible_accesses(self):
         try:
             teams_list = helper.teams_list()
             all_possible_access = {}
@@ -215,7 +216,7 @@ class OpsgenieAccess(BaseEmailAccess):
             dict: Dictionary of opsgenie access.
         """
         user_accesses = {}
-        user_accesses["opsgenie"] = self.all_possible_accesses()
+        user_accesses["opsgenie"] = self.__all_possible_accesses()
         return user_accesses
 
     def get_label_desc(self, access_label):

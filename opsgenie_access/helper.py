@@ -9,7 +9,7 @@ IGNORE_TEAMS = ACCESS_MODULES["opsgenie_access"]["IGNORE_TEAMS"]
 logger = logging.getLogger(__name__)
 
 
-def get_team(team_name):
+def get_team_id(team_name):
     """Getting the team id from the team name."""
     api_endpoint = "https://api.opsgenie.com/v2/teams"
     api_key = OPSGENIE_TOKEN
@@ -36,7 +36,7 @@ def get_team(team_name):
 
 def remove_user_from_team(team, user_email):
     """Removing the user from the team."""
-    return_value, team_id = get_team(team)
+    return_value, team_id = get_team_id(team)
     if return_value is False:
         return False, str(team_id)
 
@@ -126,15 +126,15 @@ def create_team_admin_role(team, user_email):
     Returns:
         details of created TeamAdmin role.
     """
-    try:
-        check_admin = get_user(user_email)
-        if check_admin is not None and check_admin.status_code in (200, 201):
-            role = check_admin.json()["data"]["role"]["name"]
-            if role == "Admin":
-                return False, "Admin role Alredy Exist for the %s" % user_email
-    except Exception as e:
-        logger.error("Error geeting a user")
-        return False, str(e)
+    
+    check_admin = get_user(user_email)
+    if check_admin is not None and check_admin.status_code in (200, 201):
+        role = check_admin.json()["data"]["role"]["name"]
+        if role == "Admin":
+            return False, "Admin role Alredy Exist for the %s" % user_email
+    if check_admin is None:
+        return False,"Could not find user"
+   
     url = "https://api.opsgenie.com/v2/teams/" + team + "/roles?teamIdentifierType=name"
     headers = {
         "Content-Type": "application/json",
@@ -187,15 +187,18 @@ def teams_list():
     """Returns list of teams user have"""
     url = "https://api.opsgenie.com/v2/teams"
     headers = {"Authorization": "GenieKey %s" % OPSGENIE_TOKEN}
-    teams_response = requests.get(url, headers=headers)
-    teams_json = teams_response.json()
-    all_teams = []
-    ignore_teams = IGNORE_TEAMS
-    for team_index in range(len(teams_json["data"])):
-        if teams_json["data"][team_index]["name"] in ignore_teams:
-            continue
-        all_teams.append(teams_json["data"][team_index]["name"])
-    return all_teams
+    try:
+        teams_response = requests.get(url, headers=headers)
+        teams_json = teams_response.json()
+        all_teams = []
+        ignore_teams = []
+        for team_index in range(len(teams_json["data"])):
+            if teams_json["data"][team_index]["name"] in ignore_teams:
+                continue
+            all_teams.append(teams_json["data"][team_index]["name"])
+        return all_teams
+    except Exception as e:
+        return None
 
 
 def add_user_to_team(user_name, user_email, team, role):
