@@ -1,7 +1,7 @@
 """access module for zoom"""
 import logging
 from django.template import loader
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 from . import helper, constants
 
