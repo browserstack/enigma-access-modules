@@ -1,13 +1,12 @@
 import json, requests
 import logging
 from . import constants
-from EnigmaAutomation.settings import ACCESS_MODULE
+from EnigmaAutomation.settings import ACCESS_MODULES
 
 OPSGENIE_TOKEN = ACCESS_MODULES["opsgenie_access"]["OPSGENIE_TOKEN"]
 IGNORE_TEAMS = ACCESS_MODULES["opsgenie_access"]["IGNORE_TEAMS"]
 
 logger = logging.getLogger(__name__)
-
 
 def get_team_id(team_name):
     """Getting the team id from the team name."""
