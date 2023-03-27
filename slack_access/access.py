@@ -80,7 +80,7 @@ class Slack(BaseEmailAccess):
     ):
         """Approves a users access request.
         Args:
-            user_identity (User): User identity object represents user whose access is being approved.
+            user_identity (User): User identity object represents access requested user.
             labels (str): Access Label that respesents the access to be approved.
             approver (User): User who is approving the access.
             request (UserAccessMapping): Access mapping that repesents the User Access.
@@ -88,7 +88,10 @@ class Slack(BaseEmailAccess):
                                        Defaults to False.
             auto_approve_rules (str, optional): Rules for auto approval. Defaults to None.
         Returns:
-            bool: True if the access approval is success, False in case of failure with error string.
+            :return: The return value is a tuple of two values. The first value is a
+            boolean value that indicates whether the approval was successful or not.
+            The second value is a string that contains the error message if the approval
+            was not successful.
         """
 
         user = user_identity.user
@@ -99,16 +102,14 @@ class Slack(BaseEmailAccess):
                 user.email, label["workspace_id"], workspace_name
             )
             if not invite_user_resp:
-                logger.error(
-                    f"Could not invite user to requested workspace {workspace_name}. Please contact Admin."
-                )
+                logger.error(constants.INVITE_USER_FAILED.format(workspace_name))
                 return False
 
         try:
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
             return False
 
     def revoke(self, user, user_identity, labels, request):
@@ -128,7 +129,7 @@ class Slack(BaseEmailAccess):
         )
         if not response:
             logger.error(
-                f"Could not remove user from requested workspace {access_workspace} : {error_message}"
+                constants.REMOVE_USER_FAILED.format(access_workspace, error_message)
             )
             return False
 
@@ -137,7 +138,7 @@ class Slack(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
             return False
 
     def get_label_desc(self, labels):
@@ -206,7 +207,7 @@ class Slack(BaseEmailAccess):
     def get_identity_template(self):
         """Returns path to user identity form template"""
         return ""
-    
+
     def verify_identity(self, request, email):
         """Verifying user Identity.
         Returns:

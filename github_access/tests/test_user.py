@@ -144,7 +144,8 @@ def user_invited(requests_mock, context):
     return_value = helpers.get_org_invite(username=user_name())
     assert return_value is True
     context["expected_message"] = (
-        "User test-username has already been invited to join github org. Accept invite to continue.."
+        "User test-username has already been invited to join github org."
+        " Accept invite to continue.."
     )
 
 
@@ -194,7 +195,8 @@ def add_user_to_org(requests_mock, context):
     return_value = helpers.put_user(username=user_name())
     assert return_value is True
     context["expected_message"] = (
-        "Invited user test-username to join github org. Access can be granted post inivation acceptance."
+        "Invited user test-username to join github org."
+        " Access can be granted post inivation acceptance."
     )
 
 

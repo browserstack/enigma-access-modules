@@ -1,12 +1,13 @@
-import json, requests
+import json
+import requests
 import logging
-from . import constants
 from EnigmaAutomation.settings import ACCESS_MODULES
 
 OPSGENIE_TOKEN = ACCESS_MODULES["opsgenie_access"]["OPSGENIE_TOKEN"]
 IGNORE_TEAMS = ACCESS_MODULES["opsgenie_access"]["IGNORE_TEAMS"]
 
 logger = logging.getLogger(__name__)
+
 
 def get_team_id(team_name):
     """Getting the team id from the team name."""
@@ -29,7 +30,7 @@ def get_team_id(team_name):
         else:
             return False, "Could not find team with %s name" % team_name
     except Exception as e:
-        logger.error("Could not get team ")
+        logger.error("Could not get team due to exception: {}".format(str(e)))
         return False, "Could not get team with %s name" % team_name
 
 
@@ -49,7 +50,7 @@ def remove_user_from_team(team, user_email):
         logger.debug(response, response.content)
         return True, response
     except Exception as e:
-        logger.error("Could not remove user from the team")
+        logger.error(f"Could not remove user from the team due to excpetion: {str(e)}")
         return False, "Could not remove user from the team"
 
 
@@ -67,14 +68,14 @@ def add_user_to_opsgenie(user_name, user_email, role):
         "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
     }
     data = {"username": user_email, "fullName": user_name, "role": {"name": role}}
-    logger.debug(data)
+    logger.debug("Data used to make the add user to opsgenie request" + str(data))
     try:
         response = requests.post(url, headers=headers, json=data)
         logger.debug(response, response.content)
         return True, response.status_code
     except Exception as e:
-        logger.error("Could not add user to opsgenie")
-        return False, ""
+        logger.error(f"Could not add user to opsgenie due to exception {str(e)}")
+        return False, "Could not add user to opsgenie"
 
 
 def get_user(user_name):
@@ -93,7 +94,7 @@ def get_user(user_name):
         response = requests.get(url, headers=headers)
         return response
     except Exception as e:
-        logger.error("Could not get an user")
+        logger.error(f"Could not get an user due to exception {str(e)}")
         return None
 
 
@@ -114,7 +115,7 @@ def delete_user(user_email):
         logger.debug(response, response.content)
         return response
     except Exception as e:
-        logger.error("Could not delete user")
+        logger.error(f"Could not delete user due to exception: {str(e)}")
         return None
 
 
@@ -125,15 +126,15 @@ def create_team_admin_role(team, user_email):
     Returns:
         details of created TeamAdmin role.
     """
-    
+
     check_admin = get_user(user_email)
     if check_admin is not None and check_admin.status_code in (200, 201):
         role = check_admin.json()["data"]["role"]["name"]
         if role == "Admin":
             return False, "Admin role Alredy Exist for the %s" % user_email
     if check_admin is None:
-        return False,"Could not find user"
-   
+        return False, "Could not find user"
+
     url = "https://api.opsgenie.com/v2/teams/" + team + "/roles?teamIdentifierType=name"
     headers = {
         "Content-Type": "application/json",
@@ -178,7 +179,9 @@ def create_team_admin_role(team, user_email):
             return False, "Could not create admin role for opsgenie"
         return True, "Successfully created Admin role"
     except Exception as e:
-        logger.error("Could not create admin role to opsgenie")
+        logger.error(
+            f"Could not create admin role to opsgenie due to exception: {str(e)}"
+        )
         return False, "Could not create admin role for opsgenie"
 
 
@@ -197,6 +200,7 @@ def teams_list():
             all_teams.append(teams_json["data"][team_index]["name"])
         return all_teams
     except Exception as e:
+        logger.exception(f"Could not list team due to exception: {str(e)}")
         return None
 
 
@@ -215,7 +219,7 @@ def add_user_to_team(user_name, user_email, team, role):
     if user_details.status_code not in (200, 201):
         return_value = False
 
-    if return_value == False:
+    if not return_value:
         return_result, response_add_user_status_code = add_user_to_opsgenie(
             user_name, user_email, role
         )
@@ -236,5 +240,5 @@ def add_user_to_team(user_name, user_email, team, role):
             return False, "Could not add %s to opsgenie" % user_name
         return True, "Successfully Added User to Opsgenie"
     except Exception as e:
-        logger.error("Could not add user to opsgenie")
-        return False, str(e)
+        logger.error("Could not add user to opsgenie due to exception: " + str(e))
+        return False, "Could not add user to opsgenie"

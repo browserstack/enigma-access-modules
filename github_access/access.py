@@ -46,7 +46,7 @@ class GithubAccess(BaseEmailAccess):
             emailSES(email_targets, email_subject, email_body)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
             return False
 
     def offboard_github(self, github_username):
@@ -83,9 +83,7 @@ class GithubAccess(BaseEmailAccess):
                     error_message = constants.INVITE_USER_FAILED % user_name
                 return_value = False
             else:
-                error_message = (
-                    "User %s has already been invited to join github org. Accept invite to continue.." % user_name
-                )
+                error_message = constants.ALREADY_INVITED_ERROR.format(user_name)
                 return_value = False
 
         if return_value and label["action"] == self.ACCESS_LABEL:
@@ -115,10 +113,15 @@ class GithubAccess(BaseEmailAccess):
 
         try:
             self.__send_approve_email(
-                user_identity.user, label_desc, request.request_id, approver, return_value, auto_approve_rules
+                user_identity.user,
+                label_desc,
+                request.request_id,
+                approver,
+                return_value,
+                auto_approve_rules,
             )
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
         return return_value, error_message
 
     def __generate_string_from_template(self, filename, **kwargs):
@@ -229,15 +232,15 @@ class GithubAccess(BaseEmailAccess):
         return valid_access_label_array
 
     def get_identity_template(self):
-        return 'github_access/identity_form.html'
+        return "github_access/identity_form.html"
 
     def verify_identity(self, request, email):
-        user_name = request['name']
+        user_name = request["name"]
         if not is_email_valid(user_name, email):
             logger.error(constants.USER_IDENTITY_NOT_FOUND % user_name)
             return {}
 
-        return {'username': user_name}
+        return {"username": user_name}
 
     def match_keywords(self):
         return ["github", "git"]

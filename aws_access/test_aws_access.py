@@ -5,7 +5,8 @@ from . import constants, helpers, access
 
 
 class MockBoto3:
-    """"Mock for boto3"""
+    """Mock for boto3"""
+
     def add_user_to_group(self, group_name, user_name):
         """mock method"""
 
@@ -37,18 +38,19 @@ class MockBoto3:
 
 
 class MockBoto3withException(MockBoto3):
-    """"Mock for Boto3 exception"""
+    """ "Mock for Boto3 exception"""
+
     def add_user_to_group(self, group_name, user_name):
-        """"mock method raises exception"""
+        """ "mock method raises exception"""
         raise Exception
 
     def remove_user_from_group(self, group_name, user_name):
-        """"mock method raises exception"""
+        """ "mock method raises exception"""
         raise Exception
 
 
 def test_get_aws_credentails(*args, **kwargs):
-    """"mock function raises exception"""
+    """ "mock function raises exception"""
     value = helpers._get_aws_credentails("test")
     assert isinstance(value, dict)
 
@@ -202,7 +204,7 @@ def test_get_aws_accounts():
 
 
 def test_get_aws_groups(mocker):
-    """"unit test for get_aws_groups"""
+    """ "unit test for get_aws_groups"""
     mocker.patch(
         "Access.access_modules.aws_access.helpers.get_aws_client",
         return_value=MockBoto3(),

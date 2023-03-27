@@ -91,7 +91,7 @@ class Zoom(BaseEmailAccess):
     ):
         """Approves a users access request.
         Args:
-            user_identity (User): User identity object represents user whose access is being approved.
+            user_identity (User): User identity object represents access requested user.
             labels (str): Access Label that respesents the access to be approved.
             approver (User): User who is approving the access.
             request (UserAccessMapping): Access mapping that repesents the User Access.
@@ -99,7 +99,10 @@ class Zoom(BaseEmailAccess):
                                        Defaults to False.
             auto_approve_rules (str, optional): Rules for auto approval. Defaults to None.
         Returns:
-            bool: True if the access approval is success, False in case of failure with error string.
+            :return: The return value is a tuple of two values. The first value is a
+            boolean value that indicates whether the approval was successful or not.
+            The second value is a string that contains the error message if the approval
+            was not successful.
         """
 
         user = user_identity.user
@@ -109,7 +112,6 @@ class Zoom(BaseEmailAccess):
                 type = 2
             elif "Standard License" in label["access_type"]:
                 type = 1
-            
 
             result, exception = helper.grant_access(user, type)
 
@@ -119,14 +121,14 @@ class Zoom(BaseEmailAccess):
                     % (label["access_type"], user.email, str(exception))
                 )
                 return False, exception
-            
+
         try:
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True, ""
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
             return False, str(e)
-    
+
     def __send_approve_email(self, user, label_desc, request_id, approver):
         """Generates and sends email in access grant."""
         email_targets = self.email_targets(user)
@@ -143,7 +145,7 @@ class Zoom(BaseEmailAccess):
         )
 
         emailSES(email_targets, email_subject, body)
-    
+
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
         vals = {}
@@ -162,7 +164,6 @@ class Zoom(BaseEmailAccess):
         email_body = ""
 
         emailSES(email_targets, email_subject, email_body)
-    
 
     def revoke(self, user, user_identity, label, request):
         """Revoke access to Zoom.
@@ -181,7 +182,7 @@ class Zoom(BaseEmailAccess):
             response = helper.delete_user(user.email)
         if response[0] != 204:
             return False, response
-        
+
         label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, label_desc, request.request_id)

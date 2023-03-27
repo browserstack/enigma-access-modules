@@ -131,16 +131,14 @@ class Confluence(BaseEmailAccess):
             if response.status_code == 400:
                 return json.loads(response.text)["message"].split(" ")[-1]
             logger.error(
-                "Could not approve permission %s for response %s",
-                {str(permission)},
-                {str(response.text)},
+                "Could not approve permission %s for response %s"
+                % (str(permission), str(response.text))
             )
             return False
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s",
-                {str(permission)},
-                {str(ex)},
+                "Could not approve permission %s for error %s"
+                % (str(permission), str(ex))
             )
             return False
 
@@ -163,9 +161,8 @@ class Confluence(BaseEmailAccess):
 
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s",
-                {str(permission_id)},
-                {str(ex)},
+                "Could not approve permission %s for error %s"
+                % (str(permission_id), str(ex))
             )
             return False
 
@@ -244,7 +241,13 @@ class Confluence(BaseEmailAccess):
         return view_permissions
 
     def approve(
-        self, user_identity, labels, approver, request, is_group=False, auto_approve_rules=None
+        self,
+        user_identity,
+        labels,
+        approver,
+        request,
+        is_group=False,
+        auto_approve_rules=None,
     ):
         """Approves a users access request.
 
@@ -292,7 +295,9 @@ class Confluence(BaseEmailAccess):
             request.update_meta_data("confluence", approve_result)
 
         try:
-            self.__send_approve_email(user_identity.user, request.request_id, access_type, approver)
+            self.__send_approve_email(
+                user_identity.user, request.request_id, access_type, approver
+            )
             return True
         except Exception as ex:
             logger.error("Could not send email for error %s", str(ex))
@@ -344,7 +349,7 @@ class Confluence(BaseEmailAccess):
                 label["access_workspace"], permission["permission_id"]
             )
             if response is False:
-                logger.error("could not revoke access for %s", str(permission))
+                logger.error("could not revoke access for %s" % str(permission))
                 return False
 
         label_desc = self.get_label_desc(label)
@@ -352,7 +357,7 @@ class Confluence(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc)
             return True
         except Exception as ex:
-            logger.error("Could not send email for error %s", str(ex))
+            logger.error("Could not send email for error %s" % str(ex))
             return False
 
     def access_desc(self):
@@ -362,7 +367,7 @@ class Confluence(BaseEmailAccess):
             str: Description of the confluence access module.
         """
         return "Confluence Access Module"
-    
+
     def get_identity_template(self):
         return "confluence/identity_form.html"
 
@@ -372,23 +377,19 @@ class Confluence(BaseEmailAccess):
             ACCESS_MODULES["confluence_module"]["API_TOKEN"],
         )
 
-        headers = {
-            "Accept": "application/json"
-        }
+        headers = {"Accept": "application/json"}
 
-        query = {
-            'accountId': id
-        }
-        
+        query = {"accountId": id}
+
         base_url = ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
         user_url = f"{base_url}/wiki/rest/api/user"
         response = requests.request(
             "GET", user_url, headers=headers, params=query, auth=auth
         )
         user = json.loads(response.text)
-        if(response.status_code != 200 or user["email"] != email):
+        if response.status_code != 200 or user["email"] != email:
             return False
-        
+
         return True
 
     def verify_identity(self, request, email):
@@ -397,7 +398,6 @@ class Confluence(BaseEmailAccess):
             return None
 
         return {"id": id}
-
 
     def tag(self):
         """Returns confluence access tag."""

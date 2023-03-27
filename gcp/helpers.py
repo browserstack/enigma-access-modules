@@ -64,7 +64,7 @@ def grant_gcp_access(group_id, domain_id, user_email):
         ).execute()
         return (True, "")
     except Exception as e:
-        logger.exception("Exception while adding user to a GCP group" + str(e))
+        logger.exception("Exception while adding user to a GCP group: " + str(e))
         if hasattr(e, "reason") and "Member already exists" in e.reason:
             return (True, "")
         return (False, str(e))
@@ -87,7 +87,7 @@ def revoke_gcp_access(group_id, domain_id, user_email):
 
         return (True, "")
     except Exception as e:
-        logger.exception("Exception while removing group from GCP group" + str(e))
+        logger.exception("Exception while removing group from GCP group: " + str(e))
         return (False, str(e))
 
 

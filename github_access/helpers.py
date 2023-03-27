@@ -235,8 +235,8 @@ def _revoke_github_user(username, repo):
 
 
 def is_email_valid(username, email):
-    headers = {'Authorization': 'token %s' % GITHUB_TOKEN}
-    GET_USER_URL = '%s/users/%s' % (GITHUB_BASE_URL, username)
+    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
+    GET_USER_URL = "%s/users/%s" % (GITHUB_BASE_URL, username)
     response = requests.get(GET_USER_URL, headers=headers)
     if response.status_code == 200:
         if "email" in response.json():

@@ -115,7 +115,13 @@ class GCPAccess(BaseEmailAccess):
         return valid_access_label_array
 
     def approve(
-        self, user_identity, labels, approver, request, is_group=False, auto_approve_rules=None
+        self,
+        user_identity,
+        labels,
+        approver,
+        request,
+        is_group=False,
+        auto_approve_rules=None,
     ):
         """Approves a users access request.
 
@@ -148,7 +154,7 @@ class GCPAccess(BaseEmailAccess):
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
             return False
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
@@ -213,7 +219,7 @@ class GCPAccess(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
             return False
 
     def access_request_data(self, request, is_group=False):
@@ -237,9 +243,9 @@ class GCPAccess(BaseEmailAccess):
         """
 
         return "GCP Group Access"
-    
+
     def get_identity_template(self):
-        return ''
+        return ""
 
     def verify_identity(self, request, email):
         return {}

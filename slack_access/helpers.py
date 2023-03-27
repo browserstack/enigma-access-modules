@@ -21,7 +21,8 @@ def _get_team_id(workspace_name):
             return None, response["error"]
     except Exception as e:
         logger.error(
-            f"Could not get team-id for workspace {workspace_name}. Error ocurred: {e}"
+            "Could not get team-id for workspace %s. Error ocurred: %s"
+            % (workspace_name, str(e))
         )
         return None, "Could not get team id"
 
@@ -37,7 +38,9 @@ def _get_channel_ids(workspace_name):
             for channel in response["conversations"]:
                 if (
                     channel["name"]
-                    in ACCESS_MODULES["slack_access"][workspace_name]["DEFAULT_CHANNELS"]
+                    in ACCESS_MODULES["slack_access"][workspace_name][
+                        "DEFAULT_CHANNELS"
+                    ]
                 ):
                     channel_ids.append(channel["id"])
             return channel_ids, None
@@ -46,7 +49,7 @@ def _get_channel_ids(workspace_name):
 
     except Exception as e:
         logger.error(
-            f"Could not get channel id from workspace {workspace_name}. Error ocurred: {e}"
+            f"Could not get channel id from workspace {workspace_name}. Error ocurred: {str(e)}"
         )
         return None, "Could not get channel id"
 
@@ -55,7 +58,9 @@ def invite_user(email, team_id, workspace_name):
     channel_ids, error = _get_channel_ids(workspace_name)
     if error is not None:
         logger.error(
-            f"Could not get channels for requested workspace {workspace_name}. Error ocurred: {error} "
+            "Could not get channels for requested workspace {}. Error ocurred: {}".format(
+                workspace_name, error
+            )
         )
         return False
     try:
@@ -71,7 +76,9 @@ def invite_user(email, team_id, workspace_name):
         return False
     except Exception as e:
         logger.error(
-            f"Could not invite user from workspace {workspace_name}. Error ocurred: {e}"
+            "Could not invite user from workspace {}. Error ocurred: {}".format(
+                workspace_name, str(e)
+            )
         )
         return False
 
@@ -88,7 +95,9 @@ def remove_user(email, workspace_name, team_id):
     if not remove_user_resp:
         return (
             False,
-            "Error ocurred while removing user from workspace. Please contact Admin",
+            "Error ocurred while removing user from {} workspace. Please contact Admin".format(
+                workspace_name
+            ),
         )
 
     return True, None
@@ -108,7 +117,9 @@ def _get_user_id(email, workspace_name):
 
     except Exception as e:
         logger.error(
-            f"Could not get user_id from workspace {workspace_name}. Error ocurred: {e}"
+            "Could not get user_id from workspace {}. Error ocurred: {}".format(
+                workspace_name, str(e)
+            )
         )
         return None, "Could not get user id"
 
@@ -125,7 +136,11 @@ def _remove_user(user_id, team_id, workspace_name):
             return True
         return False
     except Exception as e:
-        logger.error(f"Could not remove from workspace {workspace_name}. Error ocurred: {e}")
+        logger.error(
+            "Could not remove from workspace {}. Error ocurred: {}".format(
+                workspace_name, str(e)
+            )
+        )
         return False
 
 

@@ -72,7 +72,7 @@ class OpsgenieAccess(BaseEmailAccess):
     ):
         """Approves a users access request.
         Args:
-            user_identity (User): User identity object represents user whose access is being approved.
+            user_identity (User): User identity object represents access requested user.
             labels (str): Access Label that respesents the access to be approved.
             approver (User): User who is approving the access.
             request (UserAccessMapping): Access mapping that repesents the User Access.
@@ -80,9 +80,11 @@ class OpsgenieAccess(BaseEmailAccess):
                                        Defaults to False.
             auto_approve_rules (str, optional): Rules for auto approval. Defaults to None.
         Returns:
-            bool: True if the access approval is success, False in case of failure with error string.
+            :return: The return value is a tuple of two values. The first value is a
+            boolean value that indicates whether the approval was successful or not.
+            The second value is a string that contains the error message if the approval
+            was not successful.
         """
-
         user = user_identity.user
         username = user.user.username
         user_email = user.email
@@ -119,7 +121,7 @@ class OpsgenieAccess(BaseEmailAccess):
                 auto_approve_rules,
             )
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
         return True, ""
 
     def __generate_string_from_template(self, filename, **kwargs):
@@ -158,7 +160,7 @@ class OpsgenieAccess(BaseEmailAccess):
         for access to {label_desc} for user {user.email}"""
         emailSES(email_targets, email_subject, "")
 
-    def revoke(self, user, user_identity, access_label, request):
+    def revoke(self, user, user_identity, label, request):
         """Revoke access to Opsgenie.
         Args:
             user (User): User whose access is to be revoked.
@@ -175,7 +177,7 @@ class OpsgenieAccess(BaseEmailAccess):
             if response is not None and response.status_code not in (200, 201):
                 response = None
         else:
-            team = access_label["team"]
+            team = label["team"]
             return_value_remove, response_message = helper.remove_user_from_team(team)
             if return_value_remove is False:
                 return False, "User cannot be revoked due to " + str(response_message)
@@ -186,14 +188,18 @@ class OpsgenieAccess(BaseEmailAccess):
             if usr_result is not None and usr_result in ("Deleted", "Removed"):
                 return_value = True
         else:
-            logger.error("Something went wrong while removing %s from %s: %s", ())
+            logger.error(
+                "Something went wrong while removing %s from %s: %s"
+                % (user.name, label["team"], str(response))
+            )
             return False
 
         access_description = self.access_desc()
         try:
             self.__send_revoke_email(user, request.request_id, access_description)
         except Exception as ex:
-            logger.error("Could not send email for error %s", str(ex))
+            logger.error("Could not send email for error %s" % str(ex))
+            return False
         return return_value, response
 
     def __all_possible_accesses(self):
@@ -203,7 +209,7 @@ class OpsgenieAccess(BaseEmailAccess):
             all_possible_access.update({team: team for team in teams_list})
             return all_possible_access
         except Exception as e:
-            logger.error(e)
+            logger.error("Exception while getting possible accesses: " + str(e))
             teams_list = {}, {}, {}
 
     def access_request_data(self, request, is_group=False):
