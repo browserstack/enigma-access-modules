@@ -206,7 +206,7 @@ class Slack(BaseEmailAccess):
     def get_identity_template(self):
         """Returns path to user identity form template"""
         return ""
-    
+
     def verify_identity(self, request, email):
         """Verifying user Identity.
         Returns:
