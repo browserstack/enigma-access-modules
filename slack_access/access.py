@@ -111,7 +111,7 @@ class Slack(BaseEmailAccess):
             logger.error("Could not send email for error %s", str(e))
             return False
 
-    def revoke(self, user, user_identity, labels, request):
+    def revoke(self, user, user_identity, label, request):
         """Revoke access to Slack.
         Args:
             user (User): User whose access is to be revoked.
@@ -122,9 +122,9 @@ class Slack(BaseEmailAccess):
             bool: True if revoke succeed. False if revoke fails.
             response: (array): Array of user details.
         """
-        access_workspace = labels["workspace_name"]
+        access_workspace = label["workspace_name"]
         response, error_message = remove_user(
-            user_identity.user.email, access_workspace, labels["workspace_id"]
+            user_identity.user.email, access_workspace, label["workspace_id"]
         )
         if not response:
             logger.error(
@@ -132,7 +132,7 @@ class Slack(BaseEmailAccess):
             )
             return False
 
-        label_desc = self.combine_labels_desc(labels)
+        label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
@@ -140,18 +140,18 @@ class Slack(BaseEmailAccess):
             logger.error("Could not send email for error %s", str(e))
             return False
 
-    def get_label_desc(self, labels):
+    def get_label_desc(self, label):
         """Returns access label description.
         Args:
             labels: access label whose access to be requested.
         Returns:
             string: Description of access label.
         """
-        access_workspace = labels["workspace_name"]
+        access_workspace = label["workspace_name"]
 
         return "Slack access for Workspace: " + access_workspace
 
-    def combine_labels_desc(self, labelss):
+    def combine_labels_desc(self, labels):
         """Combines multiple labelss.
         Args:
             labelss (array): Array of access labels.
@@ -159,8 +159,8 @@ class Slack(BaseEmailAccess):
             str: Comma seperated access labels.
         """
         label_descriptions_set = set()
-        for labels in labelss:
-            label_desc = self.get_label_desc(labels)
+        for access_label in labels:
+            label_desc = self.get_label_desc(access_label)
             label_descriptions_set.add(label_desc)
 
         return ", ".join(label_descriptions_set)
