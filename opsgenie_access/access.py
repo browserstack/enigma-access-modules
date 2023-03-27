@@ -56,7 +56,33 @@ class OpsgenieAccess(BaseEmailAccess):
         return valid_access_label_array
 
     def combine_labels_desc(self, labels):
-        return str(labels[0]["team"]) + " " + str(labels[0]["usertype"])
+        """Combines multiple labelss.
+        Args:
+            labelss (array): Array of access labels.
+        Returns:
+            str: Comma seperated access labels.
+        """
+        label_descriptions_set = set()
+        for access_label in labels:
+            label_desc = self.get_label_desc(access_label)
+            label_descriptions_set.add(label_desc)
+        return ", ".join(label_descriptions_set)
+
+    def get_label_desc(self, label):
+        """Returns access label description.
+        Args:
+            labels: access label whose access to be requested.
+        Returns:
+            string: Description of access label.
+        """
+        opsgenie_team = label["team"]
+        opsgenie_usertype = label["usertype"]
+        return (
+            "Opsgenie access for Team: "
+            + opsgenie_team
+            + " and Role: "
+            + opsgenie_usertype
+        )
 
     def get_team_and_usertype(self, labels):
         return labels["team"], labels["usertype"]
@@ -108,7 +134,7 @@ class OpsgenieAccess(BaseEmailAccess):
                 value = False
                 return False, "Failed to add user to Team" + str(error_message)
 
-        access_description = self.access_desc()
+        access_description = self.combine_labels_desc(labels)
         try:
             self.__send_approve_email(
                 user_identity.user,
@@ -189,7 +215,7 @@ class OpsgenieAccess(BaseEmailAccess):
             logger.error("Something went wrong while removing %s from %s: %s", ())
             return False
 
-        access_description = self.access_desc()
+        access_description = self.get_label_desc(access_label)
         try:
             self.__send_revoke_email(user, request.request_id, access_description)
         except Exception as ex:
@@ -218,18 +244,6 @@ class OpsgenieAccess(BaseEmailAccess):
         user_accesses = {}
         user_accesses["opsgenie"] = self.__all_possible_accesses()
         return user_accesses
-
-    def get_label_desc(self, access_label):
-        """Returns access lable descryption.
-        Args:
-            access_label: access lable whose access to be requested.
-        Returns:
-            string: Descryption of access lable.
-        """
-        if "team" in access_label:
-            return access_label["team"]
-        else:
-            return access_label["data"]
 
     def verify_identity(self, request, email):
         """Verifying user Identity.
