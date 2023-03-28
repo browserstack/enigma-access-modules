@@ -9,11 +9,19 @@
     },
     "inventory_file_path": {
       "type": "string"
+    },
+    "common_sudo_group": {
+      "type": "string"
+    },
+    "private_key_path": {
+      "type": "string"
     }
   },
   "required": [
     "engima_root_user",
     "app_user",
-    "inventory_file_path"
+    "inventory_file_path",
+    "common_sudo_group",
+    "private_key_path"
   ]
 }

@@ -3,5 +3,5 @@
   "app_user": "app",
   "inventory_file_path":"Access/access_modules/ssh/inventory.csv",
   "common_sudo_group": "sudoppl",
-  "private_key_path": "/Users/nivesh/.ssh/id_rsa"
+  "private_key_path": "/Users/username/.ssh/id_rsa"
 }
