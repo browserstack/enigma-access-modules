@@ -4,6 +4,7 @@ import logging
 from django.template import loader
 from requests.auth import HTTPBasicAuth
 import requests
+import constants
 
 from Access.base_email_access.access import BaseEmailAccess
 from EnigmaAutomation.settings import ACCESS_MODULES
@@ -51,16 +52,23 @@ class Confluence(BaseEmailAccess):
         Returns:
             arr: Array of the access labels for the request access.
         """
-        access_workspace = access_labels_data[0]["accessWorkspace"]
-        access_type = access_labels_data[0]["confluenceAccessType"]
         valid_access_label_array = []
         for access_label_data in access_labels_data:
-            valid_access_label = {"data": access_label_data}
+            if not access_label_data.get("accessWorkspace") or not access_label_data.get("confluenceAccessType"):
+                raise(constants.ERROR_MESSAGES["missing_argument"])
+            if not self.__in_access_types(access_label_data.get("confluenceAccessType")):
+                raise(constants.ERROR_MESSAGES["valid_access_type"])
+            
+            valid_access_label = {
+                "access_workspace": access_label_data.get("accessWorkspace"),
+                "access_type": access_label_data.get("confluenceAccessType")
+            }
             valid_access_label_array.append(valid_access_label)
 
-        valid_access_label["access_workspace"] = access_workspace
-        valid_access_label["access_type"] = access_type
         return valid_access_label_array
+
+    def __in_access_types(self, access_type):
+        return access_type in ["View Access", "Edit Access", "Admin Access"]
 
     def get_label_desc(self, access_label):
         """Gets the access label descrption.
