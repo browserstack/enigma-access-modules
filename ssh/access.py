@@ -1,6 +1,6 @@
 import logging
 
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 from . import helpers, urls
 
@@ -185,7 +185,7 @@ class SSHAccess(BaseEmailAccess):
         Returns:
             bool: True if the request is approved, False otherwise
         """
-        is_revoked, error_message = helpers.sshHelper(label, user_identity, user, "revoke")
+        is_revoked, error_message = helpers.sshHelper([label], user_identity, user, "revoke")
 
         if not is_revoked:
             logger.error(

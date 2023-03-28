@@ -22,7 +22,7 @@ def get_ip_from_hostname(hostname):
 def get_connection_to_host(ip):
 
     # Connect to the remote machine
-    connection = Connection(user=ACCESS_MODULES["ssh"]["engima_root_user"], host=ip)
+    connection = Connection(user=ACCESS_MODULES["ssh"]["engima_root_user"], host=ip, connect_kwargs={"key_filename": ACCESS_MODULES["ssh"]["private_key_path"]})
     logger.info(f"Connection to then remove machine with ip: {ip} has been formed")
 
     # check whether authentication is successful or not
@@ -35,27 +35,34 @@ def get_connection_to_host(ip):
         return False
 
 
+def get_username(access_level, user):
+    username = user.user.username
+    if access_level not in ["sudo", "nonsudo"]:
+        username = access_level
+        if access_level == "app":
+            username = ACCESS_MODULES["ssh"]["app_user"]
+    
+    return username
+
+
 def sshHelper(labels, user_identity, user, action):
     for label in labels:
         access_level = label["access_level"]
         hostname = label["machine"]
         ip = label["ip"]
-        username = user.user.username
+        username = get_username(access_level, user)
         ssh_key = user_identity.identity["ssh_public_key"]
 
         if action == "grant":
-            if access_level in ["sudo", "non sudo"]:
+            if access_level in ["sudo", "nonsudo"]:
                 return add_user(hostname, ip, ssh_key, username, access_level)
             else:
-                return add_key_existing_user(ip, ssh_key, access_level)
+                return add_key_existing_user(ip, ssh_key, access_level, username)
         elif action == "revoke":
             return revoke_user_access(hostname, ip, ssh_key, username)
 
 
-def add_key_existing_user(ip, ssh_key, access_level):
-    username = access_level
-    if access_level == "app":
-        username = ACCESS_MODULES["ssh"]["app_user"]
+def add_key_existing_user(ip, ssh_key, access_level, username):
     
     connection = get_connection_to_host(ip)
     if not connection:
@@ -93,7 +100,7 @@ def add_user(hostname, ip, ssh_key, username, access_level):
 
         # Check if the user should be a root user or a basic user
         if access_level == "sudo":
-            connection.sudo("usermod -aG sudo {}".format(username))
+            connection.sudo("usermod -aG {} {}".format(ACCESS_MODULES["ssh"]["common_sudo_group"], username))
 
         # Create the .ssh directory
         connection.sudo("mkdir /home/{}/.ssh".format(username))
