@@ -5,25 +5,7 @@
 </div>
 
 <script type="text/javascript">
-  labelComponents = [{}]
-  function githubAccessLevelChange(elem) {
-    if (!labelComponents.length) {
-      labelComponents = [{}]
-    }
-    labelComponents[0]["accessLevel"] = elem.value;
-    $('#github_accessLabel').val(JSON.stringify(labelComponents));
-  }
-
   jQuery(document).ready(function ($) {
-    $('#search-github').multiselect({
-      search: {
-        left: '<input type="text" class="form-control" placeholder="Search..." />',
-        right: '<input type="text" class="form-control" placeholder="Search..." />',
-      },
-      fireSearch: function (value) {
-        return value.length > 1;
-      }
-    });
     function getSelectedRepos() {
       return $('#search-github_to').children().map(function () { return $(this).val() }).get()
     }
@@ -35,12 +17,34 @@
       labelComponents[0]["repoList"] = getSelectedRepos()
       $('#github_accessLabel').val(JSON.stringify(labelComponents));
     }
-    $("#search-github").on("change", repoListChange)
-    $("#search-github_to").on("change", repoListChange)
-    $("#search-github_rightAll").on("click", repoListChange)
-    $("#search-github_rightSelected").on("click", repoListChange)
-    $("#search-github_leftSelected").on("click", repoListChange)
-    $("#search-github_leftAll").on("click", repoListChange)
+    function githubAccessLevelChange() {
+      labelComponents = JSON.parse($('#github_accessLabel').val());
+      if (!labelComponents.length) {
+        labelComponents = [{}]
+      }
+      labelComponents[0]["accessLevel"] = $("#githubaccess").val();
+      $('#github_accessLabel').val(JSON.stringify(labelComponents));
+    }
+    function registerEventsOnLoad() {
+      $("#githubaccess").on("change", githubAccessLevelChange)
+      $("#search-github").on("change", repoListChange)
+      $("#search-github_to").on("change", repoListChange)
+
+      $('#search-github').multiselect({
+        search: {
+          left: '<input type="text" class="form-control" placeholder="Search..." />',
+          right: '<input type="text" class="form-control" placeholder="Search..." />',
+        },
+        fireSearch: function (value) {
+          return value.length > 1;
+        },
+        submitAllLeft: false,
+        submitAllRight: false,
+        afterMoveToRight: repoListChange,
+        afterMoveToLeft: repoListChange,
+      });
+    }
+    registerEventsOnLoad()
   });
 </script>
 
@@ -54,8 +58,7 @@
       <div class="col-sm-3">
         <label for="Access" class=""
           style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
-        <select id="githubaccess" name="githubAccessLevel" class="form-control"
-          onchange="githubAccessLevelChange(this)">
+        <select id="githubaccess" name="githubAccessLevel" class="form-control">
           <option hidden disabled selected value> -- select -- </option>
           <option value="push">push</option>
           <option value="pull">pull</option>
