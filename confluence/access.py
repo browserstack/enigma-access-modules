@@ -55,9 +55,9 @@ class Confluence(BaseEmailAccess):
         valid_access_label_array = []
         for access_label_data in access_labels_data:
             if not access_label_data.get("accessWorkspace") or not access_label_data.get("confluenceAccessType"):
-                raise(constants.ERROR_MESSAGES["missing_argument"])
+                raise Exception(constants.ERROR_MESSAGES["missing_argument"])
             if not self.__in_access_types(access_label_data.get("confluenceAccessType")):
-                raise(constants.ERROR_MESSAGES["valid_access_type"])
+                raise Exception(constants.ERROR_MESSAGES["valid_access_type"])
             
             valid_access_label = {
                 "access_workspace": access_label_data.get("accessWorkspace"),
