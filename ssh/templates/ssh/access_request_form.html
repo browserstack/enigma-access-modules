@@ -5,62 +5,71 @@
 </div>
 
 <script type="text/javascript">
-  function sshAccessLevelChange(elem){
-    if(elem.value=='other'){
-      document.getElementById('otherssh').style.display = "block";
-    } else{
-      document.getElementById('otherssh').style.display = "none";
+  jQuery(document).ready(function($) {
+    function getSelectedMachines() {
+      return $('#search-machine_to').children().map(function () { return $(this).val() }).get()
+    }
+    function getOtherIPs() {
+      return $('#otherMachines').val()
+    }
+    function sshAccessLevelChange(){
+      access_level = $("#sshaccess").val();
+      if(access_level=='other'){
+        $("#otherssh").show();
+      } else{
+        $("#otherssh").hide()
+        labelComponents = JSON.parse($('#sshLabel').val());
+        if(!labelComponents.length){
+          labelComponents = [{}];
+        }
+        labelComponents[0]["accessLevel"] = access_level;
+        $('#sshLabel').val(JSON.stringify(labelComponents));
+      }
+    }
+    function otherUsernameChange(){
+      labelComponents = JSON.parse($('#sshLabel').val());
+      username = $("#username").val();
+      if(!labelComponents.length){
+        labelComponents = [{}];
+      }
+      labelComponents[0]["accessLevel"] = username;
+      $('#sshLabel').val(JSON.stringify(labelComponents));
+    }
+    function machineListChange() {
       labelComponents = JSON.parse($('#sshLabel').val());
       if(!labelComponents.length){
         labelComponents = [{}]
       }
-      labelComponents[0]["accessLevel"] = elem.value
+      labelComponents[0]["selected_machines"] = getSelectedMachines()
+      labelComponents[0]["other_machines"] = getOtherIPs()
       $('#sshLabel').val(JSON.stringify(labelComponents));
     }
-  }
 
-  function otherUsernameChange(elem){
-    labelComponents = JSON.parse($('#sshLabel').val());
-    if(!labelComponents.length){
-      labelComponents = [{}]
+    function registerEventsOnLoad() {
+      $('#sshaccess').dropdown();
+      $("#sshaccess").on("change", sshAccessLevelChange);
+      $("#username").on("input", otherUsernameChange);
+      $("#search-machine_to").on("change", machineListChange);
+      $("#search-machine").on("change", machineListChange);
+      $("#otherMachines").on("input", machineListChange)
+
+      $("#search-machine").multiselect({
+        search: {
+          left: '<input type="text" class="form-control" placeholder="Search..." />',
+          right: '<input type="text" class="form-control" placeholder="Search..." />',
+        },
+        fireSearch: function (value) {
+          return value.length > 1;
+        },
+        submitAllLeft: false,
+        submitAllRight: false,
+        afterMoveToRight: machineListChange,
+        afterMoveToLeft: machineListChange,
+      });
     }
-    labelComponents[0]["accessLevel"] = elem.value
-    $('#sshLabel').val(JSON.stringify(labelComponents));
-  }
 
-  jQuery(document).ready(function($) {
-        $('#search-machine').multiselect({
-            search: {
-                left: '<input type="text" class="form-control" placeholder="Search..." />',
-                right: '<input type="text" class="form-control" placeholder="Search..." />',
-            },
-            fireSearch: function(value) {
-                return value.length > 1;
-            }
-        });
-        function getSelectedMachines() {
-          return $('#search-machine_to').children().map(function () { return $(this).val() }).get()
-        }
-        function getOtherIPs() {
-          return $('#otherMachines').val()
-        }
-        function machineListChange() {
-          labelComponents = JSON.parse($('#sshLabel').val());
-          if(!labelComponents.length){
-            labelComponents = [{}]
-          }
-          labelComponents[0]["selected_machines"] = getSelectedMachines()
-          labelComponents[0]["other_machines"] = getOtherIPs()
-          $('#sshLabel').val(JSON.stringify(labelComponents));
-        }
-        $("#search-machine").on("change", machineListChange)
-        $("#search-machine_to").on("change",machineListChange)
-        $("#search-machine_rightAll").on("click", machineListChange)
-        $("#search-machine_rightSelected").on("click", machineListChange)
-        $("#search-machine_leftSelected").on("click", machineListChange)
-        $("#search-machine_leftAll").on("click", machineListChange)
-        $("#otherMachines").on("input", machineListChange)
-    });
+    registerEventsOnLoad()
+  });
 
 </script>
 
@@ -69,7 +78,7 @@
         <div class="row">
           <div class="col-sm-3">
             <label for="Access" class="" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
-            <select id="sshaccess" name="sshAccessLevel" class="form-control" onchange="sshAccessLevelChange(this)" required>
+            <select id="sshaccess" name="sshAccessLevel" class="form-control" required>
                   <option hidden disabled selected value> -- select -- </option>
                   <option value="app" >app</option>
                   <option value="nonsudo" >non-sudo</option>
@@ -81,7 +90,7 @@
             <div id="otherssh" style="display:none">
               <label for="otherssh" class="" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Other Username:</label>
               <div class="wrapper">
-                <input type="text" class="form-text1" id="username" name="otherUsername" oninput="otherUsernameChange(this)" style="width:60%;" maxlength="2048" placeholder="Provide Other Username">
+                <input type="text" class="form-text1" id="username" name="otherUsername" style="width:60%;" maxlength="2048" placeholder="Provide Other Username">
               </div>
             </div>
           </div>
@@ -90,21 +99,19 @@
         <div class="row">
           <div class="col-xs-5 col-md-5">
             <select id="search-machine" class="form-control" size="8" multiple="multiple">
-                        {% for machine in each_access.accessRequestData.machineList %}
-                          <option value="{{machine.tagname}},{{machine.ip}}">{{machine.name}}</option>
-                        {%endfor%}
-                      </select>
+              {% for machine in each_access.accessRequestData.machineList %}
+                <option value="{{machine.tagname}},{{machine.ip}}">{{machine.name}}</option>
+              {%endfor%}
+            </select>
           </div>
 
           <div class="col-xs-2 col-md-2" style="margin-top:1%;">
-            <button type="button" id="search-machine_rightAll" class="btn btn-block btn-primary" disabled><i class="fa fa-angle-double-right" style="font-size:24px"></i></button>
             <button type="button" id="search-machine_rightSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
             <button type="button" id="search-machine_leftSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
-            <button type="button" id="search-machine_leftAll" class="btn btn-block btn-primary" disabled><i class="fa fa-angle-double-left" style="font-size:24px"></i></button>
           </div>
 
           <div class="col-xs-5 col-md-5">
-            <select name="selectedMachineList" id="search-machine_to" class="form-control" size="8" multiple="multiple"></select>
+            <select id="search-machine_to" class="form-control" size="8" multiple="multiple"></select>
           </div>
         </div>
 
