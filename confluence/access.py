@@ -4,11 +4,11 @@ import logging
 from django.template import loader
 from requests.auth import HTTPBasicAuth
 import requests
-import constants
 
 from Access.base_email_access.access import BaseEmailAccess
 from EnigmaAutomation.settings import ACCESS_MODULES
 from bootprocess.general import emailSES
+from . import constants
 
 logger = logging.getLogger(__name__)
 
