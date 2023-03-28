@@ -3,7 +3,7 @@ from django.template import loader
 import logging
 
 from . import constants, helpers, urls
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 
 

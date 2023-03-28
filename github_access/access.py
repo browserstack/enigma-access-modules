@@ -1,6 +1,6 @@
 import logging
 
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from Access.access_modules.github_access.helpers import (
     get_org,
     get_org_invite,

@@ -1,6 +1,6 @@
 """access module for AWS"""
 from . import helpers, constants, urls
-from Access.access_modules.base_email_access.access import BaseEmailAccess
+from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 
 import logging
@@ -68,7 +68,7 @@ class AWSAccess(BaseEmailAccess):
         label_meta = self.combine_labels_meta(labels)
         for label in labels:
             granted_access, exception = helpers.grant_aws_access(
-                user.email, label["account"], label["group"]
+                user, label["account"], label["group"]
             )
 
             if not granted_access:
@@ -210,7 +210,7 @@ class AWSAccess(BaseEmailAccess):
             bool: True is the revoke is success. False if the revoke Fails.
         """
         is_revoked, exception = helpers.revoke_aws_access(
-            user.email, label["account"], label["group"]
+            user, label["account"], label["group"]
         )
 
         if not is_revoked:
