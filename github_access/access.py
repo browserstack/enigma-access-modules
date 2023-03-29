@@ -208,9 +208,6 @@ class GithubAccess(BaseEmailAccess):
             )
         )
 
-    def get_extra_fields(self):
-        return ["repoList"]
-
     def validate_request(self, access_labels_data, request_user, is_group=False):
         valid_access_label_array = []
         valid_access_label = {}
