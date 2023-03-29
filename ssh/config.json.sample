@@ -1,0 +1,7 @@
+{
+  "engima_root_user": "enigma-user",
+  "app_user": "app",
+  "inventory_file_path":"Access/access_modules/ssh/inventory.csv",
+  "common_sudo_group": "sudoppl",
+  "private_key_path": "/Users/username/.ssh/id_rsa"
+}

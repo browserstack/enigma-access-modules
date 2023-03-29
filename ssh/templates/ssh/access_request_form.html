@@ -1,0 +1,126 @@
+<div class="page-header">
+  <div class="container-fluid">
+    <h2 class="h5 no-margin-bottom">{{ each_access.formDesc }}</h2>
+  </div>
+</div>
+
+<script type="text/javascript">
+  jQuery(document).ready(function($) {
+    function getSelectedMachines() {
+      return $('#search-machine_to').children().map(function () { return $(this).val() }).get()
+    }
+    function getOtherIPs() {
+      return $('#otherMachines').val()
+    }
+    function sshAccessLevelChange(){
+      access_level = $("#sshaccess").val();
+      if(access_level=='other'){
+        $("#otherssh").show();
+      } else{
+        $("#otherssh").hide()
+        labelComponents = JSON.parse($('#sshLabel').val());
+        if(!labelComponents.length){
+          labelComponents = [{}];
+        }
+        labelComponents[0]["accessLevel"] = access_level;
+        $('#sshLabel').val(JSON.stringify(labelComponents));
+      }
+    }
+    function otherUsernameChange(){
+      labelComponents = JSON.parse($('#sshLabel').val());
+      username = $("#username").val();
+      if(!labelComponents.length){
+        labelComponents = [{}];
+      }
+      labelComponents[0]["accessLevel"] = username;
+      $('#sshLabel').val(JSON.stringify(labelComponents));
+    }
+    function machineListChange() {
+      labelComponents = JSON.parse($('#sshLabel').val());
+      if(!labelComponents.length){
+        labelComponents = [{}]
+      }
+      labelComponents[0]["selected_machines"] = getSelectedMachines()
+      labelComponents[0]["other_machines"] = getOtherIPs()
+      $('#sshLabel').val(JSON.stringify(labelComponents));
+    }
+
+    function registerEventsOnLoad() {
+      $('#sshaccess').dropdown();
+      $("#sshaccess").on("change", sshAccessLevelChange);
+      $("#username").on("input", otherUsernameChange);
+      $("#search-machine_to").on("change", machineListChange);
+      $("#search-machine").on("change", machineListChange);
+      $("#otherMachines").on("input", machineListChange)
+
+      $("#search-machine").multiselect({
+        search: {
+          left: '<input type="text" class="form-control" placeholder="Search..." />',
+          right: '<input type="text" class="form-control" placeholder="Search..." />',
+        },
+        fireSearch: function (value) {
+          return value.length > 1;
+        },
+        submitAllLeft: false,
+        submitAllRight: false,
+        afterMoveToRight: machineListChange,
+        afterMoveToLeft: machineListChange,
+      });
+    }
+
+    registerEventsOnLoad()
+  });
+
+</script>
+
+<div class="row">
+  <div class="col-md-12">
+        <div class="row">
+          <div class="col-sm-3">
+            <label for="Access" class="" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
+            <select id="sshaccess" name="sshAccessLevel" class="form-control" required>
+                  <option hidden disabled selected value> -- select -- </option>
+                  <option value="app" >app</option>
+                  <option value="nonsudo" >non-sudo</option>
+                  <option value="sudo" >sudo</option>
+                  <option value="other">other</option>
+                </select>
+          </div>
+          <div class="col-sm-9" style="font-weight: bolder; min-height:0px; ">
+            <div id="otherssh" style="display:none">
+              <label for="otherssh" class="" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Other Username:</label>
+              <div class="wrapper">
+                <input type="text" class="form-text1" id="username" name="otherUsername" style="width:60%;" maxlength="2048" placeholder="Provide Other Username">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-xs-5 col-md-5">
+            <select id="search-machine" class="form-control" size="8" multiple="multiple">
+              {% for machine in each_access.accessRequestData.machineList %}
+                <option value="{{machine.tagname}},{{machine.ip}}">{{machine.name}}</option>
+              {%endfor%}
+            </select>
+          </div>
+
+          <div class="col-xs-2 col-md-2" style="margin-top:1%;">
+            <button type="button" id="search-machine_rightSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
+            <button type="button" id="search-machine_leftSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
+          </div>
+
+          <div class="col-xs-5 col-md-5">
+            <select id="search-machine_to" class="form-control" size="8" multiple="multiple"></select>
+          </div>
+        </div>
+
+        <div class="form-group" style="padding-left:1%;">
+          <label class="col-sm-3" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;" for="otherMachines">Other IPs (comma separated): </label>
+          <input type="text" class="form-text1" style="width:60%;" maxlength="2024" id="otherMachines" name="other_ips"><br><br>
+          <label class="col-sm-3" for="reason" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for Access:</label>
+          <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024" required>
+        </div>
+        <input type="hidden" id="sshLabel" value="[]" name="accessLabel">
+  </div>
+</div>
