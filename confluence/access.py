@@ -171,7 +171,7 @@ class Confluence(BaseEmailAccess):
 
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s",
+                "Could not revoke permission %s for error %s",
                 {str(permission_id)},
                 {str(ex)},
             )
@@ -395,6 +395,7 @@ class Confluence(BaseEmailAccess):
         )
         user = json.loads(response.text)
         if(response.status_code != 200 or user["email"] != email):
+            logger.error(f"Could not find the user with id {id} and email {email}.")
             return False
         
         return True
