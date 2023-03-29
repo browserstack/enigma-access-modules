@@ -196,12 +196,12 @@ class OpsgenieAccess(BaseEmailAccess):
             response: (array): Array of user details.
         """
         return_value = False
+        team = access_label["team"]
         if user.state in (2, 3):
             response = helper.delete_user(user.email)
             if response is not None and response.status_code not in (200, 201):
                 response = None
         else:
-            team = access_label["team"]
             return_value_remove, response_message = helper.remove_user_from_team(team)
             if return_value_remove is False:
                 return False, "User cannot be revoked due to " + str(response_message)
@@ -212,7 +212,7 @@ class OpsgenieAccess(BaseEmailAccess):
             if usr_result is not None and usr_result in ("Deleted", "Removed"):
                 return_value = True
         else:
-            logger.error("Something went wrong while removing user")
+            logger.error("Something went wrong while removing %s from %s" % (user.user.username,team))
             return False
 
         access_description = self.get_label_desc(access_label)
