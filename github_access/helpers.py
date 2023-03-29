@@ -66,8 +66,8 @@ def get_org_invite(username):
 def _get_org_invite(username):
     headers = {"Authorization": "token %s" % GITHUB_TOKEN}
     GET_ORG_INVITE_URL = "%s/orgs/%s/invitations" % (GITHUB_BASE_URL, GITHUB_ORG)
-    response = requests.get(GET_ORG_INVITE_URL, headers=headers)
-    return username in [member["login"] for member in response.json()]
+    response = requests.get(GET_ORG_INVITE_URL, headers=headers).json()
+    return username in [member["login"] for member in response]
 
 
 def put_user(username):
