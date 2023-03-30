@@ -68,11 +68,11 @@ function isAdmin(opsgenieteamadmin) {
     if(!labelComponents.length){
       labelComponents = [{}]
     }
-    
+
     if("UserType" in labelComponents[0]) {
       user_type = labelComponents[0]["UserType"]
     }
-    
+
     finalSelectedLabels.push({"teams_list":teams_list,"UserType": user_type});
     $('#opsgenieLabel').val(JSON.stringify(finalSelectedLabels.sort()));
   }

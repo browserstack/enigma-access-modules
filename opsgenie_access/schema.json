@@ -11,5 +11,7 @@
       }
     }
   },
-  "required": ["OPSGENIE_TOKEN"]
+  "required": [
+    "OPSGENIE_TOKEN"
+  ]
 }

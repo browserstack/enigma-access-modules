@@ -151,8 +151,8 @@ def replace_user_key(hostname, ip, new_ssh_key, old_ssh_key, username):
 
     # Replace the / with \/ in the old SSH key and the new SSH key so that it can
     # be used in the sed command below (sed command uses / as a delimiter)
-    old_ssh_key = old_ssh_key.replace("/", "\/") #noqa
-    new_ssh_key = new_ssh_key.replace("/", "\/") #noqa
+    old_ssh_key = old_ssh_key.replace("/", "\/")  # noqa
+    new_ssh_key = new_ssh_key.replace("/", "\/")  # noqa
 
     try:
         # Replace the old SSH key with the new SSH key in
