@@ -54,14 +54,18 @@ class Confluence(BaseEmailAccess):
         """
         valid_access_label_array = []
         for access_label_data in access_labels_data:
-            if not access_label_data.get("accessWorkspace") or not access_label_data.get("confluenceAccessType"):
+            if not access_label_data.get(
+                "accessWorkspace"
+            ) or not access_label_data.get("confluenceAccessType"):
                 raise Exception(constants.ERROR_MESSAGES["missing_argument"])
-            if not self.__in_access_types(access_label_data.get("confluenceAccessType")):
+            if not self.__in_access_types(
+                access_label_data.get("confluenceAccessType")
+            ):
                 raise Exception(constants.ERROR_MESSAGES["valid_access_type"])
-            
+
             valid_access_label = {
                 "access_workspace": access_label_data.get("accessWorkspace"),
-                "access_type": access_label_data.get("confluenceAccessType")
+                "access_type": access_label_data.get("confluenceAccessType"),
             }
             valid_access_label_array.append(valid_access_label)
 
@@ -395,7 +399,7 @@ class Confluence(BaseEmailAccess):
             "GET", user_url, headers=headers, params=query, auth=auth
         )
         user = json.loads(response.text)
-        if(response.status_code != 200 or user["email"] != email):
+        if response.status_code != 200 or user["email"] != email:
             logger.error(f"Could not find the user with id {id} and email {email}.")
             return False
 

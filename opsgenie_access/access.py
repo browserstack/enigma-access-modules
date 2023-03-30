@@ -214,7 +214,10 @@ class OpsgenieAccess(BaseEmailAccess):
             if usr_result is not None and usr_result in ("Deleted", "Removed"):
                 return_value = True
         else:
-            logger.error("Something went wrong while removing %s from %s" % (user.user.username,team))
+            logger.error(
+                "Something went wrong while removing %s from %s"
+                % (user.user.username, team)
+            )
             return False
 
         access_description = self.get_label_desc(label)

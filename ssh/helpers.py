@@ -1,12 +1,9 @@
-import json
 import traceback
 import logging
-
 from fabric import Connection
-
-logger = logging.getLogger(__name__)
 from EnigmaAutomation.settings import ACCESS_MODULES
 
+logger = logging.getLogger(__name__)
 
 with open(ACCESS_MODULES["ssh"]["inventory_file_path"], "r") as f:
     global ssh_machine_list
@@ -15,6 +12,7 @@ with open(ACCESS_MODULES["ssh"]["inventory_file_path"], "r") as f:
     for line in f.readlines():
         ssh_machine_list[line.split(",")[0]] = line.split(",")[1].strip()
 
+
 def get_ip_from_hostname(hostname):
     return ssh_machine_list[hostname]
 
@@ -22,7 +20,11 @@ def get_ip_from_hostname(hostname):
 def get_connection_to_host(ip):
 
     # Connect to the remote machine
-    connection = Connection(user=ACCESS_MODULES["ssh"]["engima_root_user"], host=ip, connect_kwargs={"key_filename": ACCESS_MODULES["ssh"]["private_key_path"]})
+    connection = Connection(
+        user=ACCESS_MODULES["ssh"]["engima_root_user"],
+        host=ip,
+        connect_kwargs={"key_filename": ACCESS_MODULES["ssh"]["private_key_path"]},
+    )
     logger.info(f"Connection to then remove machine with ip: {ip} has been formed")
 
     # check whether authentication is successful or not
@@ -41,7 +43,7 @@ def get_username(access_level, user):
         username = access_level
         if access_level == "app":
             username = ACCESS_MODULES["ssh"]["app_user"]
-    
+
     return username
 
 
@@ -63,7 +65,7 @@ def sshHelper(labels, user_identity, user, action):
 
 
 def add_key_existing_user(ip, ssh_key, access_level, username):
-    
+
     connection = get_connection_to_host(ip)
     if not connection:
         return False, "Authentication failed to machine."
@@ -75,11 +77,14 @@ def add_key_existing_user(ip, ssh_key, access_level, username):
             )
         )
     except Exception as e:
-        logger.exception("Exception while adding ssh key to {}: {}".format(username, str(e)))
+        logger.exception(
+            "Exception while adding ssh key to {}: {}".format(username, str(e))
+        )
         return False, "Failed to add ssh to user"
 
     connection.close()
     return True, ""
+
 
 def add_user(hostname, ip, ssh_key, username, access_level):
     connection = get_connection_to_host(ip)
@@ -100,7 +105,11 @@ def add_user(hostname, ip, ssh_key, username, access_level):
 
         # Check if the user should be a root user or a basic user
         if access_level == "sudo":
-            connection.sudo("usermod -aG {} {}".format(ACCESS_MODULES["ssh"]["common_sudo_group"], username))
+            connection.sudo(
+                "usermod -aG {} {}".format(
+                    ACCESS_MODULES["ssh"]["common_sudo_group"], username
+                )
+            )
 
         # Create the .ssh directory
         connection.sudo("mkdir /home/{}/.ssh".format(username))
@@ -122,7 +131,7 @@ def add_user(hostname, ip, ssh_key, username, access_level):
         # group of the user (username:username)
         connection.sudo("chown -R {}:{} /home/{}".format(username, username, username))
     except Exception as e:
-        logger.error("Exception occured while adding user: "+str(e))
+        logger.error("Exception occured while adding user: " + str(e))
         traceback.print_exc()
         return False, "Failed to add user"
 
@@ -142,21 +151,21 @@ def replace_user_key(hostname, ip, new_ssh_key, old_ssh_key, username):
 
     # Replace the / with \/ in the old SSH key and the new SSH key so that it can
     # be used in the sed command below (sed command uses / as a delimiter)
-    old_ssh_key = old_ssh_key.replace("/", "\/")
-    new_ssh_key = new_ssh_key.replace("/", "\/")
+    old_ssh_key = old_ssh_key.replace("/", "\/") #noqa
+    new_ssh_key = new_ssh_key.replace("/", "\/") #noqa
 
     try:
-        # Replace the old SSH key with the new SSH key in the authorized_keys file on the remote machine
+        # Replace the old SSH key with the new SSH key in
+        # the authorized_keys file on the remote machine
         connection.sudo(
             'sed -i "s/{}/{}/g" /home/{}/.ssh/authorized_keys'.format(
                 old_ssh_key, new_ssh_key, username
             )
         )
     except Exception as e:
-        logger.exception("Exception while replacing the ssh Key: "+str(e))
+        logger.exception("Exception while replacing the ssh Key: " + str(e))
         return False, "Failed to replace ssh key"
 
     # Close the connection
     connection.close()
     return True, ""
-

@@ -2,7 +2,7 @@ import logging
 
 from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
-from . import helpers, urls
+from . import helpers
 
 from django.template import loader
 
@@ -11,8 +11,9 @@ logger = logging.getLogger(__name__)
 
 class SSHAccess(BaseEmailAccess):
     """SSH Access Module"""
+
     available = True
-    urlpatterns = urls.urlpatterns
+    urlpatterns = []
 
     def email_targets(self, user):
         """returns email targets
@@ -53,7 +54,9 @@ class SSHAccess(BaseEmailAccess):
         label_desc = self.combine_labels_desc(labels)
         user = user_identity.user
 
-        return_value, error_message = helpers.sshHelper(labels, user_identity, user, "grant")
+        return_value, error_message = helpers.sshHelper(
+            labels, user_identity, user, "grant"
+        )
 
         if not return_value:
             logger.error(
@@ -63,7 +66,12 @@ class SSHAccess(BaseEmailAccess):
 
         try:
             self.__send_approve_email(
-                user, label_desc, request.request_id, approver, return_value, auto_approve_rules
+                user,
+                label_desc,
+                request.request_id,
+                approver,
+                return_value,
+                auto_approve_rules,
             )
         except Exception as e:
             logger.error(
@@ -169,7 +177,7 @@ class SSHAccess(BaseEmailAccess):
             if key == "hostname" and value == "ip":
                 continue
             machineList.append({"name": key, "tagname": key, "ip": value})
-        data = {'machineList': machineList}
+        data = {"machineList": machineList}
         return data
 
     def revoke(self, user, user_identity, label, request):
@@ -185,7 +193,9 @@ class SSHAccess(BaseEmailAccess):
         Returns:
             bool: True if the request is approved, False otherwise
         """
-        is_revoked, error_message = helpers.sshHelper([label], user_identity, user, "revoke")
+        is_revoked, error_message = helpers.sshHelper(
+            [label], user_identity, user, "revoke"
+        )
 
         if not is_revoked:
             logger.error(
@@ -226,18 +236,18 @@ class SSHAccess(BaseEmailAccess):
                 label = {
                     "machine": hostname,
                     "access_level": label_data["accessLevel"],
-                    "ip": ip
+                    "ip": ip,
                 }
                 valid_access_label_array.append(label)
-            
+
             if label_data["other_machines"]:
                 label_data["other_machines"] = label_data["other_machines"].split(",")
-            
+
             for other_machine in label_data["other_machines"]:
                 label = {
                     "machine": "other",
                     "access_level": label_data["accessLevel"],
-                    "ip": other_machine
+                    "ip": other_machine,
                 }
                 valid_access_label_array.append(label)
 
@@ -274,14 +284,14 @@ class SSHAccess(BaseEmailAccess):
             str: tag for the SSH access module
         """
         return "ssh"
-    
+
     def get_identity_template(self):
-        return 'ssh/identity_form.html'
+        return "ssh/identity_form.html"
 
     def verify_identity(self, request, email):
         ssh_public_key = request["ssh_pub_key"]
         return {"ssh_public_key": ssh_public_key}
-    
+
     def can_auto_approve(self):
         return False
 
