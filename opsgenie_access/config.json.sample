@@ -1,4 +1,7 @@
 {
-  "OPSGENIE_TOKEN":"test-token",
-  "IGNORE_TEAMS":["team_1","team_2"]
+  "OPSGENIE_TOKEN": "test-token",
+  "IGNORE_TEAMS": [
+    "team_1",
+    "team_2"
+  ]
 }

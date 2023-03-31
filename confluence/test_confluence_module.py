@@ -5,6 +5,7 @@ from EnigmaAutomation.settings import ACCESS_MODULES
 
 class MockRequest:
     """Mock HTTP Request for confluence"""
+
     def __init__(self):
         self.request_id = ""
         self.meta_data = {

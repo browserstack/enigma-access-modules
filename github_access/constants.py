@@ -1,7 +1,6 @@
 USER_NOT_FOUND = "User %s not present on github."
-INVITE_USER_SUCCESS = (
-    "Invited user %s to join github org. Access can be granted post inivation acceptance."
-)
+INVITE_USER_SUCCESS = "Invited user %s to join github org. \
+        Access can be granted post inivation acceptance."
 INVITE_USER_FAILED = "Failed to add user %s to github org"
 REPO_NOT_FOUND = "Repository %s does not exist"
 GRANT_ACCESS_FAILED = "Failed to grant access to user %s for repo %s"
@@ -13,3 +12,7 @@ GET_USER_BY_EMAIL_FAILED = "Failed to read user email address from github. \
         Please chnage visibility to public for email address from Github Profile"
 USER_IDENTITY_NOT_FOUND = "Failed to verify identity for user %s. \
         User does not exist OR invalid details entered."
+ALREADY_INVITED_ERROR = (
+    "User {} has already been invited to join github org."
+    " Accept invite to continue.."
+)

@@ -80,7 +80,7 @@ class Slack(BaseEmailAccess):
     ):
         """Approves a users access request.
         Args:
-            user_identity (User): User identity object represents user whose access is being approved.
+            user_identity (User): User identity object represents access requested user.
             labels (str): Access Label that respesents the access to be approved.
             approver (User): User who is approving the access.
             request (UserAccessMapping): Access mapping that repesents the User Access.
@@ -88,7 +88,10 @@ class Slack(BaseEmailAccess):
                                        Defaults to False.
             auto_approve_rules (str, optional): Rules for auto approval. Defaults to None.
         Returns:
-            bool: True if the access approval is success, False in case of failure with error string.
+            :return: The return value is a tuple of two values. The first value is a
+            boolean value that indicates whether the approval was successful or not.
+            The second value is a string that contains the error message if the approval
+            was not successful.
         """
 
         user = user_identity.user
@@ -99,16 +102,14 @@ class Slack(BaseEmailAccess):
                 user.email, label["workspace_id"], workspace_name
             )
             if not invite_user_resp:
-                logger.error(
-                    f"Could not invite user to requested workspace {workspace_name}. Please contact Admin."
-                )
+                logger.error(constants.INVITE_USER_FAILED.format(workspace_name))
                 return False
 
         try:
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
             return False
 
     def revoke(self, user, user_identity, label, request):
@@ -128,7 +129,7 @@ class Slack(BaseEmailAccess):
         )
         if not response:
             logger.error(
-                f"Could not remove user from requested workspace {access_workspace} : {error_message}"
+                constants.REMOVE_USER_FAILED.format(access_workspace, error_message)
             )
             return False
 
@@ -137,21 +138,21 @@ class Slack(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
             return False
 
-    def get_label_desc(self, label):
+    def get_label_desc(self, access_label):
         """Returns access label description.
         Args:
             labels: access label whose access to be requested.
         Returns:
             string: Description of access label.
         """
-        access_workspace = label["workspace_name"]
+        access_workspace = access_label["workspace_name"]
 
         return "Slack access for Workspace: " + access_workspace
 
-    def combine_labels_desc(self, labels):
+    def combine_labels_desc(self, access_labels):
         """Combines multiple labelss.
         Args:
             labelss (array): Array of access labels.
@@ -159,13 +160,13 @@ class Slack(BaseEmailAccess):
             str: Comma seperated access labels.
         """
         label_descriptions_set = set()
-        for access_label in labels:
+        for access_label in access_labels:
             label_desc = self.get_label_desc(access_label)
             label_descriptions_set.add(label_desc)
 
         return ", ".join(label_descriptions_set)
 
-    def validate_request(self, labels, user, is_group=False):
+    def validate_request(self, access_labels_data, request_user, is_group=False):
         """Combines multiple labelss.
         Args:
             labelss_data (array): Array of access lables types.
@@ -175,7 +176,7 @@ class Slack(BaseEmailAccess):
         """
         valid_labels_array = []
 
-        for label in labels:
+        for label in access_labels_data:
             slack_workspace_data = label["slackAccessWorkspace"]
             slack_workspace_data = json.loads(slack_workspace_data.replace("'", '"'))
 

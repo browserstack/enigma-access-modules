@@ -4,7 +4,6 @@ import logging
 from time import sleep
 import datetime
 import requests
-from requests.auth import HTTPBasicAuth
 import jwt
 from EnigmaAutomation.settings import ACCESS_MODULES
 from . import constants
@@ -98,22 +97,20 @@ def make_request(url, request_type="GET", data=None):
         raise Exception("Zoom Access token is Expired.")
     return [response.status_code, response_data]
 
+
 def grant_access(user, type):
     user_details = get_user(user.email)
     if user_details[0] == 200:
-        response = update_user(
-            user.email, type
-        )
+        response = update_user(user.email, type)
         if response[0] != 204:
             return False, "User updation failed" + str(response)
     else:
-        response = create_user(
-            user.email, type
-        )
+        response = create_user(user.email, type)
         if response[0] != 200 or response[0] != 201:
             return False, "User creation failed" + str(response)
-    
+
     return True, ""
+
 
 def get_user(email):
     """Gets user details

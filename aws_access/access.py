@@ -73,10 +73,8 @@ class AWSAccess(BaseEmailAccess):
 
             if not granted_access:
                 logger.error(
-                    "Something when wrong while adding %s to group %s: %s",
-                    user.email,
-                    label["group"],
-                    str(exception),
+                    "Something when wrong while adding %s to group %s: %s"
+                    % (user.email, label["group"], str(exception))
                 )
                 return False
 
@@ -90,9 +88,7 @@ class AWSAccess(BaseEmailAccess):
                 label_meta,
             )
         except Exception as ex:
-            logger.error(
-                "%s Could not send email for error %s", {self.tag()}, {str(ex)}
-            )
+            logger.error("%s Could not send email for error %s" % (self.tag(), str(ex)))
             return False
 
         return True
@@ -179,7 +175,9 @@ class AWSAccess(BaseEmailAccess):
             for label in access_labels:
                 for key, value in label.items():
                     if str(combined_meta[key]) != "":
-                        combined_meta[key] = ", ".join([str(combined_meta[key]), str(value)])
+                        combined_meta[key] = ", ".join(
+                            [str(combined_meta[key]), str(value)]
+                        )
                     else:
                         combined_meta[key] = str(value)
             return combined_meta
@@ -215,10 +213,8 @@ class AWSAccess(BaseEmailAccess):
 
         if not is_revoked:
             logger.error(
-                "Something went wrong while removing %s from %s: %s",
-                user.email,
-                label["group"],
-                str(exception),
+                "Something went wrong while removing %s from %s: %s"
+                % (user.email, label["group"], str(exception))
             )
             return False
 
@@ -227,7 +223,7 @@ class AWSAccess(BaseEmailAccess):
             self.__send_revoke_email(user, request.request_id, label_desc)
             return True
         except Exception as ex:
-            logger.error("Could not send email for error %s", str(ex))
+            logger.error("Could not send email for error %s" % str(ex))
             return False
 
     def validate_request(self, access_labels_data, request_user, is_group=False):
@@ -312,9 +308,9 @@ class AWSAccess(BaseEmailAccess):
     def access_types(self):
         """Not Implemented."""
         return {}
-        
+
     def get_identity_template(self):
-        return ''
+        return ""
 
     def verify_identity(self, request, email):
         return {}

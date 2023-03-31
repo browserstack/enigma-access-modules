@@ -71,6 +71,7 @@ def get_aws_client(account, resource):
     creds = _get_aws_credentails(account=account)
     return boto3.client(resource, **creds)
 
+
 def __get_username(email):
     return email.split("@")[0]
 
@@ -90,7 +91,7 @@ def grant_aws_access(user, account, group):
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
         client.add_user_to_group(GroupName=group, UserName=__get_username(user.email))
     except Exception as ex:
-        logger.error(str(ex))
+        logger.error("Exception while adding user to AWS group: " + str(ex))
         return False, str(ex)
     return True, ""
 
@@ -108,9 +109,11 @@ def revoke_aws_access(user, account, group):
     """
     try:
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
-        client.remove_user_from_group(GroupName=group, UserName=__get_username(user.email))
+        client.remove_user_from_group(
+            GroupName=group, UserName=__get_username(user.email)
+        )
     except Exception as ex:
-        logger.error(str(ex))
+        logger.error("Exception while removing user from AWS group: " + str(ex))
         return False, str(ex)
     return True, ""
 

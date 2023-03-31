@@ -55,7 +55,7 @@ class OpsgenieAccess(BaseEmailAccess):
             valid_access_label_array.append(valid_access_label)
         return valid_access_label_array
 
-    def combine_labels_desc(self, labels):
+    def combine_labels_desc(self, access_labels):
         """Combines multiple labelss.
         Args:
             labelss (array): Array of access labels.
@@ -63,20 +63,20 @@ class OpsgenieAccess(BaseEmailAccess):
             str: Comma seperated access labels.
         """
         label_descriptions_set = set()
-        for access_label in labels:
+        for access_label in access_labels:
             label_desc = self.get_label_desc(access_label)
             label_descriptions_set.add(label_desc)
         return ", ".join(label_descriptions_set)
 
-    def get_label_desc(self, label):
+    def get_label_desc(self, access_label):
         """Returns access label description.
         Args:
             labels: access label whose access to be requested.
         Returns:
             string: Description of access label.
         """
-        opsgenie_team = label["team"]
-        opsgenie_usertype = label["usertype"]
+        opsgenie_team = access_label["team"]
+        opsgenie_usertype = access_label["usertype"]
         return (
             "Opsgenie access for Team: "
             + opsgenie_team
@@ -84,7 +84,7 @@ class OpsgenieAccess(BaseEmailAccess):
             + opsgenie_usertype
         )
 
-    def get_team_and_usertype(self, labels):
+    def __get_team_and_usertype(self, labels):
         return labels["team"], labels["usertype"]
 
     def approve(
@@ -98,7 +98,7 @@ class OpsgenieAccess(BaseEmailAccess):
     ):
         """Approves a users access request.
         Args:
-            user_identity (User): User identity object represents user whose access is being approved.
+            user_identity (User): User identity object represents access requested user.
             labels (str): Access Label that respesents the access to be approved.
             approver (User): User who is approving the access.
             request (UserAccessMapping): Access mapping that repesents the User Access.
@@ -106,14 +106,16 @@ class OpsgenieAccess(BaseEmailAccess):
                                        Defaults to False.
             auto_approve_rules (str, optional): Rules for auto approval. Defaults to None.
         Returns:
-            bool: True if the access approval is success, False in case of failure with error string.
+            :return: The return value is a tuple of two values. The first value is a
+            boolean value that indicates whether the approval was successful or not.
+            The second value is a string that contains the error message if the approval
+            was not successful.
         """
-
         user = user_identity.user
         username = user.user.username
         user_email = user.email
         for label in labels:
-            team, user_type = self.get_team_and_usertype(label)
+            team, user_type = self.__get_team_and_usertype(label)
             value = True
             role = "user"
             if user_type == "team_admin":
@@ -145,7 +147,7 @@ class OpsgenieAccess(BaseEmailAccess):
                 auto_approve_rules,
             )
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.error("Could not send email for error %s" % str(e))
         return True, ""
 
     def __generate_string_from_template(self, filename, **kwargs):
@@ -184,19 +186,19 @@ class OpsgenieAccess(BaseEmailAccess):
         for access to {label_desc} for user {user.email}"""
         emailSES(email_targets, email_subject, "")
 
-    def revoke(self, user, user_identity, access_label, request):
+    def revoke(self, user, user_identity, label, request):
         """Revoke access to Opsgenie.
         Args:
             user (User): User whose access is to be revoked.
             user_identity (UserIdentity): User Identity object represents identity of user.
-            access_label (str): Access label representing the access to be revoked.
+            label (str): Access label representing the access to be revoked.
             request (UserAccessMapping): UserAccessMapping representing the access.
         Returns:
             bool: True if revoke succeed. False if revoke fails.
             response: (array): Array of user details.
         """
         return_value = False
-        team = access_label["team"]
+        team = label["team"]
         if user.state in (2, 3):
             response = helper.delete_user(user.email)
             if response is not None and response.status_code not in (200, 201):
@@ -212,14 +214,18 @@ class OpsgenieAccess(BaseEmailAccess):
             if usr_result is not None and usr_result in ("Deleted", "Removed"):
                 return_value = True
         else:
-            logger.error("Something went wrong while removing %s from %s" % (user.user.username,team))
+            logger.error(
+                "Something went wrong while removing %s from %s"
+                % (user.user.username, team)
+            )
             return False
 
-        access_description = self.get_label_desc(access_label)
+        access_description = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, request.request_id, access_description)
         except Exception as ex:
-            logger.error("Could not send email for error %s", str(ex))
+            logger.error("Could not send email for error %s" % str(ex))
+            return False
         return return_value, response
 
     def __all_possible_accesses(self):
@@ -229,7 +235,7 @@ class OpsgenieAccess(BaseEmailAccess):
             all_possible_access.update({team: team for team in teams_list})
             return all_possible_access
         except Exception as e:
-            logger.error(e)
+            logger.error("Exception while getting possible accesses: " + str(e))
             teams_list = {}, {}, {}
 
     def access_request_data(self, request, is_group=False):
@@ -256,7 +262,7 @@ class OpsgenieAccess(BaseEmailAccess):
 
         return {}
 
-    def get_label_meta(self, request_params):
+    def get_label_meta(self, access_label):
         return {}
 
     def combine_labels_meta(self, access_labels):
