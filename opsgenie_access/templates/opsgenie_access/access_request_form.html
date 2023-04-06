@@ -6,35 +6,42 @@
 
 <input type="hidden" id="opsgenieLabel" name="accessLabel" value="[]">
 <div class="row">
-  <div class="col-md-6">
-    <div class="page-header">
-      <div class="container-fluid">
-        <h2 class="h5 no-margin-bottom">Opsgenie</h2>
+  <div class="col-md-12">
+    <div class="row">
+      <div class="col-sm-3">
+        <label for="Access" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
+        <select id="opsgenieAccessLevel" name="opsgenieAccessLevel" class="form-control" required>
+          <option hidden disabled selected value> -- select -- </option>
+          <option value="user" >Member</option>
+          <option value="team_admin" >Admin</option>
+        </select>
       </div>
     </div>
-    <div class="box box-danger">
-      {% for permission, desc in each_access.accessRequestData.opsgenie.items %}
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" value="{{ desc }}" name="opsgenieRequest" id="defaultCheck1{{ desc }}">
-        <label class="form-check-label" for="defaultCheck1{{ desc }}">
-            {{ permission }}
-        </label>
+
+    <label for="opsgenie-team" style="padding-left: 20px ; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Opsgenie Teams:</label>
+    <div class="row">
+      <div class="col-xs-5 col-md-5">
+        <select id="opsgenie-team" class="form-control" size="8" multiple="multiple">
+          {% for permission, desc in each_access.accessRequestData.opsgenie.items %}
+            <option value="{{permission}}">{{permission}}</option>
+          {%endfor%}
+        </select>
       </div>
-      {% endfor %}
+
+      <div class="col-xs-2 col-md-2" style="margin-top:1%;">
+        <button type="button" id="opsgenie-team_rightSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
+        <button type="button" id="opsgenie-team_leftSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
+      </div>
+
+      <div class="col-xs-5 col-md-5">
+        <select id="opsgenie-team_to" class="form-control" size="8" multiple="multiple"></select>
+      </div>
     </div>
   </div>
 </div>
 
-<div class='row'>
-    <div class="col-sm-9">
-      <label for="opsgenieteamadmin">
-        &nbsp&nbsp&nbsp&nbsp<input class="form-check-input" type="checkbox" value="true" style="height: 20px;width: 20px;" onchange="isAdmin(this)"  name="opsgenieteamadmin" id="opsgenieteamadmin">&nbsp&nbspTeam Admin
-      </label>
-    </div>
-</div>
-
 <div class="row">
-  <div class="col-md-6">
+  <div class="col-md-12">
     <div class="form-group">
       <label class="col-sm-3" for="reason" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for Access:</label>
       <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024" required>
@@ -45,40 +52,45 @@
 
 <script type="text/javascript">
 
-
-function isAdmin(opsgenieteamadmin) {
-    labelComponents = JSON.parse($('#opsgenieLabel').val());
-    if(!labelComponents.length){
-      labelComponents = [{}]
+jQuery(document).ready(function($) {
+    function getSelectedTeams() {
+      return $('#opsgenie-team_to').children().map(function () { return $(this).val() }).get()
     }
-    labelComponents[0]["UserType"] = opsgenieteamadmin.checked ? "team_admin" : "user";
-    $('#opsgenieLabel').val(JSON.stringify(labelComponents));
-  }
-  function registerLabelChange() {
-    var finalSelectedLabels = [];
-    var allAccess = $('[name=opsgenieRequest]'); // multiple elements with same id
-    teams_list = []
-    for(var iter = 0; iter < allAccess.length; iter += 1) {
-      if(allAccess[iter].checked) {
-        teams_list.push(allAccess[iter].value);
+    function getOpsgenieAccessLevel() {
+      return $('#opsgenieAccessLevel').val()
+    }
+    function teamListChange() {
+      labelComponents = JSON.parse($('#opsgenieLabel').val());
+      if(!labelComponents.length){
+        labelComponents = [{}]
       }
-    }
-    user_type = "user"
-    labelComponents = JSON.parse($('#opsgenieLabel').val());
-    if(!labelComponents.length){
-      labelComponents = [{}]
+      labelComponents[0]["teams_list"] = getSelectedTeams()
+      labelComponents[0]["UserType"] = getOpsgenieAccessLevel()
+      $('#opsgenieLabel').val(JSON.stringify(labelComponents));
     }
 
-    if("UserType" in labelComponents[0]) {
-      user_type = labelComponents[0]["UserType"]
+    function registerEventsOnLoad() {
+      $('#opsgenieAccessLevel').dropdown();
+      $("#opsgenieAccessLevel").on("change", teamListChange);
+      $("#opsgenie-team_to").on("change", teamListChange);
+      $("#opsgenie-team").on("change", teamListChange);
+
+      $("#opsgenie-team").multiselect({
+        search: {
+          left: '<input type="text" class="form-control" placeholder="Search..." />',
+          right: '<input type="text" class="form-control" placeholder="Search..." />',
+        },
+        fireSearch: function (value) {
+          return value.length > 1;
+        },
+        submitAllLeft: false,
+        submitAllRight: false,
+        afterMoveToRight: teamListChange,
+        afterMoveToLeft: teamListChange,
+      });
     }
 
-    finalSelectedLabels.push({"teams_list":teams_list,"UserType": user_type});
-    $('#opsgenieLabel').val(JSON.stringify(finalSelectedLabels.sort()));
-  }
-  $('[name=opsgenieRequest]').change(function(changeData) {
-    registerLabelChange();
+    registerEventsOnLoad()
   });
-
 
 </script>
