@@ -193,9 +193,8 @@ def teams_list():
         teams_response = requests.get(url, headers=headers)
         teams_json = teams_response.json()
         all_teams = []
-        ignore_teams = []
         for team_index in range(len(teams_json["data"])):
-            if teams_json["data"][team_index]["name"] in ignore_teams:
+            if teams_json["data"][team_index]["name"] in IGNORE_TEAMS:
                 continue
             all_teams.append(teams_json["data"][team_index]["name"])
         return all_teams
