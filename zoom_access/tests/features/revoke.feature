@@ -12,4 +12,3 @@ Feature: ZoomAccess Revoke
         And Access can not be revoked
         When I pass revoke request
         Then Email will be sent
-        
