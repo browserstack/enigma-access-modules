@@ -6,4 +6,3 @@ Feature: ZoomAccess User
         And User does not exist on zoom
         When I pass approval request
         Then return value should be False
-
