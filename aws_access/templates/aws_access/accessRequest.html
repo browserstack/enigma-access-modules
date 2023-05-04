@@ -1,182 +1,242 @@
-<style>
-  table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
+<script>
+
+  function clearAWSGroups() {
+    $("#aws-group-table").empty()
   }
 
-  td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
+  const handleAWSGroupSelectionView = () => {
+    const finalCount = $('#aws-group-selection-table').children('tr').length;
+
+    if(finalCount < 1) {
+      $('#aws-group-selection-empty').show();
+      $('#aws-group-selection-list').hide();
+      $('#aws-group-selection-list').children('nav').hide();
+      $('#aws-group-selected-count').hide();
+      $("#aws-group-selection-height").hide()
+    } else {
+      $('#aws-group-selection-empty').hide();
+      $('#aws-group-selection-list').show();
+      $('#aws-group-selection-list').children('nav').css('display', 'flex');
+      $('#aws-group-selected-count').show();
+      $('#aws-group-selection-height').show()
+      $('#aws-group-selected-count').text(finalCount + ' selected');
+    }
+  };
+
+  const selectGroupCheckbox = (group, checked) => {
+    if(checked) {
+      $(`#${group}-marker`).show();
+      $(`#${group}-checkbox`).prop('checked', true);
+      $(`#${group}-tablerow`).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+      $(`#${group}-tabledesc`).removeClass('text-gray-900').addClass('text-blue-600');
+    } else {
+      $(`#${group}-marker`).hide();
+      $(`#${group}-checkbox`).prop('checked', false);
+      $(`#${group}-tablerow`).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+      $(`#${group}-tabledesc`).removeClass('text-blue-600').addClass('text-gray-900');
+    }
+  };
+
+  const addAWSGroupSelection = (group) => {
+    const selectionList = $('#aws-group-selection-table');
+    const newSpan = $("#aws-group-selection-row-template").clone(true, true);
+
+    selectGroupCheckbox(group, true);
+
+    newSpan.appendTo(selectionList);
+    newSpan.show();
+    const tableData = newSpan.children('td');
+    tableData[0].textContent = group;
+    newSpan.attr('id', `aws-group-selection-${group}`);
+
+    handleAWSGroupSelectionView();
+  };
+
+  const removeGroupSelectionSpanElem = (elem) => {
+    const spanId = elem.id || elem.attr('id');
+    const group = spanId.replace('aws-group-selection-', '');
+
+    elem.remove();
+    selectGroupCheckbox(group, false);
+
+    handleAWSGroupSelectionView();
+  };
+
+  const removeAllAWSGroups = () => {
+    const groups = $('#aws-group-selection-table').children('tr');
+    console.log(groups)
+    for(iter = 0; iter < groups.length; iter++) {
+      removeGroupSelectionSpanElem(groups[iter]);
+    }
+  };
+
+  const selectAllAWSGroup = () => {
+    const groups = $('#aws-group-table').children('tr');
+    console.log($('#aws-group-table').children('tr'))
+    for(iter = 0; iter < groups.length; iter++) {
+      addAWSGroupSelection(groups[iter].id.split('-tablerow')[0])
+    }
   }
 
-  tr:nth-child(even) {
-    background-color:#3a3939;
+  const selectAllAWSGroupToggle = (elem) => {
+    if(elem.checked) {
+      console.log("checked")
+      selectAllAWSGroup()
+    } else {
+      removeAllAWSGroups()
+    }
   }
-</style>
 
-<div class="page-header">
-<div class="container-fluid">
-  <h2 class="h5 no-margin-bottom">{{ each_access.formDesc }}</h2>
-</div>
-</div>
+  const removeAWSGroupSelection = (group) => {
+    removeGroupSelectionSpanElem($(`#aws-group-selection-${group}`));
+  };
 
-<div style="margin: 0px; padding: 1%;">
-<div>
-  <div class="form-group">
-    <label for="awsAccount">AWS Account</label>
-    <select class="form-control" id="awsAccount">
-      <option hidden disabled selected value> -- select -- </option>
-      {% for each_account in each_access.accessRequestData.accounts %}
-      <option value="{{ each_account }}">{{ each_account }}</option>
-      {% endfor %}
-    </select>
-  </div>
+  const removeAWSGroupSelectionUI = (elem) => {
+    removeGroupSelectionSpanElem(elem.parentElement.parentElement);
+  };
 
-  <div class="form-group d-none" id="aws-groups-form-div" style="padding-top:10px;">
-    <label for="awsGroups">AWS groups that you should be a part of</label>
-
-    <div class="row" style="padding-top:5px;">
-      <div class="col-xs-5 col-md-5">
-        <select id="awsGroupComponents" class="form-control" size="8" multiple="multiple">
-        </select>
-        <div class="aws-next-page-token-btn d-inline"><button type="button" id="awsNextPageToken" class="btn btn-primary" style="padding: 0px 30px;" value=""><i class="small material-icons">Next Page</i></button></div>
-      </div>
-
-      <div class="col-xs-2 col-md-2" style="margin-top:1%;">
-        <button type="button" id="awsGroupComponents_rightSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
-        <button type="button" id="awsGroupComponents_leftSelected" class="btn btn-block btn-primary multiselect-button"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
-      </div>
-
-      <div class="col-xs-5 col-md-5">
-        <select id="awsGroupComponents_to" class="form-control required" size="8" multiple="multiple">
-        </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-check-label">Reason</label>
-      <textarea class="form-control" name="accessReason" type="accessReason" rows="3" required></textarea>
-    </div>
-  </div>
-
-  <input type="hidden" id="awsAccessLabel" value="[]" name="accessLabel">
-</div>
-</div>
-
-<script type="text/javascript">
-  jQuery(document).ready(function ($) {
-    function showGroupComponentsStaticMessage(message) {
-      $("#awsGroupComponents").html(`<option value="static">${message}</option>`);
-      $("#awsGroupComponents_to").html(`<option value="static">${message}</option>`);
+  const handleAWSGroupSelection = (elem, group) => {
+    if(elem.checked) {
+      addAWSGroupSelection(group);
+    } else {
+      removeAWSGroupSelection(group);
     }
+  };
 
-    function showFromGroupComponentsStaticMessage(message) {
-      $("#awsGroupComponents").html(`<option value="static">${message}</option>`);
-    }
+  function clearSelectedAWSGroups() {
 
-    function populateAWSGroups(marker=null) {
-      showFromGroupComponentsStaticMessage("Fetching ...");
+  }
 
-      let account = getSelectedAWSAccount();
-      if(account === "") return;
+  function getSelectedAWSAccount() {
+    return $('#awsAccount').val();
+  }
 
-      $.ajax({
-        url: "/api/v1/aws/account/groups/",
-        data: {"AWSAccount": account, "marker": marker},
-        error: (xhr, status, error) => {
-          showGroupComponentsStaticMessage(`Failed to fetch groups. Error ${error}`);
-        },
-      }).done(function(data, statusText, xhr){
-        let status = xhr.status;
-        let head = xhr.getAllResponseHeaders();
-        if(status != 200) {
-          showGroupComponentsStaticMessage(`Failed to fetch groups. API response status code ${status}`);
-          return;
-        }
-        if(!("AWSGroups" in data)) {
-          showGroupComponentsStaticMessage('Got malformed API response');
-          return;
-        }
-        // $("#awsGroupComponents_to").html('');
-        let optionArray = $.map(data["AWSGroups"], function(group, idx) { return `<option value="${group}"> ${group} </option>` });
-        $("#awsGroupComponents").html(optionArray.join(""));
+  function fetchAWSGroups() {
+    console.log("Hello")
+    let account = getSelectedAWSAccount();
+    clearAWSGroups()
+    marker=null;
+    $.ajax({
+      url: "/api/v1/aws/account/groups/",
+      data: {"AWSAccount": account, "marker": marker},
+    }).done(function(data, statusText, xhr){
+      console.log(data)
+      let rows = $.map(data["AWSGroups"], function(group, idx){
+        return `<tr id="${group}-tablerow" class="hover:bg-blue-50 hover:text-blue-700">
+            <td class="relative w-12 px-6 sm:w-16 sm:px-8">
+              <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="${group}-marker"></div>
 
-        if(!data["marker"]) {
-          $("#awsNextPageToken").val("")
-        }
-        else{
-          $("#awsNextPageToken").val(data["marker"])
-        }
-      });
-    }
+              <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleAWSGroupSelection(this, '${group}');" id="${group}-checkbox"></input>
+            </td>
+            <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="${group}-tabledesc">${group}</td>
+          </tr>`
+      })
 
-    $(document).on("click", "#awsNextPageToken", () => {
-      next_marker = $("#awsNextPageToken").val()
-      populateAWSGroups(next_marker)
+      console.log(rows)
+
+      $('#aws-group-table').append(rows.join(""))
+
     })
-
-    function awsAccountChanged() {
-      $('#aws-groups-form-div').removeClass('d-none');
-      $('#aws-groups-form-div').show();
-      populateAWSGroups();
-      updateAccessLabel();
-    }
-
-    function awsGroupChanged() {
-      updateAccessLabel();
-    }
-
-    function getSelectedAWSAccount() {
-      return $('#awsAccount').val();
-    }
-
-    function getSelectedAWSGroups() {
-      return $('#awsGroupComponents_to').children().map(function () { return $(this).val() }).get().filter(groupName => groupName != "static");
-    }
-
-    function updateAccessLabel(){
-      let awsAccount = getSelectedAWSAccount();
-      let awsGroups = getSelectedAWSGroups();
-      updatedLabels = []
-      for(group of awsGroups) {
-        updatedLabels.push({
-          "action": "GroupAccess",
-          "account": awsAccount,
-          "group": group
-        })
-      }
-      let labels = JSON.parse($('#awsAccessLabel').val());
-      labels = updatedLabels
-      $('#awsAccessLabel').val(JSON.stringify(labels));
-      $('#awsAccessTest').html(JSON.stringify(labels))
-    }
-
-    function registerEventsOnLoad(){
-      $('#awsAccount').dropdown();
-      $('#awsAccount').on('change', awsAccountChanged);
-      $("#awsGroupComponents").on('change', awsGroupChanged);
-      $("#awsGroupComponents_to").on('change', awsGroupChanged);
-
-      $(["#awsGroupComponents"]).each((idx, elem) => {
-        $(elem).multiselect({
-          search: {
-            left: '<input type="text" class="form-control" placeholder="Search..." />',
-            right: '<input type="text" class="form-control" placeholder="Search..." />',
-          },
-          fireSearch: function (value) {
-            return value.length > 1;
-          },
-          submitAllLeft: false,
-          submitAllRight: false,
-          afterMoveToRight: updateAccessLabel,
-          afterMoveToLeft: updateAccessLabel,
-        });
-      });
-      $("#awsGroupComponents_to").html('');
-      updateAccessLabel();
-    }
-
-    registerEventsOnLoad();
-  });
+  }
 </script>
+
+<label for="awsAccount" class="text-sm font-medium leading-5 text-gray-700">AWS Account</label>
+<div class="mt-2">
+  <select onchange="fetchAWSGroups()" id="awsAccount" class="w-1/2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"required>
+    <option hidden disabled selected value="">Select</option>
+    {% for each_account in each_access.accessRequestData.accounts %}
+    <option value="{{ each_account }}">{{ each_account }}</option>
+    {% endfor %}
+  </select>
+</div>
+<h1 class="mt-8 text-sm text-gray-900">AWS groups that you should be a part of</h1>
+<div class="grid grid-cols-2 gap-4">
+  <div class="flex-col">
+    <div class="mt-4 flex flex-col">
+      <div class="flex felx-row">
+        <div class="flex-auto relative flex items-center">
+          <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search AWS groups">
+          <div class="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" class="text-gray-500 h-full" width="18px" fill="currentColor" aria-hidden="true">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="flex-none flex">
+          <input type="checkbox" onclick="selectAllAWSGroupToggle(this)" name="select-all-aws-group" id="selectAllAWSGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
+        </div>
+      </div>
+      <div class="h-80 ml-1 overflow-y-auto bg-white mt-6 rounded-md border-0 ring-1 ring-gray-200">
+        <div class="px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col">
+            <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div class="inline-block min-w-full align-middle">
+                <div class="relative overflow-hidden">
+                  <table class="min-w-full table-fixed">
+                    <tbody class="bg-white" id="aws-group-table">
+
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-3 ml-2 flex flex-col">
+    <div class="flex flex-row items-center mb-10">
+      <h1 class="text-xl text-gray-900">Your selection</h1>
+      <span class="inline-flex items-center rounded-full bg-green-100 ml-4 px-2.5 py-0.5 text-xs font-medium text-green-800 hidden" id="aws-group-selected-count">0 selected</span>
+    </div>
+    <div class="rounded-md border-0 ring-1 ring-inset ring-gray-200 py-24 px-6 sm:py-32 bg-white justify-center lg:px-8 flex h-80" id="aws-group-selection-empty">
+      <div class="mx-auto max-w-2xl">
+        <div class="flex gap-4 content-center justify-center min-w-full min-h-full">
+          <div class="block m-auto content-center justify-center">
+            <div class="m-auto content-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 96 960 960" width="40px" class="text-gray-400 flex-shrink-0 justify-center content-center block m-auto" fill="currentColor" aria-hidden="true">
+                  <path d="M479.754 801Q504 801 519.5 786.246q15.5-14.755 15.5-39Q535 723 519.746 707q-15.255-16-39.5-16Q456 691 440.5 706.982 425 722.965 425 747.211q0 24.245 15.254 39.017Q455.509 801 479.754 801ZM436 624h94V354h-94v270Zm44.404 377q-88.872 0-166.125-33.084-77.254-33.083-135.183-91.012-57.929-57.929-91.012-135.119Q55 664.594 55 575.638q0-88.957 33.084-166.285 33.083-77.328 90.855-134.809 57.772-57.482 135.036-91.013Q391.238 150 480.279 150q89.04 0 166.486 33.454 77.446 33.453 134.853 90.802 57.407 57.349 90.895 134.877Q906 486.66 906 575.734q0 89.01-33.531 166.247-33.531 77.237-91.013 134.86-57.481 57.623-134.831 90.891Q569.276 1001 480.404 1001Zm.096-94q137.5 0 234-96.372T811 575.5q0-137.5-96.312-234Q618.375 245 479.5 245q-137.5 0-234 96.312Q149 437.625 149 576.5q0 137.5 96.372 234T480.5 907Zm-.5-331Z"/>
+                </svg>
+            </div>
+            <h4 class="text-sm[14px] leading-5 font-medium tracking-tight text-center text-gray-900 sm:text-lg mt-2">You have not selected any groups yet</h4>
+            <p class="mt-2 text-sm[14px] leading-5 font-normal text-center text-gray-700">Please select AWS groups from the left panel.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="min-y-full w-full bg-white flex flex-1 md:flex-col rounded-md border-0 ring-1 ring-inset ring-gray-200 md:flex hidden" id="aws-group-selection-list">
+      <div class="flex-1 relative overflow-y-auto space-y-1 inline-block rounded-md min-w-full align-middle">
+        <div class="h-72 hidden" id="aws-group-selection-height">
+          <table class="min-w-full border-l border-t border-r table-fixed rounded-md divide-gray-300">
+            <tbody class="divide-gray-200 bg-white" id="aws-group-selection-table">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <nav class="flex flex-shrink-0 px-4 items-center justify-between align-bottom border-t border-gray-200 pt-4 pb-4 hidden">
+        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllAWSGroups();">
+          Remove all
+        </button>
+      </nav>
+    </div>
+  </div>
+</div>
+<label for="reason" class="block text-sm font-medium leading-5 text-gray-700">Reason for Access</label>
+<div class="mt-2">
+  <input type="text" name="accessReason" id="reason" class="block w-1/2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Please mention the reason for requesting this access in detail." required>
+</div>
+<table class="hidden">
+<tr id="aws-group-selection-row-template" class="hidden max-h-4 px-6 hover:bg-blue-50 hover:text-blue-700">
+  <td class="relative w-full px-4" id="aws-group-selection-row-tabledesc">Group</td>
+  <td class="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 justify-right content-right max-w-2" id="aws-group-selection-row-cancel">
+    <button type="button" class="ml-0.5 mr-0.5 inline-flex max-w-2 flex-shrink-0 items-center justify-center rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-500 focus:text-white focus:outline-none" onclick="removeAWSGroupSelectionUI(this);">
+      <span class="sr-only">Remove large option</span>
+      <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+        <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
+      </svg>
+    </button>
+  </td>
+</tr>
+</table>
