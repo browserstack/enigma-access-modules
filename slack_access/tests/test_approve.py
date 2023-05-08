@@ -25,7 +25,7 @@ def test_grant_slack_workspace_access_success():
 @given('A user email',target_fixture="user_email")
 def user_email():
     """A user email."""
-    return 'test@test.com'
+    return 'invalid@nonexistent.com'
 
 
 @given('user in not invited earlier for workspace',target_fixture="user_not_invited_output")

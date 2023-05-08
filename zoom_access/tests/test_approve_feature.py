@@ -40,7 +40,7 @@ def test_grant_standard_access_success():
 @given("Access can be granted to user for Pro access")
 def access_grant_standard_access(requests_mock):
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -49,7 +49,7 @@ def access_grant_standard_access(requests_mock):
     )
 
     requests_mock.patch(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -64,7 +64,7 @@ def access_grant_standard_access(requests_mock):
 @given("Access can be granted to user for Standard access")
 def access_grant_standard_access(requests_mock):
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -73,7 +73,7 @@ def access_grant_standard_access(requests_mock):
     )
 
     requests_mock.patch(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -87,7 +87,7 @@ def access_grant_standard_access(requests_mock):
 
 @given("User exists on zoom")
 def user_already_exists(requests_mock):
-    API_URL = "https://test-base-url.com/users/test@test.com"
+    API_URL = "https://test-base-url.com/users/invalid@nonexistent.com"
     expected_headers = (
         {
             "Authorization": "token test-token",
@@ -108,7 +108,7 @@ def user_already_exists(requests_mock):
 @given("Access cannot be granted to user for Standard access")
 def access_grant_standard_access_fail(requests_mock):
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -125,7 +125,7 @@ def access_grant_standard_access_fail(requests_mock):
         json=json.dumps(
             {
                 "action": "create",
-                "user_info": {"email": "test@test.com", "type": 1},
+                "user_info": {"email": "invalid@nonexistent.com", "type": 1},
             }
         ),
         status_code=404,
@@ -137,7 +137,7 @@ def access_grant_standard_access_fail(requests_mock):
 @given("an user email", target_fixture="user_email")
 def user_email():
     """an user email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @pytest.fixture

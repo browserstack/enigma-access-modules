@@ -25,7 +25,7 @@ def test_revoke_user_access_to_a_workspace_success():
 @given('A user email')
 def user_email():
     """A user email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def access_cant_revoked(mocker):
     response_mock = {'ok': False}
     client_mock.users_lookupByEmail.return_value ={"ok": False, "error": "error message"}
     client_mock.admin_users_remove.return_value = response_mock
-    result , error_mssg =remove_user('test@test.com', 'enigma-slack', 'T1234')
+    result , error_mssg =remove_user('invalid@nonexistent.com', 'enigma-slack', 'T1234')
     assert result == False
 
 @given('Access will be revoked')
@@ -68,7 +68,7 @@ def access_revoked(mocker):
     response_mock = {'ok': True}
     client_mock.users_lookupByEmail.return_value ={"ok": True, "user": {"id": "123"}}
     client_mock.admin_users_remove.return_value = response_mock
-    result , error_mssg =remove_user('test@test.com', 'enigma-slack', 'T1234')
+    result , error_mssg =remove_user('invalid@nonexistent.com', 'enigma-slack', 'T1234')
     assert result == True
 
 

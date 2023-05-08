@@ -39,7 +39,7 @@ def user_identity(mocker, user):
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.email = "test@test.com"
+    user.email = "invalid@nonexistent.com"
     user.user.username = "test-user"
     return user
 
@@ -72,7 +72,7 @@ def test_user_does_not_exist_on_opsgenie():
 @given("A user_email")
 def user_email():
     """A user_email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @given("User does not exist on Opsgenie")

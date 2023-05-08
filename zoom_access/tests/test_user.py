@@ -16,7 +16,7 @@ from pytest_bdd import (
 @pytest.fixture
 def user_a(mocker):
     user_a = mocker.MagicMock()
-    user_a.identity = {"user_email": "test@test.com"}
+    user_a.identity = {"user_email": "invalid@nonexistent.com"}
     return user_a
 
 
@@ -32,7 +32,7 @@ def labels():
 @pytest.fixture
 def usera(mocker):
     usera = mocker.MagicMock()
-    usera.email = "test@test.com"
+    usera.email = "invalid@nonexistent.com"
     usera.state = 2
     return usera
 
@@ -61,14 +61,14 @@ def user_does_not_exist(requests_mock):
         json=json.dumps(
             {
                 "action": "create",
-                "user_info": {"email": "test@test.com", "type": 1},
+                "user_info": {"email": "invalid@nonexistent.com", "type": 1},
             }
         ),
         status_code=404,
     )
 
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -83,7 +83,7 @@ def user_does_not_exist(requests_mock):
 @given("a user email")
 def user_email():
     """a user email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @when("I pass approval request", target_fixture="context_output")

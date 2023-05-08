@@ -25,7 +25,7 @@ def labels():
 @pytest.fixture
 def usera(mocker):
     usera = mocker.MagicMock()
-    usera.email = "test@test.com"
+    usera.email = "invalid@nonexistent.com"
     usera.state = 2
     return usera
 
@@ -33,7 +33,7 @@ def usera(mocker):
 @pytest.fixture
 def user_a(mocker):
     user_a = mocker.MagicMock()
-    user_a.identity = {"user_email": "test@test.com"}
+    user_a.identity = {"user_email": "invalid@nonexistent.com"}
     return user_a
 
 
@@ -53,7 +53,7 @@ def test_revoke_user_access_to_a_zoom_success():
 @given("Access will be revoked")
 def revoke_sucess(requests_mock):
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -61,7 +61,7 @@ def revoke_sucess(requests_mock):
         status_code=200,
     )
     requests_mock.delete(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -74,7 +74,7 @@ def revoke_sucess(requests_mock):
 
 @given("a user email")
 def user_email():
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @when("I pass revoke request", target_fixture="context_output")
@@ -98,7 +98,7 @@ def test_revoke_user_fails_to_a_zoom_success():
 @given("Access can not be revoked")
 def revoke_fails(requests_mock):
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -106,7 +106,7 @@ def revoke_fails(requests_mock):
         status_code=404,
     )
     requests_mock.delete(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/invalid@nonexistent.com",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",

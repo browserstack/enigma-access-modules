@@ -31,7 +31,7 @@ def setup_test_config():
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.email = "test@test.com"
+    user.email = "invalid@nonexistent.com"
     user.user.username = "test-user"
     user.state = 2
     return user
@@ -53,7 +53,7 @@ def test_revoke_user_access_to_a_opsgenie_success():
 def revoke_fail(requests_mock):
     """Access can not be revoked."""
     requests_mock.delete(
-        "https://api.opsgenie.com/v2/users/" + "test@test.com",
+        "https://api.opsgenie.com/v2/users/" + "invalid@nonexistent.com",
         headers={
             "Content-Type": "application/json",
             "Authorization": "GenieKey GenieKey test-token",
@@ -69,7 +69,7 @@ def revoke_fail(requests_mock):
 def revoke_success(requests_mock):
     """Access will be revoked."""
     requests_mock.delete(
-        "https://api.opsgenie.com/v2/users/" + "test@test.com",
+        "https://api.opsgenie.com/v2/users/" + "invalid@nonexistent.com",
         headers={
             "Content-Type": "application/json",
             "Authorization": "GenieKey GenieKey test-token",
@@ -87,7 +87,7 @@ def revoke_success(requests_mock):
 @given("a user email")
 def user_email():
     """a user email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @when("I pass revoke request", target_fixture="context_output")
