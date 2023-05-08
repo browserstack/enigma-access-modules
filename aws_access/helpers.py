@@ -91,7 +91,7 @@ def grant_aws_access(user, account, group):
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
         client.add_user_to_group(GroupName=group, UserName=__get_username(user.email))
     except Exception as ex:
-        logger.error("Exception while adding user to AWS group: " + str(ex))
+        logger.exception("Exception while adding user to AWS group: " + str(ex))
         return False, str(ex)
     return True, ""
 
