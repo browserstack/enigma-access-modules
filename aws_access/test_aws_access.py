@@ -7,10 +7,11 @@ from . import constants, helpers, access
 class MockBoto3:
     """Mock for boto3"""
 
-    def add_user_to_group(self, group_name, user_name):
+    # Follows boto3 signature
+    def add_user_to_group(self, GroupName, UserName):
         """mock method"""
 
-    def remove_user_from_group(self, group_name, user_name):
+    def remove_user_from_group(self, GroupName, UserName):
         """mock method"""
 
     def list_groups(self, marker=None):
