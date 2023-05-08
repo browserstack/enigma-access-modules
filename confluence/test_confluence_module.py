@@ -104,12 +104,10 @@ def test_confluence(mocker, requests_mock):
     label2 = confluence_access.validate_request(form_label_2, user_mock, False)
 
     assert label1[0] == {
-        "data": {"accessWorkspace": "test", "confluenceAccessType": "View Access"},
         "access_workspace": "test",
         "access_type": "View Access",
     }
     assert label2[0] == {
-        "data": {"accessWorkspace": "test 2", "confluenceAccessType": "Edit Access"},
         "access_workspace": "test 2",
         "access_type": "Edit Access",
     }
@@ -155,6 +153,7 @@ def test_confluence(mocker, requests_mock):
     resp = confluence_access.approve(user_mock, label1, "1234", request)
     assert resp is False
 
-    resp = confluence_access.revoke(user_mock, label1[0], request)
+    resp = confluence_access.revoke(
+            user_mock, mocker.MagicMock(), label1[0], request)
 
     assert resp is False
