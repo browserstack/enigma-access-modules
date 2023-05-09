@@ -29,6 +29,14 @@ def setup_test_config():
 
 
 @pytest.fixture
+def patched_revoke_email(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.access.OpsgenieAccess._OpsgenieAccess__send_revoke_email",
+        return_value=""
+    )
+
+
+@pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
     user.email = "invalid@nonexistent.com"
@@ -91,10 +99,10 @@ def user_email():
 
 
 @when("I pass revoke request", target_fixture="context_output")
-def revoke_request(user, user_labels, mocker):
+def revoke_request(user, user_labels, mocker, patched_revoke_email):
     """I pass revoke request."""
     opsgenie_access = access.get_object()
-    return opsgenie_access.revoke(user, user, user_labels, mocker.Mock())
+    return opsgenie_access.revoke(user, user, user_labels[0], mocker.Mock())
 
 
 @then("Approved Email will be sent")

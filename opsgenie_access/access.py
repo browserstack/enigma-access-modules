@@ -120,8 +120,8 @@ class OpsgenieAccess(BaseEmailAccess):
             role = "user"
             if user_type == "team_admin":
                 response_return_value, response_message = helper.create_team_admin_role(
-                    team, user_email
-                )
+                        team, user_email
+                        )
                 if response_return_value is False:
                     value = False
                     return False, "Failed to create TeamAdmin role because" + str(
@@ -218,14 +218,14 @@ class OpsgenieAccess(BaseEmailAccess):
                 "Something went wrong while removing %s from %s"
                 % (user.user.username, team)
             )
-            return False
+            return False, ""
 
         access_description = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, request.request_id, access_description)
         except Exception as ex:
-            logger.error("Could not send email for error %s" % str(ex))
-            return False
+            logger.exception("Could not send email for error %s" % str(ex))
+            return False, ""
         return return_value, response
 
     def __all_possible_accesses(self):

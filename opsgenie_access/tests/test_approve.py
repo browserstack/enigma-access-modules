@@ -1,15 +1,16 @@
 """OpsgenieAccess Grant feature tests."""
 
+import json
+import pytest
 from pytest_bdd import (
     given,
     scenario,
     then,
     when,
 )
-import pytest
+
 from .. import access
 from .. import helper
-import json
 
 
 @pytest.fixture(autouse=True)
@@ -31,6 +32,14 @@ def user_identity(mocker, user):
     user_identity = mocker.MagicMock()
     user_identity.user = user
     return user_identity
+
+
+@pytest.fixture
+def patched_email(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.access.OpsgenieAccess._OpsgenieAccess__send_approve_email",
+        return_value=""
+    )
 
 
 @pytest.fixture
@@ -181,9 +190,6 @@ def user_exists(requests_mock):
         json={"name": "test-user"},
         status_code=200,
     )
-    response = helper.get_user("invalid@nonexistent.com")
-    assert response.status_code == 200
-    assert response.json() == {"name": "test-user"}
 
 
 @given("an user email")
@@ -192,16 +198,18 @@ def user_email():
     return "invalid@nonexistent.com"
 
 
-@when("I pass approval request for add user to team", target_fixture="context_output")
-def user_approve(user_identity, user_labels, request_obj):
+@when("I pass approval request for add user to team",
+      target_fixture="context_output")
+def user_approve(user_identity, user_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, user_labels, "test-approver", request_obj
     )
 
 
-@when("I pass approval request to give admin access", target_fixture="context_output")
-def admin_approve(user_identity, admin_labels, request_obj):
+@when("I pass approval request to give admin access",
+      target_fixture="context_output")
+def admin_approve(user_identity, admin_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, admin_labels, "test-approver", request_obj
