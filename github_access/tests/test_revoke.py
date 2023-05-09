@@ -26,6 +26,15 @@ def user(mocker):
 
 
 @pytest.fixture
+def user_identity(mocker):
+    identity_mock = mocker.MagicMock()
+    identity_mock.identity = {
+        "username": user_name(),
+    }
+    return identity_mock
+
+
+@pytest.fixture
 def labels():
     form_label = {
         "action": "repository_access",
@@ -82,9 +91,9 @@ def access_not_revoked(requests_mock):
 
 
 @when("I pass revoke request", target_fixture="context_output")
-def revoke_request(user, labels, mocker):
+def revoke_request(user, labels, mocker, user_identity):
     github_access = access.get_object()
-    return github_access.revoke(user, labels, mocker.Mock())
+    return github_access.revoke(user, user_identity, labels, mocker.Mock())
 
 
 @then("Email will be sent")

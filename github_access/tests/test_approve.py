@@ -10,9 +10,17 @@ import json
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.gitusername = "test-username"
+    user.gitusername = user_name()
     user.email = "test_user@test.com"
     return user
+
+@pytest.fixture
+def user_identity(mocker):
+    identity_mock = mocker.MagicMock()
+    identity_mock.identity = {
+        "username": user_name(),
+    }
+    return identity_mock
 
 
 @pytest.fixture(scope="function")
@@ -177,9 +185,9 @@ def labels():
 
 
 @when("I pass approval request", target_fixture="context_output")
-def add_user_approve(user, labels):
+def add_user_approve(user_identity, labels):
     github_access = access.get_object()
-    return github_access.approve(user, labels, "test-approver", "123")
+    return github_access.approve(user_identity, labels, "test-approver", "123")
 
 
 @pytest.fixture
@@ -195,9 +203,14 @@ def push_labels():
 
 
 @when("I pass approval request for push", target_fixture="context_output")
-def push_approve(user, push_labels):
+def push_approve(user_identity, push_labels):
     github_access = access.get_object()
-    return github_access.approve(user, push_labels, "test-approver", "123")
+    return github_access.approve(
+        user_identity,
+        push_labels,
+        "test-approver",
+        "123"
+    )
 
 
 @then("return value should be False")
