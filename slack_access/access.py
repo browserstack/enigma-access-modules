@@ -1,5 +1,7 @@
 import logging
 import json
+from django.template import loader
+
 from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 from .helpers import (
@@ -7,9 +9,8 @@ from .helpers import (
     remove_user,
     get_workspace_list,
 )
-
 from . import constants
-from django.template import loader
+
 
 logger = logging.getLogger(__name__)
 
@@ -102,14 +103,14 @@ class Slack(BaseEmailAccess):
                 user.email, label["workspace_id"], workspace_name
             )
             if not invite_user_resp:
-                logger.error(constants.INVITE_USER_FAILED.format(workspace_name))
+                logger.error(constants.INVITE_USER_FAILED.format(workspace_name=workspace_name))
                 return False
 
         try:
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s" % str(e))
             return False
 
     def revoke(self, user, user_identity, label, request):
@@ -138,7 +139,7 @@ class Slack(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s" % str(e))
             return False
 
     def get_label_desc(self, access_label):

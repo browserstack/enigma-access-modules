@@ -20,19 +20,19 @@ def setup_test_config():
 
 
 @scenario("features/approve.feature", "Grant Access Fails")
-def test_grant_access_fails():
+def test_zoom_grant_access_fails():
     """Grant Access Fails."""
     pass
 
 
 @scenario("features/approve.feature", "Grant Pro License Access Success")
-def test_grant_pro_license_access_success():
+def test_zoom_grant_pro_license_access_success():
     """Grant Pro License Access Success."""
     pass
 
 
 @scenario("features/approve.feature", "Grant Standard Access Success")
-def test_grant_standard_access_success():
+def test_zoom_grant_standard_access_success():
     """Grant Standard Access Success."""
     pass
 
