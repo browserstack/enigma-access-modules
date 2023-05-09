@@ -1,110 +1,35 @@
-<div class="page-header">
-  <div class="container-fluid">
-    <h2 class="h5 no-margin-bottom">{{ each_access.formDesc }}</h2>
+<div class="rounded-md bg-blue-50 p-4">
+  <div class="flex">
+    <div class="flex-shrink-0">
+      <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <div class="ml-3 flex-1 md:flex md:justify-between">
+      <p class="text-sm leading-5 font-medium text-blue-800">Note - Github merge access will not be raised if Branch Protection of that Repository is Disabled. To enable Branch Protection contact the Admin. To enable Branch Protection contact the Admin.To enable Branch Protection contact the Admin.</p>
+    </div>
   </div>
 </div>
-
-<script type="text/javascript">
-  jQuery(document).ready(function ($) {
-    function getSelectedRepos() {
-      return $('#search-github_to').children().map(function () { return $(this).val() }).get()
-    }
-    function repoListChange() {
-      labelComponents = JSON.parse($('#github_accessLabel').val());
-      if(!labelComponents.length){
-        labelComponents = [{}]
-      }
-      labelComponents[0]["repoList"] = getSelectedRepos()
-      $('#github_accessLabel').val(JSON.stringify(labelComponents));
-    }
-    function githubAccessLevelChange() {
-      labelComponents = JSON.parse($('#github_accessLabel').val());
-      if (!labelComponents.length) {
-        labelComponents = [{}]
-      }
-      labelComponents[0]["accessLevel"] = $("#githubaccess").val();
-      $('#github_accessLabel').val(JSON.stringify(labelComponents));
-    }
-    function registerEventsOnLoad() {
-      $("#githubaccess").on("change", githubAccessLevelChange)
-      $("#search-github").on("change", repoListChange)
-      $("#search-github_to").on("change", repoListChange)
-
-      $('#search-github').multiselect({
-        search: {
-          left: '<input type="text" class="form-control" placeholder="Search..." />',
-          right: '<input type="text" class="form-control" placeholder="Search..." />',
-        },
-        fireSearch: function (value) {
-          return value.length > 1;
-        },
-        submitAllLeft: false,
-        submitAllRight: false,
-        afterMoveToRight: repoListChange,
-        afterMoveToLeft: repoListChange,
-      });
-    }
-    registerEventsOnLoad()
-  });
-</script>
-
-<div class="row">
-  <div class="col-md-8">
-    <div class="row">
-      <p style="color: yellow;">NOTE: Github merge access will not be raised if branch Protection on that Repository is
-        Disabled. To enable Branch protection contact the Admin<br></p>
+<label for="githubaccess" class="text-sm font-medium leading-5 text-gray-700">Access Level</label>
+<div class="mt-2">
+  <select id="githubaccess" name="githubAccessLevel" class="w-1/2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"required>
+    <option hidden disabled selected value="">Select</option>
+    <option value="push">push</option>
+    <option value="pull">pull</option>
+    <option value="admin">admin</option>
+    <option value="merge">push + merge</option>
+  </select>
+</div>
+<div class="rounded-md bg-blue-50 p-4">
+  <div class="flex">
+    <div class="flex-shrink-0">
+      <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+      </svg>
     </div>
-    <div class="row">
-      <div class="col-sm-3">
-        <label for="Access" class=""
-          style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
-        <select id="githubaccess" name="githubAccessLevel" class="form-control">
-          <option hidden disabled selected value> -- select -- </option>
-          <option value="push">push</option>
-          <option value="pull">pull</option>
-          <option value="admin">admin</option>
-          <option value="merge">push + merge</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-xs-5 col-md-5">
-        <select id="search-github" class="form-control" size="8" multiple="multiple">
-          {% for repo in each_access.accessRequestData.githubRepoList %}
-          <option value="{{repo}}">{{repo}}</option>
-          {%endfor%}
-        </select>
-      </div>
-
-      <div class="col-xs-2 col-md-2" style="margin-top:1%;">
-        <button type="button" id="search-github_rightAll" class="btn btn-block btn-primary" disabled><i
-            class="fa fa-angle-double-right" style="font-size:24px"></i></button>
-        <button type="button" id="search-github_rightSelected" class="btn btn-block btn-primary"><i
-            class="fa fa-angle-right" style="font-size:24px"></i></button>
-        <button type="button" id="search-github_leftSelected" class="btn btn-block btn-primary"><i
-            class="fa fa-angle-left" style="font-size:24px"></i></button>
-        <button type="button" id="search-github_leftAll" class="btn btn-block btn-primary" disabled><i
-            class="fa fa-angle-double-left" style="font-size:24px"></i></button>
-      </div>
-
-      <div class="col-xs-5 col-md-5">
-        <select name="selectedRepoList" id="search-github_to" class="form-control" size="8"
-          multiple="multiple"></select>
-      </div>
-    </div>
-
-
-
-    <div class="form-group" style="padding-left:1%;">
-      <p>NOTE: Requires github username to be present.<br>
+    <div class="ml-3 flex-1 md:flex md:justify-between">
+      <p class="text-sm leading-5 font-medium text-blue-800">Require guthub username to be present<br>
         You will be automatically added to github org when 1st github request gets approved.</p>
-      <label class="col-sm-3" for="reason"
-        style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for
-        Access:</label>
-      <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024"
-        required>
     </div>
-    <input type="hidden" id="github_accessLabel" value="[]" name="accessLabel">
   </div>
 </div>
