@@ -5,6 +5,7 @@ from bootprocess.general import emailSES
 
 import logging
 from django.template import loader
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -226,7 +227,7 @@ class AWSAccess(BaseEmailAccess):
             logger.error("Could not send email for error %s" % str(ex))
             return False
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Validates the access request.
 
         Args:
@@ -241,31 +242,35 @@ class AWSAccess(BaseEmailAccess):
         Returns:
             arr: Array of the access labels for the request access.
         """
+        if not access_request_form.get(
+            "aws-account"
+        ) and not helpers.aws_account_exists(access_request_form.get("aws-account")):
+            raise AWSModuleValidationError(
+                constants.ERROR_MESSAGES["valid_account_required"]
+            )
+        if not access_request_form.get("selected-aws-groups"):
+            raise AWSModuleValidationError(constants.ERROR_MESSAGES["select_group"])
+
+        aws_groups = json.loads(access_request_form.get("selected-aws-groups"))
+        aws_account = access_request_form.get("aws-account")
+
+        if type(aws_groups) != list:
+            raise AWSModuleValidationError(
+                constants.ERROR_MESSAGES["valid_groups_required"]
+            )
+
         valid_access_label_array = []
-        for access_label_data in access_labels_data:
-            if (
-                not access_label_data.get("action")
-                and access_label_data["action"] != constants.GROUP_ACCESS
-            ):
-                raise AWSModuleValidationError(
-                    constants.ERROR_MESSAGES["valid_action_required"]
-                )
-            if not access_label_data.get("account") and not helpers.aws_account_exists(
-                access_label_data.get("account")
-            ):
-                raise AWSModuleValidationError(
-                    constants.ERROR_MESSAGES["valid_account_required"]
-                )
-            if not access_label_data.get("group") and not helpers.aws_group_exists(
-                access_label_data["account"], access_label_data.get("group")
-            ):
+
+        for group in aws_groups:
+            if not helpers.aws_group_exists(aws_account, group):
                 raise AWSModuleValidationError(
                     constants.ERROR_MESSAGES["valid_group_required"]
                 )
+
             valid_access_label = {
-                "action": access_label_data.get("action"),
-                "account": access_label_data.get("account"),
-                "group": access_label_data.get("group"),
+                "action": constants.GROUP_ACCESS,
+                "account": aws_account,
+                "group": group,
             }
             valid_access_label_array.append(valid_access_label)
         return valid_access_label_array
