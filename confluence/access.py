@@ -40,7 +40,7 @@ class Confluence(BaseEmailAccess):
         """
         return [user.email] + self.grant_owner()
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Validates the access request.
 
         Args:
@@ -52,24 +52,19 @@ class Confluence(BaseEmailAccess):
         Returns:
             arr: Array of the access labels for the request access.
         """
-        valid_access_label_array = []
-        for access_label_data in access_labels_data:
-            if not access_label_data.get(
-                "accessWorkspace"
-            ) or not access_label_data.get("confluenceAccessType"):
-                raise Exception(constants.ERROR_MESSAGES["missing_argument"])
-            if not self.__in_access_types(
-                access_label_data.get("confluenceAccessType")
-            ):
-                raise Exception(constants.ERROR_MESSAGES["valid_access_type"])
 
-            valid_access_label = {
-                "access_workspace": access_label_data.get("accessWorkspace"),
-                "access_type": access_label_data.get("confluenceAccessType"),
-            }
-            valid_access_label_array.append(valid_access_label)
+        if(not access_request_form.get("confluence_workspace") or not access_request_form.get("confluence_access_type")):
+            raise Exception(constants.ERROR_MESSAGES["missing_argument"])
+        if not self.__in_access_types(
+            access_request_form.get("confluence_access_type")
+        ):
+            raise Exception(constants.ERROR_MESSAGES["valid_access_type"])
+        valid_access_label = {
+            "access_workspace": access_request_form.get("confluence_workspace"),
+            "access_type": access_request_form.get("confluence_access_type"),
+        }
+        return [valid_access_label]
 
-        return valid_access_label_array
 
     def __in_access_types(self, access_type):
         return access_type in ["View Access", "Edit Access", "Admin Access"]

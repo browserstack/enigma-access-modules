@@ -1,29 +1,26 @@
 <div class="px-0.5 py-1">
-  <label for="confluence_workspace" class="text-sm font-medium leading-5 text-gray-700">Workspace</label>
-  <div class="mt-2">
-    <select name="accessWorkspace" id="confluence_workspace" class="w-1/2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"required>
-      <option hidden disabled selected value="">Select</option>
-      {% for each_space in each_access.accessRequestData.spaces %}
-      <option value="{{ each_space.key }}">{{ each_space.name }}</option>
-      {% endfor %}
-    </select>
+  <div class="pt-4">
+    <label for="confluence_workspace" class="text-sm font-medium leading-5 text-gray-700">Workspace</label>
+    <div class="mt-2">
+      <select id="confluence_workspace" name="confluence_workspace" class="w-[463.26px] rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"required>
+        <option hidden disabled selected value="">Select</option>
+        {% for each_space in each_access.accessRequestData.spaces %}
+        <option value="{{ each_space.key }}">{{ each_space.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
   </div>
 
-
-  <label for="confluence_access_type" class="text-sm font-medium leading-5 text-gray-700">Select an access type</label>
-  <div class="mt-2">
-    <select name="confluenceAccessType" id="confluence_access_type" class="w-1/2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
-      <option hidden disabled selected value="">Select</option>
-      {% for each_access_type in each_access.accessTypes %}
-      <option value="{{ each_access_type.type }}">{{ each_access_type.desc }}</option>
-      {% endfor %}
-    </select>
+  <div class="pt-4">
+    <label for="confluence_access_type" class="text-sm font-medium leading-5 text-gray-700">Select an access type</label>
+    <div class="mt-2">
+      <select id="confluence_access_type" name="confluence_access_type" class="w-[463.26px] rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required>
+        <option hidden disabled selected value="">Select</option>
+        {% for each_access_type in each_access.accessTypes %}
+        <option value="{{ each_access_type.type }}">{{ each_access_type.desc }}</option>
+        {% endfor %}
+      </select>
+    </div>
   </div>
 
-  <label for="reason" class="block text-sm font-medium leading-5 text-gray-700">Reason for Access</label>
-  <div class="mt-2">
-    <input type="text" name="accessReason" id="reason" class="block w-1/2 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Please mention the reason for requesting this access in detail." required>
-  </div>
-
-  <input type="hidden" id="confluenceAccessLabel" value="[]" name="accessLabel">
 </div>
