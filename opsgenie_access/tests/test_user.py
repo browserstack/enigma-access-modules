@@ -39,7 +39,7 @@ def user_identity(mocker, user):
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.email = "test@test.com"
+    user.email = "invalid@nonexistent.com"
     user.user.username = "test-user"
     return user
 
@@ -72,7 +72,7 @@ def test_user_does_not_exist_on_opsgenie():
 @given("A user_email")
 def user_email():
     """A user_email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @given("User does not exist on Opsgenie")
@@ -90,6 +90,44 @@ def user_fail(requests_mock):
 
     return_value = helper.get_user(user_email())
     assert return_value.status_code == 404
+
+
+@given("User can be added to Opsgenie")
+def user_can_be_added(requests_mock):
+    """Mock to allow adding user."""
+    url = "https://api.opsgenie.com/v2/users"
+    requests_mock.post(
+        url=url,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "GenieKey test-token",
+        },
+        json=json.dumps({
+            "username": "invalid@nonexistent.com",
+            "fullName": "test-user",
+            "role": {"name": "user"}
+        }),
+        status_code=200,
+    )
+
+
+@given("User can be added to Opsgenie team")
+def user_can_be_added_team(requests_mock):
+    """Mock to allow adding user to team"""
+    requests_mock.post(
+        "https://api.opsgenie.com/v2/teams/"
+        + "team_100"
+        + "/members?teamIdentifierType=name",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "GenieKey test-token",
+        },
+        json=json.dumps({
+            "user": {"username": "invalid@nonexistent.com"},
+            "role": "user"
+        }),
+        status_code=201,
+    )
 
 
 @given("a name")

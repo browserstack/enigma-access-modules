@@ -7,10 +7,11 @@ from . import constants, helpers, access
 class MockBoto3:
     """Mock for boto3"""
 
-    def add_user_to_group(self, group_name, user_name):
+    # Follows boto3 signature
+    def add_user_to_group(self, GroupName, UserName):
         """mock method"""
 
-    def remove_user_from_group(self, group_name, user_name):
+    def remove_user_from_group(self, GroupName, UserName):
         """mock method"""
 
     def list_groups(self, marker=None):
@@ -40,11 +41,12 @@ class MockBoto3:
 class MockBoto3withException(MockBoto3):
     """Mock for Boto3 exception"""
 
-    def add_user_to_group(self, group_name, user_name):
+    # Follows boto3 signature
+    def add_user_to_group(self, GroupName, UserName):
         """mock method raises exception"""
         raise Exception
 
-    def remove_user_from_group(self, group_name, user_name):
+    def remove_user_from_group(self, GroupName, UserName):
         """mock method raises exception"""
         raise Exception
 
@@ -142,6 +144,14 @@ def test_aws_access(mocker):
     request_mock = mocker.MagicMock()
     request_mock.user = user_mock
 
+    mocker.patch("Access.access_modules.aws_access.access.AWSAccess._AWSAccess__send_approve_email", return_value="")
+    mocker.patch("Access.access_modules.aws_access.access.AWSAccess._AWSAccess__send_revoke_email", return_value="")
+    mocker.patch(
+            "Access.access_modules.aws_access.helpers.grant_aws_access",
+            return_value=(True, ""))
+    mocker.patch(
+            "Access.access_modules.aws_access.helpers.revoke_aws_access",
+            return_value=(True, ""))
     aws_access = access.AWSAccess()
 
     label_1 = {
@@ -181,19 +191,11 @@ def test_aws_access(mocker):
     assert isinstance(aws_access.access_request_data("test"), dict)
     assert aws_access.validate_request([label_1], None) == [label_1]
 
-    mocker.patch(
-        "Access.access_modules.aws_access.helpers.grant_aws_access",
-        return_value=(True, ""),
-    )
-    mocker.patch(
-        "Access.access_modules.aws_access.helpers.revoke_aws_access",
-        return_value=(True, ""),
-    )
-
     return_value = aws_access.approve(user_mock, [label_1], None, request_mock)
     assert return_value is True
 
-    return_value = aws_access.revoke(user_mock, label_1, request_mock)
+    return_value = aws_access.revoke(
+            user_mock, mocker.MagicMock(), label_1, request_mock)
     assert return_value is True
 
 

@@ -1,6 +1,9 @@
 """access module for zoom"""
+
+import json
 import logging
 from django.template import loader
+
 from Access.base_email_access.access import BaseEmailAccess
 from bootprocess.general import emailSES
 from . import helper, constants
@@ -92,7 +95,7 @@ class Zoom(BaseEmailAccess):
         """Approves a users access request.
         Args:
             user_identity (User): User identity object represents access requested user.
-            labels (str): Access Label that respesents the access to be approved.
+            labels (list): List of access Label that respesents the access to be approved.
             approver (User): User who is approving the access.
             request (UserAccessMapping): Access mapping that repesents the User Access.
             is_group (bool, optional): Whether the access is requested for a User or a Group.
@@ -109,11 +112,17 @@ class Zoom(BaseEmailAccess):
         label_desc = self.combine_labels_desc(labels)
         for label in labels:
             if "Pro License" in label["access_type"]:
-                type = 2
+                access_type = 2
             elif "Standard License" in label["access_type"]:
-                type = 1
+                access_type = 1
+            else:
+                logger.exception(
+                    "Undefined access type from label %s for user %s"
+                    % (json.dumps(label), user.email)
+                )
+                return False, "Undefined access type"
 
-            result, exception = helper.grant_access(user, type)
+            result, exception = helper.grant_access(user, access_type)
 
             if not result:
                 logger.exception(
@@ -123,10 +132,15 @@ class Zoom(BaseEmailAccess):
                 return False, exception
 
         try:
-            self.__send_approve_email(user, label_desc, request.request_id, approver)
+            self.__send_approve_email(
+                user,
+                label_desc,
+                request.request_id,
+                approver
+            )
             return True, ""
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False, str(e)
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
@@ -188,7 +202,7 @@ class Zoom(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True, ""
         except Exception as e:
-            logger.error("Could not send email for error %s", str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False, str(e)
 
     def can_auto_approve(self):

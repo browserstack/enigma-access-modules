@@ -71,28 +71,26 @@ def add_user_to_opsgenie(user_name, user_email, role):
     logger.debug("Data used to make the add user to opsgenie request" + str(data))
     try:
         response = requests.post(url, headers=headers, json=data)
-        logger.debug(response, response.content)
         return True, response.status_code
     except Exception as e:
-        logger.error(f"Could not add user to opsgenie due to exception {str(e)}")
+        logger.exception(f"Could not add user to opsgenie due to exception {str(e)}")
         return False, "Could not add user to opsgenie"
 
 
-def get_user(user_name):
+def get_user(user_email):
     """Gets user details
     Args:
-        username (str): email of the user
+        user_email (str): email of the user
     Returns:
         details of user
     """
-    url = "https://api.opsgenie.com/v2/users/" + user_name
+    url = "https://api.opsgenie.com/v2/users/" + user_email
     headers = {
         "Content-Type": "application/json",
         "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
     }
     try:
-        response = requests.get(url, headers=headers)
-        return response
+        return requests.get(url, headers=headers)
     except Exception as e:
         logger.error(f"Could not get an user due to exception {str(e)}")
         return None
@@ -112,10 +110,9 @@ def delete_user(user_email):
     }
     try:
         response = requests.delete(url, headers=headers)
-        logger.debug(response, response.content)
         return response
     except Exception as e:
-        logger.error(f"Could not delete user due to exception: {str(e)}")
+        logger.exception(f"Could not delete user due to exception: {str(e)}")
         return None
 
 
@@ -213,12 +210,8 @@ def add_user_to_team(user_name, user_email, team, role):
     Returns:
         details of added user
     """
-    return_value = True
     user_details = get_user(user_email)
     if user_details.status_code not in (200, 201):
-        return_value = False
-
-    if not return_value:
         return_result, response_add_user_status_code = add_user_to_opsgenie(
             user_name, user_email, role
         )
@@ -239,5 +232,5 @@ def add_user_to_team(user_name, user_email, team, role):
             return False, "Could not add %s to opsgenie" % user_name
         return True, "Successfully Added User to Opsgenie"
     except Exception as e:
-        logger.error("Could not add user to opsgenie due to exception: " + str(e))
+        logger.exception("Could not add user to opsgenie due to exception: " + str(e))
         return False, "Could not add user to opsgenie"

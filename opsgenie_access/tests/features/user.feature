@@ -12,6 +12,8 @@ Feature: OpsgenieAccess User
         And a name
         And a role
         And User does not exist on Opsgenie
+        And User can be added to Opsgenie
+        And User can be added to Opsgenie team
         When I pass approval request for adding user to opsgenie
         Then return value should be true
 

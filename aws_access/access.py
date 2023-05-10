@@ -88,7 +88,7 @@ class AWSAccess(BaseEmailAccess):
                 label_meta,
             )
         except Exception as ex:
-            logger.error("%s Could not send email for error %s" % (self.tag(), str(ex)))
+            logger.exception("%s Could not send email for error %s" % (self.tag(), str(ex)))
             return False
 
         return True
@@ -99,10 +99,10 @@ class AWSAccess(BaseEmailAccess):
         """Generates and sends email in access grant."""
         if auto_approve_rules:
             rules = " ,".join(auto_approve_rules)
-            email_subject = f"""Access Granted: {request_id}
+            email_subject = f"""Access Granted: {request_id} \
             for access to {label_desc} for user {user.email}. Rules :- {rules}"""
         else:
-            email_subject = f"""Access Granted: {request_id}
+            email_subject = f"""Access Granted: {request_id} \
             for access to {label_desc} for user {user.email}."""
 
         email_body = self._generate_string_from_template(
@@ -119,7 +119,7 @@ class AWSAccess(BaseEmailAccess):
     def __send_revoke_email(self, user, request_id, label_desc):
         """Generates and sends email in for access revoke."""
         email_targets = self.email_targets(user)
-        email_subject = f"""Revoke Request: {request_id}
+        email_subject = f"""Revoke Request: {request_id} \
         for access to {label_desc} for user {user.email}"""
         emailSES(email_targets, email_subject, "")
 
@@ -201,6 +201,7 @@ class AWSAccess(BaseEmailAccess):
 
         Args:
             user (User): User whose access is to be revoked.
+            user_identity (UserIdentity): UserIdentity representing the user.
             label (str): Access label representing the access to be revoked.
             request (UserAccessMapping): UserAccessMapping representing the access.
 
@@ -223,7 +224,7 @@ class AWSAccess(BaseEmailAccess):
             self.__send_revoke_email(user, request.request_id, label_desc)
             return True
         except Exception as ex:
-            logger.error("Could not send email for error %s" % str(ex))
+            logger.exception("Could not send email for error %s" % str(ex))
             return False
 
     def validate_request(self, access_labels_data, request_user, is_group=False):

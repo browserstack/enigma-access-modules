@@ -1,15 +1,16 @@
 """OpsgenieAccess Grant feature tests."""
 
+import json
+import pytest
 from pytest_bdd import (
     given,
     scenario,
     then,
     when,
 )
-import pytest
+
 from .. import access
 from .. import helper
-import json
 
 
 @pytest.fixture(autouse=True)
@@ -21,7 +22,7 @@ def setup_test_config():
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.email = "test@test.com"
+    user.email = "invalid@nonexistent.com"
     user.user.username = "test-user"
     return user
 
@@ -31,6 +32,14 @@ def user_identity(mocker, user):
     user_identity = mocker.MagicMock()
     user_identity.user = user
     return user_identity
+
+
+@pytest.fixture
+def patched_email(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.access.OpsgenieAccess._OpsgenieAccess__send_approve_email",
+        return_value=""
+    )
 
 
 @pytest.fixture
@@ -70,19 +79,19 @@ def request_obj(mocker):
 
 
 @scenario("features/approve.feature", "Grant Access Fails")
-def test_grant_access_fails():
+def test_opsgenie_grant_access_fails():
     """Grant Access Fails."""
     pass
 
 
 @scenario("features/approve.feature", "Grant Add user to team Success")
-def test_grant_add_user_to_team_success():
+def test_opsgenie_grant_add_user_to_team_success():
     """Grant Add user to team Success."""
     pass
 
 
 @scenario("features/approve.feature", "Grant Give Admin Access Success")
-def test_grant_give_admin_access_success():
+def test_opsgenie_grant_give_admin_access_success():
     """Grant Give Admin Access Success."""
     pass
 
@@ -91,7 +100,7 @@ def test_grant_give_admin_access_success():
 def access_grant_add_user_to_team(requests_mock):
     """Access can be granted to user to add into team."""
     requests_mock.get(
-        "https://api.opsgenie.com/v2/users/test@test.com",
+        "https://api.opsgenie.com/v2/users/invalid@nonexistent.com",
         headers={
             "Content-Type": "application/json",
             "Authorization": "GenieKey test-token",
@@ -108,7 +117,7 @@ def access_grant_add_user_to_team(requests_mock):
             "Content-Type": "application/json",
             "Authorization": "GenieKey test-token",
         },
-        json=json.dumps({"user": {"username": "test@test.com"}, "role": "user"}),
+        json=json.dumps({"user": {"username": "invalid@nonexistent.com"}, "role": "user"}),
         status_code=201,
     )
 
@@ -122,14 +131,14 @@ def access_grant_add_user_to_team(requests_mock):
 def access_grant_team_admin_success(requests_mock):
     """Access can be granted to user to give admin access."""
     requests_mock.get(
-        "https://api.opsgenie.com/v2/users/test@test.com",
+        "https://api.opsgenie.com/v2/users/invalid@nonexistent.com",
         headers={
             "Content-Type": "application/json",
             "Authorization": "GenieKey test-token",
         },
         json={
             "data": {
-                "username": "test@test.com",
+                "username": "invalid@nonexistent.com",
                 "role": {"name": "user"},
             },
         },
@@ -158,7 +167,7 @@ def access_grant_team_admin_success(requests_mock):
         json=json.dumps(
             {
                 "user": {
-                    "username": "test@test.com",
+                    "username": "invalid@nonexistent.com",
                 },
                 "role": "TeamAdmin",
             }
@@ -173,7 +182,7 @@ def access_grant_team_admin_success(requests_mock):
 def user_exists(requests_mock):
     """User exists on opsgenie."""
     requests_mock.get(
-        "https://api.opsgenie.com/v2/users/test@test.com",
+        "https://api.opsgenie.com/v2/users/invalid@nonexistent.com",
         headers={
             "Content-Type": "application/json",
             "Authorization": "GenieKey test-token",
@@ -181,27 +190,26 @@ def user_exists(requests_mock):
         json={"name": "test-user"},
         status_code=200,
     )
-    response = helper.get_user("test@test.com")
-    assert response.status_code == 200
-    assert response.json() == {"name": "test-user"}
 
 
 @given("an user email")
 def user_email():
     """an user email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
-@when("I pass approval request for add user to team", target_fixture="context_output")
-def user_approve(user_identity, user_labels, request_obj):
+@when("I pass approval request for add user to team",
+      target_fixture="context_output")
+def user_approve(user_identity, user_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, user_labels, "test-approver", request_obj
     )
 
 
-@when("I pass approval request to give admin access", target_fixture="context_output")
-def admin_approve(user_identity, admin_labels, request_obj):
+@when("I pass approval request to give admin access",
+      target_fixture="context_output")
+def admin_approve(user_identity, admin_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, admin_labels, "test-approver", request_obj

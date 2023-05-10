@@ -20,4 +20,4 @@ Feature: OpsgenieAccess Grant
         And User exists on opsgenie
         And Access can be granted to user to add into team
         When I pass approval request for add user to team
-        Then return value should be False
+        Then return value should be True

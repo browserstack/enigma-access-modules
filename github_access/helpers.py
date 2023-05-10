@@ -156,7 +156,7 @@ def grant_access(repo, access_level, username):
         return True
     except Exception as e:
         logger.error("Error while granting repo access to user " + username)
-        logger.error(str(e))
+        logger.exception(str(e))
         return False
 
 
