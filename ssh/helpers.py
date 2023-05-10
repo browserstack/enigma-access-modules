@@ -1,16 +1,31 @@
+""" Helper methods for ssh module """
+
 import traceback
 import logging
 from fabric import Connection
+
 from EnigmaAutomation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 
-with open(ACCESS_MODULES["ssh"]["inventory_file_path"], "r") as f:
-    global ssh_machine_list
-    ssh_machine_list = {}
-    # convert inventory.csv file to dictionary with hostname as key and ip as value
-    for line in f.readlines():
-        ssh_machine_list[line.split(",")[0]] = line.split(",")[1].strip()
+global ssh_machine_list
+ssh_machine_list = {}
+
+
+def _get_inventory_file_path():
+    if "ssh" in ACCESS_MODULES:
+        if "inventory_file_path" in ACCESS_MODULES["ssh"]:
+            return ACCESS_MODULES["ssh"]["inventory_file_path"]
+    return "inventory.csv"
+
+
+def init():
+    """ Initialize the ssh machine list """
+    with open(_get_inventory_file_path(), mode="r", encoding="utf-8") as file:
+        # convert inventory.csv file to dictionary
+        # with hostname as key and ip as value
+        for line in file.readlines():
+            ssh_machine_list[line.split(",")[0]] = line.split(",")[1].strip()
 
 
 def get_ip_from_hostname(hostname):
@@ -18,12 +33,13 @@ def get_ip_from_hostname(hostname):
 
 
 def get_connection_to_host(ip):
-
     # Connect to the remote machine
     connection = Connection(
         user=ACCESS_MODULES["ssh"]["engima_root_user"],
         host=ip,
-        connect_kwargs={"key_filename": ACCESS_MODULES["ssh"]["private_key_path"]},
+        connect_kwargs={
+            "key_filename": ACCESS_MODULES["ssh"]["private_key_path"]
+        },
     )
     logger.info(f"Connection to then remove machine with ip: {ip} has been formed")
 

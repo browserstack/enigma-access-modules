@@ -3,16 +3,21 @@ import requests
 import logging
 from EnigmaAutomation.settings import ACCESS_MODULES
 
-OPSGENIE_TOKEN = ACCESS_MODULES["opsgenie_access"]["OPSGENIE_TOKEN"]
-IGNORE_TEAMS = ACCESS_MODULES["opsgenie_access"]["IGNORE_TEAMS"]
-
 logger = logging.getLogger(__name__)
+
+
+def _get_opsgenie_token():
+    return ACCESS_MODULES["ops_genie_access"]["OPSGENIE_TOKEN"]
+
+
+def _get_ignored_teams():
+    return ACCESS_MODULES["ops_genie_access"]["IGNORE_TEAMS"]
 
 
 def get_team_id(team_name):
     """Getting the team id from the team name."""
     api_endpoint = "https://api.opsgenie.com/v2/teams"
-    api_key = OPSGENIE_TOKEN
+    api_key = _get_opsgenie_token()
 
     headers = {
         "Content-Type": "application/json",
@@ -43,7 +48,7 @@ def remove_user_from_team(team, user_email):
     url = "https://api.opsgenie.com/v2/teams/" + team_id + "/members/" + user_email
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     try:
         response = requests.delete(url, headers=headers)
@@ -65,7 +70,7 @@ def add_user_to_opsgenie(user_name, user_email, role):
     url = "https://api.opsgenie.com/v2/users"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     data = {"username": user_email, "fullName": user_name, "role": {"name": role}}
     logger.debug("Data used to make the add user to opsgenie request" + str(data))
@@ -87,7 +92,7 @@ def get_user(user_email):
     url = "https://api.opsgenie.com/v2/users/" + user_email
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     try:
         return requests.get(url, headers=headers)
@@ -106,7 +111,7 @@ def delete_user(user_email):
     url = "https://api.opsgenie.com/v2/users/" + user_email
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     try:
         response = requests.delete(url, headers=headers)
@@ -135,7 +140,7 @@ def create_team_admin_role(team, user_email):
     url = "https://api.opsgenie.com/v2/teams/" + team + "/roles?teamIdentifierType=name"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     data = {
         "name": "TeamAdmin",
@@ -185,13 +190,13 @@ def create_team_admin_role(team, user_email):
 def teams_list():
     """Returns list of teams user have"""
     url = "https://api.opsgenie.com/v2/teams"
-    headers = {"Authorization": "GenieKey %s" % OPSGENIE_TOKEN}
+    headers = {"Authorization": "GenieKey %s" % _get_opsgenie_token()}
     try:
         teams_response = requests.get(url, headers=headers)
         teams_json = teams_response.json()
         all_teams = []
         for team_index in range(len(teams_json["data"])):
-            if teams_json["data"][team_index]["name"] in IGNORE_TEAMS:
+            if teams_json["data"][team_index]["name"] in _get_ignored_teams():
                 continue
             all_teams.append(teams_json["data"][team_index]["name"])
         return all_teams
@@ -223,7 +228,7 @@ def add_user_to_team(user_name, user_email, team, role):
     )
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     data = {"user": {"username": user_email}, "role": role}
     try:
