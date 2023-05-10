@@ -166,38 +166,21 @@ class Slack(BaseEmailAccess):
 
         return ", ".join(label_descriptions_set)
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Combines multiple labelss.
         Args:
-            labelss_data (array): Array of access lables types.
+            access_request_form (form): Access module request form.
             request_user (UserAccessMaping): Object of UserAccessMapping represents requested user.
         Returns:
             array (json objects): key value pair of access lable and it's access type.
         """
-        valid_labels_array = []
-
-        for label in access_labels_data:
-            slack_workspace_data = label["slackAccessWorkspace"]
-            slack_workspace_data = json.loads(slack_workspace_data.replace("'", '"'))
-
-            if slack_workspace_data is None:
-                raise Exception(constants.ERROR_MESSAGES)
-
-            if not slack_workspace_data.get("workspacename"):
-                raise Exception(constants.VALID_WORKSPACE_REQUIRED_ERROR)
-
-            if not slack_workspace_data.get("workspace_id"):
-                raise Exception(constants.VALID__WORKSPACE_ID_REQUIRED_ERROR)
-
-            valid_labels = {
-                "action": "WorkspaceAccess",
-                "workspace_id": slack_workspace_data["workspace_id"],
-                "workspace_name": slack_workspace_data["workspacename"],
+        selected_workspace=access_request_form.get("slackAccessWorkspace")
+        if (not selected_workspace):
+            raise Exception(constants.VALID_WORKSPACE_REQUIRED_ERROR)
+        valid_access_label = {
+                "workspace_name": access_request_form.get("slackAccessWorkspace"),
             }
-
-            valid_labels_array.append(valid_labels)
-
-        return valid_labels_array
+        return [valid_access_label]
 
     def access_request_data(self, request, is_group=False):
         workspace_data = [workspace for workspace in get_workspace_list()]
