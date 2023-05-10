@@ -1,15 +1,16 @@
 """ZoomAccess Grant feature tests."""
-import pytest
-from .. import access
-from .. import helper
-import json
 
+import json
+import pytest
 from pytest_bdd import (
     given,
     scenario,
     then,
     when,
 )
+
+from .. import access
+from .. import helper
 
 
 @pytest.fixture(autouse=True)
@@ -38,20 +39,24 @@ def test_zoom_grant_standard_access_success():
 
 
 @given("Access can be granted to user for Pro access")
-def access_grant_standard_access(requests_mock):
+def access_grant_standard_access(requests_mock, mocker):
+    mocker.patch(
+        'Access.access_modules.zoom_access.helper.get_token',
+        return_value="test-token"
+    )
     requests_mock.get(
-        "https://test-base-url.com/users/invalid@nonexistent.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
-            "Authorization": "token test-token",
+            "Authorization": "Bearer test-token",
             "Content-Type": "application/json",
         },
         status_code=200,
     )
 
     requests_mock.patch(
-        "https://test-base-url.com/users/invalid@nonexistent.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
-            "Authorization": "token test-token",
+            "Authorization": "Bearer test-token",
             "Content-Type": "application/json",
         },
         json=json.dumps({"type": 2}),
@@ -62,20 +67,24 @@ def access_grant_standard_access(requests_mock):
 
 
 @given("Access can be granted to user for Standard access")
-def access_grant_standard_access(requests_mock):
+def access_grant_standard_access(requests_mock, mocker):
+    mocker.patch(
+        'Access.access_modules.zoom_access.helper.get_token',
+        return_value="test-token"
+    )
     requests_mock.get(
-        "https://test-base-url.com/users/invalid@nonexistent.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
-            "Authorization": "token test-token",
+            "Authorization": "Bearer test-token",
             "Content-Type": "application/json",
         },
         status_code=200,
     )
 
     requests_mock.patch(
-        "https://test-base-url.com/users/invalid@nonexistent.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
-            "Authorization": "token test-token",
+            "Authorization": "Bearer test-token",
             "Content-Type": "application/json",
         },
         json=json.dumps({"type": 1}),
@@ -86,17 +95,19 @@ def access_grant_standard_access(requests_mock):
 
 
 @given("User exists on zoom")
-def user_already_exists(requests_mock):
-    API_URL = "https://test-base-url.com/users/invalid@nonexistent.com"
-    expected_headers = (
-        {
-            "Authorization": "token test-token",
-            "Content-Type": "application/json",
-        },
+def user_already_exists(requests_mock, mocker):
+    mocker.patch(
+        'Access.access_modules.zoom_access.helper.get_token',
+        return_value="test-token"
     )
+    api_url = "https://test-base-url.com/users/" + user_email()
+    expected_headers = {
+        "Authorization": "Bearer test-token",
+        "Content-Type": "application/json",
+    }
 
     requests_mock.get(
-        API_URL,
+        api_url,
         headers=expected_headers,
         status_code=200,
     )
@@ -106,31 +117,37 @@ def user_already_exists(requests_mock):
 
 
 @given("Access cannot be granted to user for Standard access")
-def access_grant_standard_access_fail(requests_mock):
+def access_grant_standard_access_fail(requests_mock, mocker):
+    mocker.patch(
+        'Access.access_modules.zoom_access.helper.get_token',
+        return_value="test-token"
+    )
     requests_mock.get(
-        "https://test-base-url.com/users/invalid@nonexistent.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
-            "Authorization": "token test-token",
+            "Authorization": "Bearer test-token",
             "Content-Type": "application/json",
         },
         status_code=404,
     )
 
     requests_mock.post(
-        "https://test-base-url.com/users",
+        "https://test-base-url.com/users/",
         headers={
-            "Authorization": "token test-token",
+            "Authorization": "Bearer test-token",
             "Content-Type": "application/json",
         },
-        json=json.dumps(
-            {
-                "action": "create",
-                "user_info": {"email": "invalid@nonexistent.com", "type": 1},
+        json=json.dumps({
+            'action': 'create',
+            'user_info': {
+                'email': user_email(),
+                'first_name': user_name(),
+                'type': 1
             }
-        ),
+        }),
         status_code=404,
     )
-    return_value = helper.create_user(user_email(), 1)
+    return_value = helper.create_user(user_email(), 1, user_name())
     assert return_value[0] == 404
 
 
@@ -140,12 +157,17 @@ def user_email():
     return "invalid@nonexistent.com"
 
 
+def user_name():
+    """user name mock value"""
+    return "invalid_username"
+
+
 @pytest.fixture
 def standard_labels():
     form_label = [
         {
             "action": "zoom_access",
-            "access_type": "test-standard-licence",
+            "access_type": "Standard License",
         }
     ]
     return form_label
@@ -156,7 +178,7 @@ def pro_labels():
     form_label = [
         {
             "action": "zoom_access",
-            "access_type": "test-pro-licence",
+            "access_type": "Pro License",
         }
     ]
     return form_label
@@ -165,25 +187,31 @@ def pro_labels():
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.email = "test_user@test.com"
+    user.email = user_email()
     return user
 
 
 @pytest.fixture
 def user_identity_1(mocker):
     user_identity_1 = mocker.MagicMock()
-    user_identity_1.email = "test_user@test.com"
-    user_identity_1.access.access_tag = "zoom_access"
-    user_identity_1.access.access_label = {"access_type": "Pro License"}
+    user_1 = mocker.MagicMock()
+    user_1.email = user_email()
+    user_1.name = user_name()
+    user_1.access.access_tag = "zoom_access"
+    user_1.access.access_label = {"access_type": "Pro License"}
+    user_identity_1.user = user_1
     return user_identity_1
 
 
 @pytest.fixture
 def user_identity_2(mocker):
     user_identity_2 = mocker.MagicMock()
-    user_identity_2.email = "test_user@test.com"
-    user_identity_2.access.access_tag = "zoom_access"
-    user_identity_2.access.access_label = {"access_type": "Standard Licence"}
+    user_2 = mocker.MagicMock()
+    user_2.email = user_email()
+    user_2.name = user_name()
+    user_2.access.access_tag = "zoom_access"
+    user_2.access.access_label = {"access_type": "Standard Licence"}
+    user_identity_2.user = user_2
     return user_identity_2
 
 
