@@ -12,16 +12,33 @@ global ssh_machine_list
 ssh_machine_list = {}
 
 
+class SSHModuleError(Exception):
+    """ Custom error class """
+
+    def __init__(self, message):
+        self.message = message
+
+
 def _get_inventory_file_path():
     if "ssh" in ACCESS_MODULES:
         if "inventory_file_path" in ACCESS_MODULES["ssh"]:
             return ACCESS_MODULES["ssh"]["inventory_file_path"]
-    return "inventory.csv"
+    raise SSHModuleError("Inventory file path not initialized")
 
 
 def init():
     """ Initialize the ssh machine list """
-    with open(_get_inventory_file_path(), mode="r", encoding="utf-8") as file:
+    inventory_path = ""
+    try:
+        inventory_path = _get_inventory_file_path()
+    except SSHModuleError as error:
+        logger.info(
+            "SSHModule: Inventory file path not initialized: %s",
+            error,
+        )
+        return
+
+    with open(inventory_path, mode="r", encoding="utf-8") as file:
         # convert inventory.csv file to dictionary
         # with hostname as key and ip as value
         for line in file.readlines():

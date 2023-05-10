@@ -29,10 +29,15 @@ def context():
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helpers.GITHUB_TOKEN = "test-token"
-    helpers.GITHUB_BASE_URL = "https://test-base-url.com"
-    helpers.GITHUB_ORG = "test-org"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.github_access.helpers._get_github_config",
+        return_value={
+            "GITHUB_TOKEN": "test-token",
+            "GITHUB_BASE_URL": "https://test-base-url.com",
+            "GITHUB_ORG": "test-org",
+        }
+    )
 
 
 @scenario("features/approve.feature", "Grant Merge Access Success")

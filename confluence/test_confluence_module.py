@@ -75,7 +75,17 @@ class MockRequest:
 
 
 def test_confluence(mocker, requests_mock):
-    """unit test for the confluence access module methods"""
+    """ unit test for the confluence access module methods """
+
+    base_url = "https://invalid-domain.com"
+    mocker.patch(
+        "Access.access_modules.confluence.access.Confluence._get_confluence_config",
+        return_value={
+            "ADMIN_EMAIL": "test-email@nonexistent.com",
+            "API_TOKEN": "test-token",
+            "CONFLUENCE_BASE_URL": base_url,
+        }
+    )
     confluence_access = access.Confluence()
 
     user_mock = mocker.MagicMock()
@@ -133,8 +143,6 @@ def test_confluence(mocker, requests_mock):
         {"type": "Edit Access", "desc": "Edit Access"},
         {"type": "Admin Access", "desc": "Admin Access"},
     ]
-
-    base_url = ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
 
     grant_url = f"{base_url}/wiki/rest/api/space/test/permission"
 

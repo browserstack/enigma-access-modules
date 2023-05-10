@@ -5,7 +5,6 @@ import boto3
 from EnigmaAutomation.settings import ACCESS_MODULES
 from . import constants
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -44,9 +43,16 @@ def aws_group_exists(account, group):
     return True
 
 
+def _get_aws_config():
+    """ Gets AWS config. """
+
+    return ACCESS_MODULES.get("aws_access", {})
+
+
 def _get_aws_credentails(account):
     """Get AWS API credentials."""
-    accounts = ACCESS_MODULES["aws_access"].get("aws_accounts", [])
+    aws_access_config = _get_aws_config()
+    accounts = aws_access_config.get("aws_accounts", [])
     for account_data in accounts:
         if account_data["account"] == account:
             return dict(
@@ -124,7 +130,7 @@ def get_aws_accounts():
     Returns:
         list: Returns list of Account Names.
     """
-    accounts = ACCESS_MODULES["aws_access"].get("aws_accounts", [])
+    accounts = _get_aws_config().get("aws_accounts", [])
     account_names = []
     for account in accounts:
         account_names.append(account["account"])

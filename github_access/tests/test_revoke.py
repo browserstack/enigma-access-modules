@@ -45,10 +45,15 @@ def labels():
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helpers.GITHUB_TOKEN = "test-token"
-    helpers.GITHUB_BASE_URL = "https://test-base-url.com"
-    helpers.GITHUB_ORG = "test-org"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.github_access.helpers._get_github_config",
+        return_value={
+            "GITHUB_TOKEN": "test-token",
+            "GITHUB_BASE_URL": "https://test-base-url.com",
+            "GITHUB_ORG": "test-org",
+        }
+    )
 
 
 @given("A git username", target_fixture="user_name")
@@ -84,6 +89,10 @@ def access_not_revoked(requests_mock):
         API_URL,
         headers=expected_headers,
         status_code=000,
+    )
+    mocker.patch(
+        "Access.access_modules.github_access.access.GithubAccess._GithubAccess__send_revoke_email",
+        return_value=""
     )
 
     return_value = helpers.revoke_access(username=user_name(), repo="test-repo")

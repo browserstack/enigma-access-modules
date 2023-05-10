@@ -30,24 +30,9 @@ class GithubAccess(BaseEmailAccess):
     def revoke(self, user, user_identity, label, request):
         user_name = user_identity.identity["username"]
         result = revoke_access(user_name, label["repository"])
-        label_desc = self.get_label_desc(label)
-        email_targets = self.email_targets(user)
-        email_subject = constants.REVOKE_REQUEST % (label_desc, user.email)
-        email_body = ""
 
-        if result:
-            logger.debug(constants.REVOKE_SUCCESS % (user.email, label["repository"]))
-            email_body = constants.REVOKE_SUCCESS % (user.email, label["repository"])
-        else:
-            logger.error(constants.REVOKE_FAILED % (user.email, label["repository"]))
-            email_body = constants.REVOKE_FAILED % (user.email, label["repository"])
+        self.__send_revoke_email(user, label)
 
-        try:
-            emailSES(email_targets, email_subject, email_body)
-            return True
-        except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
-            return False
 
     def offboard_github(self, github_username):
         return revoke_access(github_username)
@@ -131,6 +116,7 @@ class GithubAccess(BaseEmailAccess):
             vals[key] = value
         return template.render(vals)
 
+
     def __send_approve_email(
         self, user, label_desc, request_id, approver, grant_status, auto_approve_rules
     ):
@@ -152,6 +138,31 @@ class GithubAccess(BaseEmailAccess):
         )
 
         emailSES(email_targets, email_subject, email_body)
+
+
+    def __send_revoke_email(
+        self, user, label,
+    ):
+        email_targets = self.email_targets(user)
+
+        label_desc = self.get_label_desc(label)
+        email_subject = constants.REVOKE_REQUEST % (label_desc, user.email)
+
+        email_body = ""
+
+        if result:
+            logger.debug(constants.REVOKE_SUCCESS % (user.email, label["repository"]))
+            email_body = constants.REVOKE_SUCCESS % (user.email, label["repository"])
+        else:
+            logger.error(constants.REVOKE_FAILED % (user.email, label["repository"]))
+            email_body = constants.REVOKE_FAILED % (user.email, label["repository"])
+
+        try:
+            emailSES(email_targets, email_subject, email_body)
+            return True
+        except Exception as e:
+            logger.exception("Could not send email for error %s" % str(e))
+            return False
 
     def get_label_desc(self, access_label):
         if access_label["action"] == self.ACCESS_LABEL:

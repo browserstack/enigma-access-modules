@@ -24,9 +24,15 @@ def user_labels():
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.OPSGENIE_TOKEN = ("test-token",)
-    helper.IGNORE_TEAMS = ["team_1", "team_2"]
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_opsgenie_token",
+        return_value="test-token",
+    )
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_ignored_teams",
+        return_value=["team_1", "team_2"],
+    )
 
 
 @pytest.fixture
