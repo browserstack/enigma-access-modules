@@ -225,13 +225,21 @@ def user_identity_2(mocker):
 
 
 @when("I pass approval request for Pro access", target_fixture="context_output")
-def pro_approve(user_identity_1, standard_labels, user):
+def pro_approve(user_identity_1, standard_labels, user, mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_approve_email",
+        return_value=True
+    )
     zoom_access = access.get_object()
     return zoom_access.approve(user_identity_1, standard_labels, "test-approver", user)
 
 
 @when("I pass approval request for Standard access", target_fixture="context_output")
-def standard_approve(user_identity_2, pro_labels, user):
+def standard_approve(user_identity_2, pro_labels, user, mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_approve_email",
+        return_value=True
+    )
     zoom_access = access.get_object()
     return zoom_access.approve(user_identity_2, pro_labels, "test-approver", user)
 

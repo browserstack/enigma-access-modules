@@ -159,6 +159,10 @@ def labels():
 @when('I pass approval request', target_fixture="context_output")
 def approve_request(labels, user_identity, mocker):
     """I pass approval request."""
+    mocker.patch(
+        "Access.access_modules.slack_access.access.Slack._Slack__send_approve_email",
+        return_value=True
+    )
     slack_access = access.get_object()
     return slack_access.approve(
         user_identity,

@@ -32,6 +32,7 @@ class GithubAccess(BaseEmailAccess):
         result = revoke_access(user_name, label["repository"])
 
         self.__send_revoke_email(user, label)
+        return result
 
 
     def offboard_github(self, github_username):

@@ -103,6 +103,10 @@ def user_id():
 
 @when("I pass revoke request", target_fixture="context_output")
 def revoke_request(usera, user_a, labels, mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_revoke_email",
+        return_value=True
+    )
     zoom_access = access.get_object()
     return zoom_access.revoke(usera, user_a, labels, mocker.Mock())
 
