@@ -1,26 +1,36 @@
 """ helper functions for zoom access module"""
-import json
-import logging
+
 from time import sleep
 import datetime
-import requests
+import json
+import logging
 import jwt
+import requests
+
 from EnigmaAutomation.settings import ACCESS_MODULES
 from . import constants
 
-ZOOM_API_KEY = ACCESS_MODULES["zoom_access"]["ZOOM_API_KEY"]
-ZOOM_BASE_URL = ACCESS_MODULES["zoom_access"]["ZOOM_BASE_URL"]
-ZOOM_CLIENT_SECRET = ACCESS_MODULES["zoom_access"]["ZOOM_CLIENT_SECRET"]
-
 logger = logging.getLogger(__name__)
+
+
+def _get_api_key():
+    return ACCESS_MODULES["zoom_access"]["ZOOM_API_KEY"]
+
+
+def _get_zoom_api_base_url():
+    return ACCESS_MODULES["zoom_access"]["ZOOM_BASE_URL"]
+
+
+def _get_zoom_client_secret():
+    return ACCESS_MODULES["zoom_access"]["ZOOM_CLIENT_SECRET"]
 
 
 def get_token():
     """Returns the zoom token created using ZOOM API KEY and ZOOM CLIENT SECRET"""
     curr_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
     encoded_jwt = jwt.encode(
-        {"iss": ZOOM_API_KEY, "exp": curr_dt.timestamp()},
-        ZOOM_CLIENT_SECRET,
+        {"iss": _get_api_key(), "exp": curr_dt.timestamp()},
+        _get_zoom_client_secret(),
         algorithm="HS256",
     )
     return encoded_jwt
@@ -124,7 +134,7 @@ def get_user(email):
     Returns:
         details of user
     """
-    url = ZOOM_BASE_URL + "users/"
+    url = _get_zoom_api_base_url() + "users/"
     user_details = make_request(url + email)
     logger.debug("[ZOOM] get_user - %s", str(user_details))
     return user_details
@@ -137,7 +147,7 @@ def delete_user(email):
     Returns:
         userdetails of deleted user
     """
-    url = ZOOM_BASE_URL + "users/"
+    url = _get_zoom_api_base_url() + "users/"
     user_details = get_user(email)
     if user_details[0] != 404:
         user_id = user_details[1]["id"]
@@ -156,7 +166,7 @@ def create_user(email, access_type, name=None):
     Returns:
         userdetails of created user
     """
-    url = ZOOM_BASE_URL + "users/"
+    url = _get_zoom_api_base_url() + "users/"
     data = {
         "action": "create",
         "user_info": {"email": email, "first_name": name, "type": access_type},
@@ -174,7 +184,7 @@ def update_user(email, access_type):
     Returns:
         userdetails of updated user
     """
-    url = ZOOM_BASE_URL + "users/" + email
+    url = _get_zoom_api_base_url() + "users/" + email
     data = {"type": access_type}
     user_details = make_request(url, "PATCH", data)
     logger.info("[ZOOM] update_user - %s", str(user_details))

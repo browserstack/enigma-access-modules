@@ -23,10 +23,24 @@ def user_labels():
     return form_label
 
 
+@pytest.fixture
+def patched_email(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.access.OpsgenieAccess._OpsgenieAccess__send_approve_email",
+        return_value=""
+    )
+
+
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.OPSGENIE_TOKEN = ("test-token",)
-    helper.IGNORE_TEAMS = ["team_1", "team_2"]
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_opsgenie_token",
+        return_value="test-token",
+    )
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_ignored_teams",
+        return_value=["team_1", "team_2"],
+    )
 
 
 @pytest.fixture
@@ -143,7 +157,7 @@ def role():
 
 
 @when("I pass approval request", target_fixture="context_output")
-def approve_pass(user_identity, user_labels, request_obj):
+def approve_pass(user_identity, user_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, user_labels, "test-approver", request_obj
@@ -154,7 +168,7 @@ def approve_pass(user_identity, user_labels, request_obj):
     "I pass approval request for adding user to opsgenie",
     target_fixture="context_output",
 )
-def approve_pass(user_identity, user_labels, request_obj):
+def approve_pass(user_identity, user_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, user_labels, "test-approver", request_obj

@@ -15,6 +15,9 @@ class SSHAccess(BaseEmailAccess):
     available = True
     urlpatterns = []
 
+    def __init__(self):
+        helpers.init()
+
     def email_targets(self, user):
         """returns email targets
 

@@ -14,10 +14,19 @@ from .. import helper
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.ZOOM_API_KEY = "test-token"
-    helper.ZOOM_BASE_URL = "https://test-base-url.com/"
-    helper.ZOOM_CLIENT_SECRET = "test-org"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_api_key",
+        return_value="test-token"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_api_base_url",
+        return_value="https://test-base-url.com/"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_client_secret",
+        return_value="test-org"
+    )
 
 
 @scenario("features/approve.feature", "Grant Access Fails")
@@ -216,13 +225,21 @@ def user_identity_2(mocker):
 
 
 @when("I pass approval request for Pro access", target_fixture="context_output")
-def pro_approve(user_identity_1, standard_labels, user):
+def pro_approve(user_identity_1, standard_labels, user, mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_approve_email",
+        return_value=True
+    )
     zoom_access = access.get_object()
     return zoom_access.approve(user_identity_1, standard_labels, "test-approver", user)
 
 
 @when("I pass approval request for Standard access", target_fixture="context_output")
-def standard_approve(user_identity_2, pro_labels, user):
+def standard_approve(user_identity_2, pro_labels, user, mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_approve_email",
+        return_value=True
+    )
     zoom_access = access.get_object()
     return zoom_access.approve(user_identity_2, pro_labels, "test-approver", user)
 

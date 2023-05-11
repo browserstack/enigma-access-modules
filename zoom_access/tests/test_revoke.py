@@ -38,10 +38,19 @@ def user_a(mocker):
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.ZOOM_API_KEY = "test-token"
-    helper.ZOOM_BASE_URL = "https://test-base-url.com/"
-    helper.ZOOM_CLIENT_SECRET = "test-secret"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_api_key",
+        return_value="test-token"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_api_base_url",
+        return_value="https://test-base-url.com/"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_client_secret",
+        return_value="test-org"
+    )
 
 
 @scenario("features/revoke.feature", "Revoke User Access to a zoom success")
@@ -94,6 +103,10 @@ def user_id():
 
 @when("I pass revoke request", target_fixture="context_output")
 def revoke_request(usera, user_a, labels, mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_revoke_email",
+        return_value=True
+    )
     zoom_access = access.get_object()
     return zoom_access.revoke(usera, user_a, labels, mocker.Mock())
 

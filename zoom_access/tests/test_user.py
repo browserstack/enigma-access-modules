@@ -41,10 +41,19 @@ def usera(mocker):
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.ZOOM_API_KEY = "test-token"
-    helper.ZOOM_BASE_URL = "https://test-base-url.com/"
-    helper.ZOOM_CLIENT_SECRET = "test-secret"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_api_key",
+        return_value="test-token"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_api_base_url",
+        return_value="https://test-base-url.com/"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_client_secret",
+        return_value="test-org"
+    )
 
 
 @scenario("features/user.feature", "User does not exist on zoom")
