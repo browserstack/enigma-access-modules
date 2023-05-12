@@ -65,16 +65,18 @@ class Zoom(BaseEmailAccess):
             label_descriptions_set.add(label_desc)
         return ", ".join(label_descriptions_set)
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Combines multiple access_labels.
         Args:
-            access_labels_data (array): Array of access lables types.
+            access_request_form (form): Access module request form.
             request_user (UserAccessMaping): Object of UserAccessMapping represents requested user.
         Returns:
             array (json objects): key value pair of access lable and it's access type.
         """
         valid_access_label_array = []
-        for access_label_data in access_labels_data:
+        selected_access_label = json.loads(
+            access_request_form.get("accessLabel"))
+        for access_label_data in selected_access_label:
             if access_label_data not in ("Standard License", "Pro License"):
                 raise Exception(constants.ERROR_MESSAGES["invalid_type"])
             valid_access_label = {}
