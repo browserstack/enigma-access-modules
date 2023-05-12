@@ -169,16 +169,19 @@ class Slack(BaseEmailAccess):
     def validate_request(self, access_request_form, request_user, is_group=False):
         """Combines multiple labelss.
         Args:
-            access_request_form (form): Access module request form.
+            labelss_data (array): Array of access lables types.
             request_user (UserAccessMaping): Object of UserAccessMapping represents requested user.
         Returns:
             array (json objects): key value pair of access lable and it's access type.
         """
         selected_workspace=access_request_form.get("slackAccessWorkspace")
+        selected_workspace=json.loads(selected_workspace.replace("'", '"'))
         if (not selected_workspace):
             raise Exception(constants.VALID_WORKSPACE_REQUIRED_ERROR)
         valid_access_label = {
-                "workspace_name": access_request_form.get("slackAccessWorkspace"),
+                "action": "WorkspaceAccess",
+                "workspace_id": selected_workspace.get("workspace_id"),
+                "workspace_name": selected_workspace.get('workspacename'),
             }
         return [valid_access_label]
 
