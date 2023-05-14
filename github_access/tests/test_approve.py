@@ -14,6 +14,7 @@ def user(mocker):
     user.email = "test_user@test.com"
     return user
 
+
 @pytest.fixture
 def user_identity(mocker):
     identity_mock = mocker.MagicMock()
@@ -21,6 +22,13 @@ def user_identity(mocker):
         "username": user_name(),
     }
     return identity_mock
+
+
+@pytest.fixture
+def request_obj(mocker):
+    request_obj = mocker.MagicMock()
+    request_obj.request_id = "123"
+    return request_obj
 
 
 @pytest.fixture(scope="function")
@@ -208,13 +216,19 @@ def push_labels():
 
 
 @when("I pass approval request for push", target_fixture="context_output")
-def push_approve(user_identity, push_labels):
+def push_approve(mocker, user_identity, push_labels, request_obj):
+
+    mocker.patch(
+        "Access.access_modules.github_access.access.GithubAccess._GithubAccess__send_approve_email",
+        return_value=""
+    )
+
     github_access = access.get_object()
     return github_access.approve(
         user_identity,
         push_labels,
         "test-approver",
-        "123"
+        request_obj
     )
 
 
