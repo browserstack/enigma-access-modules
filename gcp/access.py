@@ -128,7 +128,6 @@ class GCPAccess(BaseEmailAccess):
                 "group": group,
             }
             valid_access_label_array.append(valid_access_label)
-        print("ARRAY--->", valid_access_label_array)
         return valid_access_label_array
 
     def approve(
