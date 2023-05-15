@@ -198,8 +198,12 @@ def labels():
 
 
 @when("I pass approval request", target_fixture="context_output")
-def add_user_approve(user_identity, labels):
+def add_user_approve(mocker, user_identity, labels):
     github_access = access.get_object()
+    mocker.patch(
+        "Access.access_modules.github_access.access.GithubAccess._GithubAccess__send_approve_email",
+        return_value=""
+    )
     return github_access.approve(user_identity, labels, "test-approver", "123")
 
 
