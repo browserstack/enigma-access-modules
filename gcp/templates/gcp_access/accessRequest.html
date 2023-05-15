@@ -123,11 +123,11 @@
 
   function fetchGCPGroups(page_token = null) {
     let GCPDomain = getSelectedgcpDomain();
-    console.log("Domain-->",GCPDomain)
+   
     clearGCPGroups();
     marker=null;
     {% comment %} $.ajax({
-      url: "/api/v1/aws/account/groups/",
+      url: "/api/v1/gcp/domain/groups/",
       data: {"gcp_domain": GCPDomain, "page_token": page_token},
     }).done(function(data, statusText, xhr){
       let rows = $.map(data["gcp_groups"], function(group, idx){
