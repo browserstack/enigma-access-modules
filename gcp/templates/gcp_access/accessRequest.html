@@ -126,7 +126,7 @@
    
     clearGCPGroups();
     marker=null;
-    {% comment %} $.ajax({
+    $.ajax({
       url: "/api/v1/gcp/domain/groups/",
       data: {"gcp_domain": GCPDomain, "page_token": page_token},
     }).done(function(data, statusText, xhr){
@@ -143,7 +143,7 @@
 
       $('#gcp-group-table').append(rows.join(""));
 
-    }) {% endcomment %}
+    })
   }
 </script>
 
