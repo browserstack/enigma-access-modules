@@ -18,17 +18,17 @@ class Confluence(BaseEmailAccess):
 
     urlpatterns = []
 
-    def _get_confluence_config():
-        return ACCESS_MODULES.get("confluence", {})
+    def _get_confluence_config(self):
+        return ACCESS_MODULES.get(self.tag(), {})
 
-    def _get_admin_email():
-        return _get_confluence_config()["ADMIN_EMAIL"]
+    def _get_admin_email(self):
+        return self._get_confluence_config()["ADMIN_EMAIL"]
 
-    def _get_api_token():
-        return _get_confluence_config()["API_TOKEN"]
+    def _get_api_token(self):
+        return self._get_confluence_config()["API_TOKEN"]
 
-    def _get_base_url():
-        return _get_confluence_config()["CONFLUENCE_BASE_URL"]
+    def _get_base_url(self):
+        return self._get_confluence_config()["CONFLUENCE_BASE_URL"]
 
     def can_auto_approve(self):
         return False
@@ -134,8 +134,8 @@ class Confluence(BaseEmailAccess):
         """Makes confluence API calls and approves access to a confluence space."""
         try:
             auth = HTTPBasicAuth(
-                _get_admin_email(),
-                _get_api_token(),
+                self._get_admin_email(),
+                self._get_api_token(),
             )
             headers = {"Accept": "application/json", "Content-Type": "application/json"}
             payload = json.dumps(
@@ -144,7 +144,7 @@ class Confluence(BaseEmailAccess):
                     "operation": permission,
                 }
             )
-            base_url = _get_base_url()
+            base_url = self._get_base_url()
             grant_url = f"{base_url}/wiki/rest/api/space/{space_key}/permission"
             response = requests.request(
                 "POST", grant_url, data=payload, headers=headers, auth=auth
@@ -170,10 +170,10 @@ class Confluence(BaseEmailAccess):
         """Makes confluence API calls and revokes access to a confluence space."""
         try:
             auth = HTTPBasicAuth(
-                _get_admin_email(),
-                _get_api_token(),
+                self._get_admin_email(),
+                self._get_api_token(),
             )
-            base_url = _get_base_url()
+            base_url = self._get_base_url()
             revoke_url = (
                 f"{base_url}/wiki/rest/api/space/{space_key}/permission/{permission_id}"
             )
@@ -204,15 +204,15 @@ class Confluence(BaseEmailAccess):
         available_spaces = {}
         available_spaces["spaces"] = []
         auth = HTTPBasicAuth(
-            _get_admin_email(),
-            _get_api_token(),
+            self._get_admin_email(),
+            self._get_api_token(),
         )
         start = 0
         limit = 25
         while True:
             response = requests.request(
                 "GET",
-                _get_base_url()
+                self._get_base_url()
                 + "/wiki/rest/api/space?type=global&start="
                 + str(start)
                 + "&limit="
@@ -397,15 +397,15 @@ class Confluence(BaseEmailAccess):
 
     def __is_valid_identity(self, id, email):
         auth = HTTPBasicAuth(
-            _get_admin_email(),
-            _get_api_token(),
+            self._get_admin_email(),
+            self._get_api_token(),
         )
 
         headers = {"Accept": "application/json"}
 
         query = {"accountId": id}
 
-        base_url = _get_base_url()
+        base_url = self._get_base_url()
         user_url = f"{base_url}/wiki/rest/api/user"
         response = requests.request(
             "GET", user_url, headers=headers, params=query, auth=auth
