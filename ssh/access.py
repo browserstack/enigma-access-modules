@@ -1,4 +1,5 @@
 import logging
+import json
 
 from Access.base_email_access.access import BaseEmailAccess
 from . import helpers
@@ -13,9 +14,6 @@ class SSHAccess(BaseEmailAccess):
 
     available = True
     urlpatterns = []
-
-    def __init__(self):
-        helpers.init()
 
     def email_targets(self, user):
         """returns email targets
@@ -216,43 +214,46 @@ class SSHAccess(BaseEmailAccess):
             )
             return False
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """validates the access request for the user to the resource specified in the label
         and sends an email to the user and the module owners with the details of the access.
         If the user does not have access to the resource, the request is rejected.
 
         Args:
-            access_labels_data (array): Array of access labels
+            access_request_form (form): Access module request form.
             request_user (User): User whose access is being changed
             is_group (bool, optional): If the request is for a group. Defaults to False.
 
         Returns:
             bool: True if the request is approved, False otherwise
         """
+
         valid_access_label_array = []
+        access_label = access_request_form.get('sshAccessLevel')
+        selected_machines = json.loads(
+            access_request_form.get('selected-ssh-machine'))
+        other_machines = access_request_form.get('other_machines').split(',')
 
-        for label_data in access_labels_data:
-            for machine in label_data["selected_machines"]:
-                hostname = machine.split(",", 1)[0]
-                ip = machine.split(",", 1)[1]
-                label = {
-                    "machine": hostname,
-                    "access_level": label_data["accessLevel"],
-                    "ip": ip,
-                }
-                valid_access_label_array.append(label)
+        if access_label == 'other':
+            access_label = access_request_form.get('othersAccessLabel')
 
-            if label_data["other_machines"]:
-                label_data["other_machines"] = label_data["other_machines"].split(",")
+        for machine in selected_machines:
+            hostname = machine.split(" ", 1)[0]
+            ip = machine.split(" ", 1)[1]
+            label = {
+                "machine": hostname,
+                "access_level": access_label,
+                "ip": ip,
+            }
+            valid_access_label_array.append(label)
 
-            for other_machine in label_data["other_machines"]:
-                label = {
-                    "machine": "other",
-                    "access_level": label_data["accessLevel"],
-                    "ip": other_machine,
-                }
-                valid_access_label_array.append(label)
-
+        for other_machine in other_machines:
+            label = {
+                "machine": "other",
+                "access_level": access_label,
+                "ip": other_machine,
+            }
+            valid_access_label_array.append(label)
         return valid_access_label_array
 
     def fetch_access_request_form_path(self):
