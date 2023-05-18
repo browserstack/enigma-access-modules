@@ -15,6 +15,9 @@ class SSHAccess(BaseEmailAccess):
     available = True
     urlpatterns = []
 
+    def __init__(self):
+        helpers.init()
+
     def email_targets(self, user):
         """returns email targets
 
@@ -173,7 +176,6 @@ class SSHAccess(BaseEmailAccess):
 
     def access_request_data(self, request, is_group=False):
         machineList = []
-        helpers.init()
         for key, value in helpers.ssh_machine_list.items():
             if key == "hostname" and value == "ip":
                 continue
