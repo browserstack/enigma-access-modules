@@ -173,10 +173,15 @@ class SSHAccess(BaseEmailAccess):
 
     def access_request_data(self, request, is_group=False):
         machineList = []
+        helpers.init()
         for key, value in helpers.ssh_machine_list.items():
             if key == "hostname" and value == "ip":
                 continue
-            machineList.append({"name": key, "tagname": key, "ip": value})
+            machineList.append({"name": key,
+                                "tagname": key,
+                                "ip": value,
+                                "machine_without_dot": key.replace('.', '--')+"__"+value.replace('.', '--')
+                                })
         data = {"machineList": machineList}
         return data
 

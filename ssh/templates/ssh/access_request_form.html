@@ -45,7 +45,9 @@
     newSpan.appendTo(selectionList);
     newSpan.show();
     const tableData = newSpan.children('td');
-    tableData[0].textContent = machine;
+    const host = machine.split('__')[0].split("--").join('.');
+    const ip = machine.split('__')[1].split("--").join('.');
+    tableData[0].textContent = host + " " + ip;
     newSpan.attr('id', `ssh-machine-selection-${machine}`);
 
     handleSSHMachineSelectionView();
@@ -111,7 +113,11 @@
     const ssh_machines = $('#ssh-machine-selection-table').children('tr');
     const groups = [];
     for(iter = 0; iter < ssh_machines.length; iter++) {
-      groups.push(`${ssh_machines[iter].id.split('ssh-machine-selection-')[1]}`);
+      const machine = `${ssh_machines[iter].id.split('ssh-machine-selection-')[1]}`
+      const host = machine.split('__')[0].split("--").join('.');
+      const ip = machine.split('__')[1].split("--").join('.');
+      const val = host + " " + ip
+      groups.push(val);
     }
 
     $('#selected-ssh-machine').val(JSON.stringify(groups));
@@ -177,12 +183,12 @@
                   <table class="min-w-full table-fixed">
                     <tbody class="bg-white" id="ssh-machine-table">
                       {% for machine in each_access.accessRequestData.machineList %}
-                      <tr id="{{machine.name}}-tablerow" class="hover:bg-blue-50 hover:text-blue-700">
+                      <tr id="{{machine.machine_without_dot}}-tablerow" class="hover:bg-blue-50 hover:text-blue-700">
                         <td class="relative w-12 px-6 sm:w-16 sm:px-8">
-                          <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="{{machine.name}}-marker"></div>
-                          <input type="checkbox" id="{{machine.name}}-checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelection(this, '{{machine.name}} {{machine.ip}}');" id="{{machine.name}}-checkbox"></input>
+                          <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="{{machine.machine_without_dot}}-marker"></div>
+                          <input type="checkbox" id="{{machine.machine_without_dot}}-checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelection(this, '{{machine.machine_without_dot}}');" id="{{machine.machine_without_dot}}-checkbox"></input>
                         </td>
-                        <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="{{machine.name}}-tabledesc">{{machine.name}} {{machine.ip}}</td>
+                        <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="{{machine.machine_without_dot}}-tabledesc">{{machine.name}} {{machine.ip}}</td>
                       </tr>
                       {%endfor%}
                     </tbody>
