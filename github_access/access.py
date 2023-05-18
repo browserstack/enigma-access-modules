@@ -1,4 +1,5 @@
 import logging
+import json
 
 from Access.base_email_access.access import BaseEmailAccess
 from Access.access_modules.github_access.helpers import (
@@ -34,7 +35,6 @@ class GithubAccess(BaseEmailAccess):
         self.__send_revoke_email(user, label)
         return result
 
-
     def offboard_github(self, github_username):
         return revoke_access(github_username)
 
@@ -61,7 +61,8 @@ class GithubAccess(BaseEmailAccess):
         if return_value and not get_org(user_name):
             if not get_org_invite(user_name):
                 if put_user(user_name):
-                    logger.debug("Invited %s to join github organisation" % user_name)
+                    logger.debug(
+                        "Invited %s to join github organisation" % user_name)
                     error_message = constants.INVITE_USER_SUCCESS % user_name
                     return_value = False
                 else:
@@ -69,7 +70,8 @@ class GithubAccess(BaseEmailAccess):
                     error_message = constants.INVITE_USER_FAILED % user_name
                 return_value = False
             else:
-                error_message = constants.ALREADY_INVITED_ERROR.format(user_name)
+                error_message = constants.ALREADY_INVITED_ERROR.format(
+                    user_name)
                 return_value = False
 
         if return_value and label["action"] == self.ACCESS_LABEL:
@@ -87,7 +89,8 @@ class GithubAccess(BaseEmailAccess):
                     )
                 else:
                     logger.error(
-                        constants.GRANT_ACCESS_FAILED % (user_name, label["repository"])
+                        constants.GRANT_ACCESS_FAILED % (
+                            user_name, label["repository"])
                     )
                     error_message = constants.GRANT_ACCESS_FAILED % (
                         user_name,
@@ -117,7 +120,6 @@ class GithubAccess(BaseEmailAccess):
             vals[key] = value
         return template.render(vals)
 
-
     def __send_approve_email(
         self, user, label_desc, request_id, approver, grant_status, auto_approve_rules
     ):
@@ -140,7 +142,6 @@ class GithubAccess(BaseEmailAccess):
 
         emailSES(email_targets, email_subject, email_body)
 
-
     def __send_revoke_email(
         self, user, label,
     ):
@@ -152,11 +153,15 @@ class GithubAccess(BaseEmailAccess):
         email_body = ""
 
         if result:
-            logger.debug(constants.REVOKE_SUCCESS % (user.email, label["repository"]))
-            email_body = constants.REVOKE_SUCCESS % (user.email, label["repository"])
+            logger.debug(constants.REVOKE_SUCCESS %
+                         (user.email, label["repository"]))
+            email_body = constants.REVOKE_SUCCESS % (
+                user.email, label["repository"])
         else:
-            logger.error(constants.REVOKE_FAILED % (user.email, label["repository"]))
-            email_body = constants.REVOKE_FAILED % (user.email, label["repository"])
+            logger.error(constants.REVOKE_FAILED %
+                         (user.email, label["repository"]))
+            email_body = constants.REVOKE_FAILED % (
+                user.email, label["repository"])
 
         try:
             emailSES(email_targets, email_subject, email_body)
@@ -226,18 +231,18 @@ class GithubAccess(BaseEmailAccess):
     def validate_request(self, access_labels_data, request_user, is_group=False):
         valid_access_label_array = []
         valid_access_label = {}
-        for repo_name in access_labels_data[0]["repoList"]:
-            access_level = access_labels_data[0]["accessLevel"]
+        repos = json.loads(access_labels_data.get('selected-github-repos'))
 
-            if len(repo_name) == 0:
-                raise Exception("Repo not found")
+        if len(repos) == 0:
+            raise Exception(constants.SELECT_REPO_ERROR)
+
+        for repo_name in repos:
+            access_level = access_labels_data.get("githubAccessLabel")
             valid_access_label = {}
             valid_access_label["action"] = self.ACCESS_LABEL
             valid_access_label["access_level"] = access_level
-
             valid_access_label["repository"] = repo_name
             valid_access_label_array.append(valid_access_label)
-
         return valid_access_label_array
 
     def get_identity_template(self):

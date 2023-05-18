@@ -62,7 +62,8 @@ def get_org(username):
 
 def _get_org(username):
     headers = {"Authorization": "token %s" % _get_github_token()}
-    GET_ORG_URL = "%s/orgs/%s/members/%s" % (_get_github_base_url(), _get_github_org(), username)
+    GET_ORG_URL = "%s/orgs/%s/members/%s" % (
+        _get_github_base_url(), _get_github_org(), username)
     response = str(requests.get(GET_ORG_URL, headers=headers))
     if "204" not in response:
         return False
@@ -78,7 +79,8 @@ def get_org_invite(username):
 
 def _get_org_invite(username):
     headers = {"Authorization": "token %s" % _get_github_token()}
-    GET_ORG_INVITE_URL = "%s/orgs/%s/invitations" % (_get_github_base_url(), _get_github_org())
+    GET_ORG_INVITE_URL = "%s/orgs/%s/invitations" % (
+        _get_github_base_url(), _get_github_org())
     response = requests.get(GET_ORG_INVITE_URL, headers=headers).json()
     return username in [member["login"] for member in response]
 
@@ -91,7 +93,8 @@ def put_user(username):
 
 def _put_user(username):
     headers = {"Authorization": "token %s" % _get_github_token()}
-    PUT_USER_URL = "%s/orgs/%s/memberships/%s" % (_get_github_base_url(), _get_github_org(), username)
+    PUT_USER_URL = "%s/orgs/%s/memberships/%s" % (
+        _get_github_base_url(), _get_github_org(), username)
     response = str(requests.put(PUT_USER_URL, headers=headers))
     if "200" not in response:
         return False
@@ -207,13 +210,15 @@ def get_org_repo_list():
         "Authorization": "token %s" % _get_github_token(),
         "Accept": "application/vnd.github.v3+json",
     }
-    GET_ORG_REPOS_URL = "%s/orgs/%s/repos" % (_get_github_base_url(), _get_github_org())
+    GET_ORG_REPOS_URL = "%s/orgs/%s/repos" % (
+        _get_github_base_url(), _get_github_org())
     response = requests.get(GET_ORG_REPOS_URL, headers=headers)
     if response.status_code == 200:
         user_orgs_data = response.json()
         for orgs in user_orgs_data:
             if "full_name" in orgs:
-                repoList.append(orgs["full_name"])
+                repoList.append(
+                    {'orgName': orgs["full_name"].split("/")[0], 'repoName': orgs["full_name"].split("/")[1]})
         logger.debug("Collected All Repos")
         return repoList
     return []

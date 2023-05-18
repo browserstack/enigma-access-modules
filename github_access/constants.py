@@ -12,3 +12,4 @@ USER_IDENTITY_NOT_FOUND = "Failed to verify identity for user %s. User does not 
 ALREADY_INVITED_ERROR = (
     "User {} has already been invited to join github org. Accept invite to continue.."
 )
+SELECT_REPO_ERROR = "Please select a repository to request GitHub repo access."
