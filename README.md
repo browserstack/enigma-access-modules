@@ -1,4 +1,4 @@
-# enigma-public-access-modules
+# enigma-access-modules
 Plug-able access modules for enigma
 
 ##  License
