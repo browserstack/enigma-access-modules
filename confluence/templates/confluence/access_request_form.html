@@ -7,13 +7,11 @@
 <script type="text/javascript">
   jQuery(document).ready(function ($) {
     function updateAccessLabel() {
-      console.log("Here")
       labelComponents = JSON.parse($("#confluenceAccessLabel").val());
       if(!labelComponents.length) {
         labelComponents = [{}];
       }
       labelComponents[0]["accessWorkspace"] = $("#confluence_workspace").val()
-      console.log($("#confluence_access_type").val())
       labelComponents[0]["confluenceAccessType"] = $("#confluence_access_type").val()
       $('#confluenceAccessLabel').val(JSON.stringify(labelComponents));
     }
