@@ -1,7 +1,10 @@
+import logging
+
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
-import logging
+
 from EnigmaAutomation.settings import ACCESS_MODULES
+from . import constants
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +18,7 @@ def get_gcp_domain_details(domain_id):
     Returns:
         dict: GCP Domain.
     """
-    for domain in ACCESS_MODULES["gcp_access"]["domains"]:
+    for domain in ACCESS_MODULES[constants.GCP_ACCESS_TAG]["domains"]:
         if domain["domain_id"] == domain_id:
             return domain
 
@@ -144,7 +147,7 @@ def get_gcp_domains():
         dict: Gets the list of GCP domains.
     """
     domains = []
-    for account in ACCESS_MODULES["gcp_access"]["domains"]:
+    for account in ACCESS_MODULES[constants.GCP_ACCESS_TAG]["domains"]:
         domains.append(account["domain_id"])
 
     return domains
