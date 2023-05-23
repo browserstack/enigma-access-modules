@@ -293,6 +293,8 @@ class SSHAccess(BaseEmailAccess):
 
     def verify_identity(self, request, email):
         ssh_public_key = request["ssh_pub_key"]
+        if not ssh_public_key or ssh_public_key == '':
+            return {}
         return {"ssh_public_key": ssh_public_key}
 
     def can_auto_approve(self):
