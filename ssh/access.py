@@ -78,7 +78,7 @@ class SSHAccess(BaseEmailAccess):
             )
         except Exception as e:
             logger.error(
-                "%s: Could not send email for error %s", {self.tag()}, {str(e)}
+                "%s: Could not send email for error %s", self.tag(), str(e)
             )
             return_value = False
 
@@ -202,8 +202,8 @@ class SSHAccess(BaseEmailAccess):
 
         if not is_revoked:
             logger.error(
-                "Something went wrong while revoking the %s from group %s: %s"
-                % (user.email, label, str(error_message))
+                "Something went wrong while revoking the %s from group %s: %s",
+                user.email, label, str(error_message)
             )
             return False
 
@@ -213,7 +213,7 @@ class SSHAccess(BaseEmailAccess):
             return True
         except Exception as e:
             logger.error(
-                "%s: Could not send email for error %s", {self.tag()}, {str(e)}
+                "%s: Could not send email for error %s", self.tag(), str(e)
             )
             return False
 
@@ -293,6 +293,8 @@ class SSHAccess(BaseEmailAccess):
 
     def verify_identity(self, request, email):
         ssh_public_key = request["ssh_pub_key"]
+        if not ssh_public_key or ssh_public_key == '':
+            return {}
         return {"ssh_public_key": ssh_public_key}
 
     def can_auto_approve(self):

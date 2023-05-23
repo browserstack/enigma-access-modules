@@ -14,8 +14,8 @@
   <div class="form-group" style="padding-left:1%;">
     <div class="form-group">
       {% if each_access.accessTypes|length > 1 %}
-      <label class="col-sm-3" for="accessLabel" style="padding-left: 15px; font-weight: bolder; min-height: 0px; margin-top: 10px; font-size: medium; float: left">Select an access type:</label>
-      <select class="form-control col-sm-3" id="accessLabel" name="accessLabel"  required>
+      <label class="col-sm-3" for="zoomAccessLabel" style="padding-left: 15px; font-weight: bolder; min-height: 0px; margin-top: 10px; font-size: medium; float: left">Select an access type:</label>
+      <select class="form-control col-sm-3" id="zoomAccessLabel" name="accessLabel"  required>
         <option hidden disabled selected value> -- select -- </option>
         {% for each_access_type in each_access.accessTypes %}
         <!-- adding &quot; so json.loads can work in backend -->
@@ -30,6 +30,6 @@
 
     <div>
       <label class="col-sm-3" for="reason" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for Access:</label>
-      <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024" required>
+      <input type="text" class="form-text1" id="zoomReason" name="accessReason" style="width:60%;" maxlength="2024" required>
     </div>
   </div>

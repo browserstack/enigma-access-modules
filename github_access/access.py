@@ -31,7 +31,7 @@ class GithubAccess(BaseEmailAccess):
         user_name = user_identity.identity["username"]
         result = revoke_access(user_name, label["repository"])
 
-        self.__send_revoke_email(user, label)
+        self.__send_revoke_email(user, label, result)
         return result
 
 
@@ -54,18 +54,18 @@ class GithubAccess(BaseEmailAccess):
         label = labels[0]
         user_name = user_identity.identity["username"]
         if not get_user(user_name):
-            logger.error(constants.USER_NOT_FOUND % user_name)
+            logger.error(constants.USER_NOT_FOUND, user_name)
             error_message = constants.USER_NOT_FOUND % user_name
             return_value = False
 
         if return_value and not get_org(user_name):
             if not get_org_invite(user_name):
                 if put_user(user_name):
-                    logger.debug("Invited %s to join github organisation" % user_name)
+                    logger.debug("Invited %s to join github organisation", user_name)
                     error_message = constants.INVITE_USER_SUCCESS % user_name
                     return_value = False
                 else:
-                    logger.error(constants.INVITE_USER_FAILED % user_name)
+                    logger.error(constants.INVITE_USER_FAILED, user_name)
                     error_message = constants.INVITE_USER_FAILED % user_name
                 return_value = False
             else:
@@ -74,7 +74,7 @@ class GithubAccess(BaseEmailAccess):
 
         if return_value and label["action"] == self.ACCESS_LABEL:
             if not get_repo(label["repository"]):
-                logger.error(constants.REPO_NOT_FOUND % label["repository"])
+                logger.error(constants.REPO_NOT_FOUND, label["repository"])
                 error_message = constants.REPO_NOT_FOUND % label["repository"]
                 return_value = False
             else:
@@ -82,12 +82,12 @@ class GithubAccess(BaseEmailAccess):
                     label["repository"], label["access_level"], user_name
                 ):
                     logger.debug(
-                        "Added %s access to user %s for repo %s"
-                        % (label["access_level"], user_name, label["repository"])
+                        "Added %s access to user %s for repo %s",
+                        label["access_level"], user_name, label["repository"]
                     )
                 else:
                     logger.error(
-                        constants.GRANT_ACCESS_FAILED % (user_name, label["repository"])
+                        constants.GRANT_ACCESS_FAILED, user_name, label["repository"]
                     )
                     error_message = constants.GRANT_ACCESS_FAILED % (
                         user_name,
@@ -107,7 +107,7 @@ class GithubAccess(BaseEmailAccess):
                 auto_approve_rules,
             )
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.error("Could not send email for error %s", str(e))
         return return_value, error_message
 
     def __generate_string_from_template(self, filename, **kwargs):
@@ -128,7 +128,7 @@ class GithubAccess(BaseEmailAccess):
             user.email,
         )
         email_body = self.__generate_string_from_template(
-            filename="access_email_template.html",
+            filename="github_access/access_email_template.html",
             status=grant_status,
             auto_approve=auto_approve_rules,
             request_id=request_id,
@@ -142,7 +142,7 @@ class GithubAccess(BaseEmailAccess):
 
 
     def __send_revoke_email(
-        self, user, label,
+        self, user, label, result
     ):
         email_targets = self.email_targets(user)
 
@@ -152,17 +152,17 @@ class GithubAccess(BaseEmailAccess):
         email_body = ""
 
         if result:
-            logger.debug(constants.REVOKE_SUCCESS % (user.email, label["repository"]))
+            logger.debug(constants.REVOKE_SUCCESS , user.email, label["repository"])
             email_body = constants.REVOKE_SUCCESS % (user.email, label["repository"])
         else:
-            logger.error(constants.REVOKE_FAILED % (user.email, label["repository"]))
+            logger.error(constants.REVOKE_FAILED , user.email, label["repository"])
             email_body = constants.REVOKE_FAILED % (user.email, label["repository"])
 
         try:
             emailSES(email_targets, email_subject, email_body)
             return True
         except Exception as e:
-            logger.exception("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False
 
     def get_label_desc(self, access_label):
@@ -246,7 +246,7 @@ class GithubAccess(BaseEmailAccess):
     def verify_identity(self, request, email):
         user_name = request["name"]
         if not is_email_valid(user_name, email):
-            logger.error(constants.USER_IDENTITY_NOT_FOUND % user_name)
+            logger.error(constants.USER_IDENTITY_NOT_FOUND, user_name)
             return {}
 
         return {"username": user_name}

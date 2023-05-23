@@ -73,8 +73,10 @@ class AWSAccess(BaseEmailAccess):
 
             if not granted_access:
                 logger.error(
-                    "Something when wrong while adding %s to group %s: %s"
-                    % (user.email, label["group"], str(exception))
+                    "Something when wrong while adding %s to group %s: %s",
+                    user.email,
+                    label["group"],
+                    str(exception)
                 )
                 return False
 
@@ -88,7 +90,7 @@ class AWSAccess(BaseEmailAccess):
                 label_meta,
             )
         except Exception as ex:
-            logger.exception("%s Could not send email for error %s" % (self.tag(), str(ex)))
+            logger.exception("%s Could not send email for error %s", self.tag(), str(ex))
             return False
 
         return True
@@ -99,11 +101,11 @@ class AWSAccess(BaseEmailAccess):
         """Generates and sends email in access grant."""
         if auto_approve_rules:
             rules = " ,".join(auto_approve_rules)
-            email_subject = f"""Access Granted: {request_id} \
-            for access to {label_desc} for user {user.email}. Rules :- {rules}"""
+            email_subject = (f"Access Granted: {request_id}"
+            f" for access to {label_desc} for user {user.email}. Rules :- {rules}")
         else:
-            email_subject = f"""Access Granted: {request_id} \
-            for access to {label_desc} for user {user.email}."""
+            email_subject = (f"Access Granted: {request_id}"
+            f" for access to {label_desc} for user {user.email}.")
 
         email_body = self._generate_string_from_template(
             "aws_access/approved_email_template.html.j2",
@@ -119,8 +121,8 @@ class AWSAccess(BaseEmailAccess):
     def __send_revoke_email(self, user, request_id, label_desc):
         """Generates and sends email in for access revoke."""
         email_targets = self.email_targets(user)
-        email_subject = f"""Revoke Request: {request_id} \
-        for access to {label_desc} for user {user.email}"""
+        email_subject = (f"Revoke Request: {request_id}"
+        f"for access to {label_desc} for user {user.email}")
         emailSES(email_targets, email_subject, "")
 
     def get_label_desc(self, access_label):
@@ -214,8 +216,8 @@ class AWSAccess(BaseEmailAccess):
 
         if not is_revoked:
             logger.error(
-                "Something went wrong while removing %s from %s: %s"
-                % (user.email, label["group"], str(exception))
+                "Something went wrong while removing %s from %s: %s",
+                user.email, label["group"], str(exception)
             )
             return False
 
@@ -224,7 +226,7 @@ class AWSAccess(BaseEmailAccess):
             self.__send_revoke_email(user, request.request_id, label_desc)
             return True
         except Exception as ex:
-            logger.exception("Could not send email for error %s" % str(ex))
+            logger.exception("Could not send email for error %s", str(ex))
             return False
 
     def validate_request(self, access_labels_data, request_user, is_group=False):

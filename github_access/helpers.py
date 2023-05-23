@@ -127,7 +127,7 @@ def grant_access(repo, access_level, username):
         if not get_repo(repo):
             logger.debug(
                 "Skipping git access for %s for user %s because repo does not exist"
-                " anymore" % (repo, username)
+                " anymore", repo, username
             )
             return True
         if access_level == "merge":
