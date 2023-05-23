@@ -152,7 +152,7 @@ class Zoom(BaseEmailAccess):
             user.email,
         )
         body = self.__generate_string_from_template(
-            filename="approve_email.html",
+            filename="zoom_access/approve_email.html",
             label_desc=label_desc,
             user_email=user.email,
             approver=approver,
