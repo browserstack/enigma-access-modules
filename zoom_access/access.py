@@ -117,8 +117,8 @@ class Zoom(BaseEmailAccess):
                 access_type = 1
             else:
                 logger.exception(
-                    "Undefined access type from label %s for user %s"
-                    % (json.dumps(label), user.email)
+                    "Undefined access type from label %s for user %s",
+                    json.dumps(label), user.email
                 )
                 return False, "Undefined access type"
 
@@ -126,8 +126,8 @@ class Zoom(BaseEmailAccess):
 
             if not result:
                 logger.exception(
-                    "Something went wrong while giving %s access to the %s: %s"
-                    % (label["access_type"], user.email, str(exception))
+                    "Something went wrong while giving %s access to the %s: %s",
+                    label["access_type"], user.email, str(exception)
                 )
                 return False, exception
 
