@@ -145,8 +145,8 @@ class GCPAccess(BaseEmailAccess):
             )
             if result is False:
                 logger.error(
-                    "Something went wrong while adding the %s to group %s: %s"
-                    % (user.email, label["group"], str(exception))
+                    "Something went wrong while adding the %s to group %s: %s",
+                    user.email, label["group"], str(exception)
                 )
                 return False
 
@@ -154,7 +154,7 @@ class GCPAccess(BaseEmailAccess):
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.error("Could not send email for error %s", str(e))
             return False
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
@@ -166,7 +166,7 @@ class GCPAccess(BaseEmailAccess):
             user.email,
         )
         body = self.__generate_string_from_template(
-            filename="approve_email.html",
+            filename="gcp_access/approve_email.html",
             label_desc=label_desc,
             user_email=user.email,
             approver=approver,
@@ -219,7 +219,7 @@ class GCPAccess(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.error("Could not send email for error %s", str(e))
             return False
 
     def access_request_data(self, request, is_group=False):

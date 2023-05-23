@@ -50,7 +50,7 @@ class Slack(BaseEmailAccess):
             user.email,
         )
         body = self._generate_string_from_template(
-            filename="approve_email.html",
+            filename="slack_access/approve_email.html",
             label_desc=label_desc,
             user_email=user.email,
             approver=approver,
@@ -110,7 +110,7 @@ class Slack(BaseEmailAccess):
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.exception("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False
 
     def revoke(self, user, user_identity, label, request):
@@ -139,7 +139,7 @@ class Slack(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.exception("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False
 
     def get_label_desc(self, access_label):

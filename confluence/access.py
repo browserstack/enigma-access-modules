@@ -155,14 +155,14 @@ class Confluence(BaseEmailAccess):
             if response.status_code == 400:
                 return json.loads(response.text)["message"].split(" ")[-1]
             logger.error(
-                "Could not approve permission %s for response %s"
-                % (str(permission), str(response.text))
+                "Could not approve permission %s for response %s",
+                str(permission), str(response.text)
             )
             return False
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s"
-                % (str(permission), str(ex))
+                "Could not approve permission %s for error %s",
+                str(permission), str(ex)
             )
             return False
 
@@ -185,8 +185,8 @@ class Confluence(BaseEmailAccess):
 
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s"
-                % (str(permission_id), str(ex))
+                "Could not approve permission %s for error %s",
+                str(permission_id), str(ex)
             )
             return False
 
@@ -330,11 +330,11 @@ class Confluence(BaseEmailAccess):
     def __send_approve_email(self, user, request_id, access_type, approver):
         """Generates and sends email in access grant."""
         targets = self.email_targets(user)
-        subject = f"""Approved Access: {request_id} for access to
-        {self.access_desc()} for user {user.email}"""
+        subject = (f"Approved Access: {request_id} for access to"
+        f" {self.access_desc()} for user {user.email}")
 
         body = self.__generate_string_from_template(
-            filename="approve_email.html",
+            filename="confluence/approve_email.html",
             access_type=access_type,
             user_email=user.email,
             approver=approver,
@@ -373,7 +373,7 @@ class Confluence(BaseEmailAccess):
                 label["access_workspace"], permission["permission_id"]
             )
             if response is False:
-                logger.error("could not revoke access for %s" % str(permission))
+                logger.error("could not revoke access for %s", str(permission))
                 return False
 
         label_desc = self.get_label_desc(label)
@@ -381,7 +381,7 @@ class Confluence(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc)
             return True
         except Exception as ex:
-            logger.error("Could not send email for error %s" % str(ex))
+            logger.error("Could not send email for error %s", str(ex))
             return False
 
     def access_desc(self):
