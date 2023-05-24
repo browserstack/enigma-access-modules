@@ -24,4 +24,4 @@ and check [this guide](https://github.com/browserstack/enigma/blob/main/docs/%E2
 
 
 ##  License
-See [LICENSE.md](.github/LICENSE.md)
+See [LICENSE.md](/LICENSE.md)
