@@ -13,7 +13,6 @@ from Access.access_modules.github_access.helpers import (
     is_email_valid,
 )
 from . import constants
-from bootprocess.general import emailSES
 from django.template import loader
 from django.shortcuts import render
 
@@ -138,7 +137,7 @@ class GithubAccess(BaseEmailAccess):
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
 
     def __send_revoke_email(
@@ -159,7 +158,7 @@ class GithubAccess(BaseEmailAccess):
             email_body = constants.REVOKE_FAILED % (user.email, label["repository"])
 
         try:
-            emailSES(email_targets, email_subject, email_body)
+            self.email_via_smtp(email_targets, email_subject, email_body)
             return True
         except Exception as e:
             logger.exception("Could not send email for error %s", str(e))
