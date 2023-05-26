@@ -87,7 +87,7 @@ def test_grant_aws_access(
         "Access.access_modules.aws_access.helpers.get_aws_client",
         return_value=boto3_client,
     )
-    mocker.patch("Access.base_email_access.access.BaseEmailAccess.email_via_smtp", return_value="")
+    mocker.patch("Access.access_modules.aws_access.access.AWSAccess.email_via_smtp", return_value="")
 
     return_value, _ = helpers.grant_aws_access(
         user_mock, label["account"], label["group"]
