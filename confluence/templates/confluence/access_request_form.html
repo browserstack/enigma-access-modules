@@ -26,7 +26,7 @@
 
 <div class="form-group">
   <label class="col-sm-3" for="confluence_workspace" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium; float: left">Workspace:</label>
-  <select class="form-control col-sm-3" id="confluence_workspace" name="accessWorkspace">
+  <select class="form-control col-sm-3" id="confluence_workspace" name="accessWorkspace" required>
     <option hidden disabled selected value> -- select -- </option>
     {% for each_space in each_access.accessRequestData.spaces %}
     <option value="{{ each_space.key }}">{{ each_space.name }}</option>
