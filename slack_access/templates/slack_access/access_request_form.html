@@ -21,7 +21,7 @@
     <label class="col-sm-3" for="workspace"
       style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium; float: left">Workspace:</label>
     <select class="form-control col-sm-3" id="slackWorkspace" name="slackAccessWorkspace"
-      onchange="slackWorkspaceChange(this)">
+      onchange="slackWorkspaceChange(this)" required>
       <option hidden disabled selected value> -- select -- </option>
       {% for workspace in each_access.accessRequestData.slackWorkspaceList %}
       <option value="{{workspace}}">{{workspace.workspacename}}</option>
