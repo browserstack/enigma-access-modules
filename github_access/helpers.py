@@ -2,7 +2,7 @@ import json
 import requests
 import logging
 from . import constants
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 default_branch = ["master", "main"]

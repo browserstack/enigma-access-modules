@@ -6,7 +6,7 @@ from requests.auth import HTTPBasicAuth
 import requests
 
 from Access.base_email_access.access import BaseEmailAccess
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 from bootprocess.general import emailSES
 from . import constants
 
