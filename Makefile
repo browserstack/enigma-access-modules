@@ -26,8 +26,13 @@ ensure_container_for_test:
 test: export APPUID = $(APP_UID)
 test: ensure_container_for_test
 
-	@docker exec test python -m pytest -v --cov --disable-warnings Access/access_modules;\
-	echo "Tests finished. Stopping runserver:"
+	@docker exec test python -m pytest -v --cov --disable-warnings Access/access_modules
+	@if [ "$$?" -ne 0 ]; then \
+		echo "Unit Tests failed"; \
+		exit 1; \
+	else \
+	  echo "Unit Tests passed"; \
+	fi
 
 .PHONY: lint
 lint: export APPUID = $(APP_UID)
@@ -40,19 +45,6 @@ lint: ensure_container_for_test
 	else \
 	  echo "Linter checks passed"; \
 	fi
-
-
-## Lint code using pylama skipping files in env (if pyenv created)
-# .PHONY: lint
-# lint:
-# 	@python3 -m pylama --version
-# 	@python3 -m pylama
-# 	@if [ "$$?" -ne 0 ]; then \
-# 		echo "Linter checks failed"; \
-# 		exit 1; \
-# 	else \
-# 	  echo "Linter checks passed"; \
-# 	fi
 
 run_semgrep:
 	$(shell semgrep --error --config "p/cwe-top-25" --config "p/owasp-top-ten" --config "p/r2c-security-audit")
