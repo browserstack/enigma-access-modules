@@ -11,3 +11,4 @@ services:
     - ./secrets/ops_app_test.env
     volumes:
     - ./mounts/logs/:/ebs/logs/
+    - ./:/srv/code/dev/Access/access_modules/

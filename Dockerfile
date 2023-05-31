@@ -32,14 +32,7 @@ USER app
 COPY requirements.txt /tmp/access-module-requirements.txt
 RUN pip install -r /tmp/requirements.txt --no-cache-dir --ignore-installed
 RUN pip install -r /tmp/access-module-requirements.txt --no-cache-dir --ignore-installed
-COPY --chown=app:root aws_access ./Access/access_modules/aws_access
-COPY --chown=app:root confluence ./Access/access_modules/confluence
-COPY --chown=app:root gcp ./Access/access_modules/gcp
-COPY --chown=app:root github_access ./Access/access_modules/github_access
-COPY --chown=app:root opsgenie_access ./Access/access_modules/opsgenie_access
-COPY --chown=app:root slack_access ./Access/access_modules/slack_access
-COPY --chown=app:root ssh ./Access/access_modules/ssh
-COPY --chown=app:root zoom_access ./Access/access_modules/zoom_access
+COPY --chown=app:root . ./Access/access_modules
 
 # Starts Docker Container and keeps it running for Debugging
 FROM base as test
