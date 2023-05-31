@@ -1,0 +1,14 @@
+name: Lint
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup docker-compose
+      uses: KengoTODA/actions-setup-docker-compose@v1.0.9
+    - name: Setup make
+      run: |
+        sudo apt-get install make
+    - name: Run linter
+      run: make lint

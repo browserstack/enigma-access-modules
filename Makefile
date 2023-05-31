@@ -1,39 +1,58 @@
+APP_UID := $(shell id -u)
+
 ## make all : Run service, test and linter
 .PHONY: all
 all: test lint
 
 .PHONY: build
+build: export APPUID = $(APP_UID)
 build:
-	@docker-compose up -d
+	@docker-compose up --build -d
 
 .PHONY: down
 down:
 	@docker-compose -f docker-compose.yml down
 
-## Run tests with coverage
-.PHONY: test
-test:
-	@if [ $$(docker ps -f name=test | wc -l) -eq 2 ]; then \
-			docker exec test python -m pytest --version; \
+ensure_container_for_test:
+	@if [ $$(docker ps -a -f name=test | wc -l) -eq 2 ]; then \
+		docker exec test python -m pytest --version; \
 	else \
-		echo "No containers running.. Starting runserver:"; \
+		echo "No containers running.. "; \
 		make build; \
-		echo "Running Tests"; \
 	fi
 
-	@docker exec test python -m pytest -v --cov --disable-warnings;\
-	echo "Tests finished. Stopping runserver:" && make down
+## Run tests with coverage
+.PHONY: test
+test: export APPUID = $(APP_UID)
+test: ensure_container_for_test
 
-## Create lint issues file
-.PHONY: lint_issues
-lint_issues:
-	@touch $@
+	@docker exec test python -m pytest -v --cov --disable-warnings Access/access_modules;\
+	echo "Tests finished. Stopping runserver:"
+
+.PHONY: lint
+lint: export APPUID = $(APP_UID)
+lint: ensure_container_for_test
+	@docker exec test python -m pylama --version
+	@docker exec test python -m pylama Access/access_modules
+	@if [ "$$?" -ne 0 ]; then \
+		echo "Linter checks failed"; \
+		exit 1; \
+	else \
+	  echo "Linter checks passed"; \
+	fi
+
 
 ## Lint code using pylama skipping files in env (if pyenv created)
-.PHONY: lint
-lint: lint_issues
-	@python3 -m pylama --version
-	@pylama --skip "./env/*" -r lint_issues || echo "Linter run returned errors. Check lint_issues file for details." && false
+# .PHONY: lint
+# lint:
+# 	@python3 -m pylama --version
+# 	@python3 -m pylama
+# 	@if [ "$$?" -ne 0 ]; then \
+# 		echo "Linter checks failed"; \
+# 		exit 1; \
+# 	else \
+# 	  echo "Linter checks passed"; \
+# 	fi
 
 run_semgrep:
 	$(shell semgrep --error --config "p/cwe-top-25" --config "p/owasp-top-ten" --config "p/r2c-security-audit")
