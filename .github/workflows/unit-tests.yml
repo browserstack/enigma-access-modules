@@ -1,4 +1,4 @@
-name: Lint
+name: Unit Tests
 on: [push]
 jobs:
   build:
@@ -10,5 +10,5 @@ jobs:
         sudo apt-get install make
     - name: Build docker container
       run: make build
-    - name: Run linter
-      run: make lint
+    - name: Run unit tests
+      run: make test
