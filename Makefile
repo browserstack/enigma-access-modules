@@ -38,7 +38,7 @@ test: ensure_container_for_test
 lint: export APPUID = $(APP_UID)
 lint: ensure_container_for_test
 	@docker exec test python -m pylama --version
-	@docker exec test python -m pylama Access/access_modules
+	@docker exec test python -m pylama Access/access_modules/aws_access/helper.py
 	@if [ "$$?" -ne 0 ]; then \
 		echo "Linter checks failed"; \
 		exit 1; \

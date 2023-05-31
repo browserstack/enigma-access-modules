@@ -44,7 +44,7 @@ def aws_group_exists(account, group):
 
 
 def _get_aws_config():
-    """ Gets AWS config. """
+    """Gets AWS config."""
 
     return ACCESS_MODULES.get("aws_access", {})
 
@@ -97,7 +97,7 @@ def grant_aws_access(user, account, group):
         client = get_aws_client(account=account, resource=constants.IAM_RESOURCE)
         client.add_user_to_group(GroupName=group, UserName=__get_username(user.email))
     except Exception as ex:
-        logger.exception("Exception while adding user to AWS group: " + str(ex))
+        logger.exception("Exception while adding user to AWS group: %s", str(ex))
         return False, str(ex)
     return True, ""
 
@@ -119,7 +119,7 @@ def revoke_aws_access(user, account, group):
             GroupName=group, UserName=__get_username(user.email)
         )
     except Exception as ex:
-        logger.error("Exception while removing user from AWS group: " + str(ex))
+        logger.error("Exception while removing user from AWS group: %s", str(ex))
         return False, str(ex)
     return True, ""
 

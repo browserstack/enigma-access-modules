@@ -144,14 +144,22 @@ def test_aws_access(mocker):
     request_mock = mocker.MagicMock()
     request_mock.user = user_mock
 
-    mocker.patch("Access.access_modules.aws_access.access.AWSAccess._AWSAccess__send_approve_email", return_value="")
-    mocker.patch("Access.access_modules.aws_access.access.AWSAccess._AWSAccess__send_revoke_email", return_value="")
     mocker.patch(
-            "Access.access_modules.aws_access.helpers.grant_aws_access",
-            return_value=(True, ""))
+        "Access.access_modules.aws_access.access.AWSAccess._AWSAccess__send_approve_email",
+        return_value="",
+    )
     mocker.patch(
-            "Access.access_modules.aws_access.helpers.revoke_aws_access",
-            return_value=(True, ""))
+        "Access.access_modules.aws_access.access.AWSAccess._AWSAccess__send_revoke_email",
+        return_value="",
+    )
+    mocker.patch(
+        "Access.access_modules.aws_access.helpers.grant_aws_access",
+        return_value=(True, ""),
+    )
+    mocker.patch(
+        "Access.access_modules.aws_access.helpers.revoke_aws_access",
+        return_value=(True, ""),
+    )
     aws_access = access.AWSAccess()
 
     label_1 = {
@@ -195,7 +203,8 @@ def test_aws_access(mocker):
     assert return_value is True
 
     return_value = aws_access.revoke(
-            user_mock, mocker.MagicMock(), label_1, request_mock)
+        user_mock, mocker.MagicMock(), label_1, request_mock
+    )
     assert return_value is True
 
 

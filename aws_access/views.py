@@ -16,8 +16,11 @@ def get_aws_accounts(request):
     Returns:
         JsonResponse: json response with aws account list
     """
-    response = {"data": helpers.get_aws_accounts()}
-    return JsonResponse(response)
+    if request.GET:
+        response = {"data": helpers.get_aws_accounts()}
+        return JsonResponse(response)
+
+    return JsonResponse({"error": constants.BAD_REQUEST}, status=400)
 
 
 @login_required
