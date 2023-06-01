@@ -73,12 +73,12 @@ class AWSAccess(BaseEmailAccess):
 
             if not granted_access:
                 logger.error(
-                    "Something when wrong while adding %s to group %s: %s",
+                    constants.ERROR_MESSAGES["grant_access_failed"],
                     user.email,
                     label["group"],
                     str(exception)
                 )
-                return False
+                return False, constants.ERROR_MESSAGES["grant_access_failed"] % (user.email, label["group"], str(exception))
 
         try:
             self.__send_approve_email(
@@ -91,7 +91,6 @@ class AWSAccess(BaseEmailAccess):
             )
         except Exception as ex:
             logger.exception("%s Could not send email for error %s", self.tag(), str(ex))
-            return False
 
         return True
 
@@ -216,18 +215,17 @@ class AWSAccess(BaseEmailAccess):
 
         if not is_revoked:
             logger.error(
-                "Something went wrong while removing %s from %s: %s",
+                constants.ERROR_MESSAGES["revoke_access_failed"],
                 user.email, label["group"], str(exception)
             )
-            return False
+            return False, constants.ERROR_MESSAGES["revoke_access_failed"] % (user.email, label["group"], str(exception))
 
         label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, request.request_id, label_desc)
-            return True
         except Exception as ex:
             logger.exception("Could not send email for error %s", str(ex))
-            return False
+        return True
 
     def validate_request(self, access_labels_data, request_user, is_group=False):
         """Validates the access request.

@@ -97,6 +97,9 @@ class GithubAccess(BaseEmailAccess):
 
         label_desc = self.combine_labels_desc(labels)
 
+        if not return_value :
+            return return_value, error_message
+
         try:
             self.__send_approve_email(
                 user_identity.user,

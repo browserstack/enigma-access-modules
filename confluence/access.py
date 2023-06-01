@@ -151,20 +151,20 @@ class Confluence(BaseEmailAccess):
             )
 
             if response.status_code == 200:
-                return str(json.loads(response.text)["id"])
+                return True, str(json.loads(response.text)["id"])
             if response.status_code == 400:
-                return json.loads(response.text)["message"].split(" ")[-1]
+                return True, json.loads(response.text)["message"].split(" ")[-1]
             logger.error(
-                "Could not approve permission %s for response %s",
+                constants.ERROR_MESSAGES["grant_access_failed"],
                 str(permission), str(response.text)
             )
-            return False
+            return False, constants.ERROR_MESSAGES["grant_access_failed"] % (str(permission), str(response.text))
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s",
+                constants.ERROR_MESSAGES["grant_access_failed"],
                 str(permission), str(ex)
             )
-            return False
+            return False, constants.ERROR_MESSAGES["grant_access_failed"] % (str(permission), str(response.text))
 
     def __revoke_space_access(self, space_key, permission_id):
         """Makes confluence API calls and revokes access to a confluence space."""
@@ -303,14 +303,14 @@ class Confluence(BaseEmailAccess):
             approve_result = []
 
             for permission in permissions:
-                response = self.__approve_space_access(
+                response, result = self.__approve_space_access(
                     label["access_workspace"],
                     permission,
                     user_identity.identity["id"],
                     subject_type="user",
                 )
                 if response is False:
-                    return False
+                    return response, result
 
                 approve_result.append(
                     {"permission": permission, "permission_id": response}
@@ -322,10 +322,9 @@ class Confluence(BaseEmailAccess):
             self.__send_approve_email(
                 user_identity.user, request.request_id, access_type, approver
             )
-            return True
         except Exception as ex:
             logger.error("Could not send email for error %s", str(ex))
-            return False
+        return True
 
     def __send_approve_email(self, user, request_id, access_type, approver):
         """Generates and sends email in access grant."""
@@ -373,16 +372,15 @@ class Confluence(BaseEmailAccess):
                 label["access_workspace"], permission["permission_id"]
             )
             if response is False:
-                logger.error("could not revoke access for %s", str(permission))
-                return False
+                logger.error(constants.ERROR_MESSAGES["revoke_access_failed"], str(permission))
+                return False, constants.ERROR_MESSAGES["revoke_access_failed"] % (str(permission))
 
         label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, label_desc)
-            return True
         except Exception as ex:
             logger.error("Could not send email for error %s", str(ex))
-            return False
+        return True
 
     def access_desc(self):
         """Description of the access module.
