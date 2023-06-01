@@ -1,7 +1,6 @@
 """access module for AWS"""
 from . import helpers, constants, urls
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 
 import logging
 from django.template import loader
@@ -115,14 +114,14 @@ class AWSAccess(BaseEmailAccess):
             access_meta=label_meta,
         )
         email_targets = self.email_targets(user)
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def __send_revoke_email(self, user, request_id, label_desc):
         """Generates and sends email in for access revoke."""
         email_targets = self.email_targets(user)
         email_subject = (f"Revoke Request: {request_id}"
         f"for access to {label_desc} for user {user.email}")
-        emailSES(email_targets, email_subject, "")
+        self.email_via_smtp(email_targets, email_subject, "")
 
     def get_label_desc(self, access_label):
         """Gets the access label descrption

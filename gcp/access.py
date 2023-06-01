@@ -4,8 +4,6 @@ import logging
 
 from . import constants, helpers, urls
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
-
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +169,7 @@ class GCPAccess(BaseEmailAccess):
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, body)
+        self.email_via_smtp(email_targets, email_subject, body)
 
     def __send_revoke_email(self, user, label_desc, request_id):
         """Generates and sends email in for access revoke."""
@@ -183,7 +181,7 @@ class GCPAccess(BaseEmailAccess):
         )
         email_body = ""
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)

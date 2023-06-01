@@ -5,7 +5,6 @@ import logging
 from django.template import loader
 
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 from . import helper, constants
 
 logger = logging.getLogger(__name__)
@@ -157,7 +156,7 @@ class Zoom(BaseEmailAccess):
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, body)
+        self.email_via_smtp(email_targets, email_subject, body)
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
@@ -176,7 +175,7 @@ class Zoom(BaseEmailAccess):
         )
         email_body = ""
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def revoke(self, user, user_identity, label, request):
         """Revoke access to Zoom.
