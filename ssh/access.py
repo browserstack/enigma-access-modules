@@ -1,7 +1,6 @@
 import logging
 
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 from . import helpers
 
 from django.template import loader
@@ -119,7 +118,7 @@ class SSHAccess(BaseEmailAccess):
                 % (label_desc, self.access_desc(), user.email, approver)
             )
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def __send_revoke_email(self, user, request_id, label_desc):
         """generates and sends email in for access revoke"""
@@ -132,7 +131,7 @@ class SSHAccess(BaseEmailAccess):
             "Access successfully revoked for %s for %s to %s.<br>No futher action"
             " needed" % (label_desc, self.access_desc(), user.email)
         )
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def get_label_desc(self, access_label):
         """gets the access label description

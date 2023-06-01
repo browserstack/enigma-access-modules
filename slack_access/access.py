@@ -3,7 +3,6 @@ import json
 from django.template import loader
 
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 from .helpers import (
     invite_user,
     remove_user,
@@ -56,7 +55,7 @@ class Slack(BaseEmailAccess):
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, body)
+        self.email_via_smtp(email_targets, email_subject, body)
 
     def __send_revoke_email(self, user, label_desc, request_id):
         """Generates and sends email in for access revoke."""
@@ -68,7 +67,7 @@ class Slack(BaseEmailAccess):
         )
         email_body = ""
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def approve(
         self,
