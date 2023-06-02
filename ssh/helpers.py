@@ -4,7 +4,7 @@ import traceback
 import logging
 from fabric import Connection
 
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 

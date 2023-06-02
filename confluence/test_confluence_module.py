@@ -1,6 +1,6 @@
 """unit tests for the confluence acces module"""
 from . import access
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 
 class MockRequest:

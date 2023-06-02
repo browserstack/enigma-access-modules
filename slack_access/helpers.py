@@ -1,7 +1,7 @@
 import json
 import logging
 
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 from slack_sdk import WebClient
 
 logger = logging.getLogger(__name__)
