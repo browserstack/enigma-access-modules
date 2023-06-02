@@ -157,7 +157,7 @@ def test_confluence(mocker, requests_mock):
         status_code=204,
     )
 
-    mocker.patch("bootprocess.general.emailSES", return_value="")
+    mocker.patch("Access.access_modules.confluence.access.Confluence.email_via_smtp", return_value="")
     resp = confluence_access.approve(user_mock, label1, "1234", request)
     assert resp is False
 

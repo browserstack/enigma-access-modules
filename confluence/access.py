@@ -7,7 +7,6 @@ import requests
 
 from Access.base_email_access.access import BaseEmailAccess
 from enigma_automation.settings import ACCESS_MODULES
-from bootprocess.general import emailSES
 from . import constants
 
 logger = logging.getLogger(__name__)
@@ -339,7 +338,7 @@ class Confluence(BaseEmailAccess):
             user_email=user.email,
             approver=approver,
         )
-        emailSES(targets, subject, body)
+        self.email_via_smtp(targets, subject, body)
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
@@ -353,7 +352,7 @@ class Confluence(BaseEmailAccess):
         email_targets = self.email_targets(user)
         email_subject = f"Revoke Request: {label_desc} for {user.email}"
         email_body = ""
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def revoke(self, user, user_identity, label, request):
         """Revoke confluence workspace access

@@ -3,7 +3,6 @@ from . import helper, constants
 import logging
 import json
 from django.template import loader
-from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)
 
@@ -177,14 +176,14 @@ class OpsgenieAccess(BaseEmailAccess):
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def __send_revoke_email(self, user, request_id, label_desc):
         """Generates and sends email in for access revoke."""
         email_targets = self.email_targets(user)
         email_subject = (f"Revoke Request: {request_id}"
         f"for access to {label_desc} for user {user.email}")
-        emailSES(email_targets, email_subject, "")
+        self.email_via_smtp(email_targets, email_subject, "")
 
     def revoke(self, user, user_identity, label, request):
         """Revoke access to Opsgenie.
