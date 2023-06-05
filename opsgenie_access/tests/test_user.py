@@ -23,10 +23,24 @@ def user_labels():
     return form_label
 
 
+@pytest.fixture
+def patched_email(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.access.OpsgenieAccess._OpsgenieAccess__send_approve_email",
+        return_value=""
+    )
+
+
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.OPSGENIE_TOKEN = ("test-token",)
-    helper.IGNORE_TEAMS = ["team_1", "team_2"]
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_opsgenie_token",
+        return_value="test-token",
+    )
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_ignored_teams",
+        return_value=["team_1", "team_2"],
+    )
 
 
 @pytest.fixture
@@ -39,7 +53,7 @@ def user_identity(mocker, user):
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.email = "test@test.com"
+    user.email = "invalid@nonexistent.com"
     user.user.username = "test-user"
     return user
 
@@ -72,7 +86,7 @@ def test_user_does_not_exist_on_opsgenie():
 @given("A user_email")
 def user_email():
     """A user_email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @given("User does not exist on Opsgenie")
@@ -92,6 +106,44 @@ def user_fail(requests_mock):
     assert return_value.status_code == 404
 
 
+@given("User can be added to Opsgenie")
+def user_can_be_added(requests_mock):
+    """Mock to allow adding user."""
+    url = "https://api.opsgenie.com/v2/users"
+    requests_mock.post(
+        url=url,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "GenieKey test-token",
+        },
+        json=json.dumps({
+            "username": "invalid@nonexistent.com",
+            "fullName": "test-user",
+            "role": {"name": "user"}
+        }),
+        status_code=200,
+    )
+
+
+@given("User can be added to Opsgenie team")
+def user_can_be_added_team(requests_mock):
+    """Mock to allow adding user to team"""
+    requests_mock.post(
+        "https://api.opsgenie.com/v2/teams/"
+        + "team_100"
+        + "/members?teamIdentifierType=name",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": "GenieKey test-token",
+        },
+        json=json.dumps({
+            "user": {"username": "invalid@nonexistent.com"},
+            "role": "user"
+        }),
+        status_code=201,
+    )
+
+
 @given("a name")
 def user_name():
     """a name."""
@@ -105,7 +157,7 @@ def role():
 
 
 @when("I pass approval request", target_fixture="context_output")
-def approve_pass(user_identity, user_labels, request_obj):
+def approve_pass(user_identity, user_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, user_labels, "test-approver", request_obj
@@ -116,7 +168,7 @@ def approve_pass(user_identity, user_labels, request_obj):
     "I pass approval request for adding user to opsgenie",
     target_fixture="context_output",
 )
-def approve_pass(user_identity, user_labels, request_obj):
+def approve_pass(user_identity, user_labels, request_obj, patched_email):
     opsgenie_access = access.get_object()
     return opsgenie_access.approve(
         user_identity, user_labels, "test-approver", request_obj

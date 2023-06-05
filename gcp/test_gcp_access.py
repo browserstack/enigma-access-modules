@@ -119,6 +119,8 @@ def test_GCPAccess(mocker):
     request = mocker.MagicMock()
     request.request_id = "123"
 
+    mocker.patch("Access.access_modules.gcp.access.GCPAccess._GCPAccess__send_approve_email", return_value="")
+    mocker.patch("Access.access_modules.gcp.access.GCPAccess._GCPAccess__send_revoke_email", return_value="")
     gcp_access = access.get_object()
 
     # assert type(gcp_access.email_targets(userMock)) == list
@@ -148,5 +150,5 @@ def test_GCPAccess(mocker):
     result = gcp_access.approve(userMock, label, "test", request)
     assert result is True
 
-    result = gcp_access.revoke(userMock, label[0], request)
+    result = gcp_access.revoke(userMock, mocker.MagicMock(), label[0], request)
     assert result is True

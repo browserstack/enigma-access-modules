@@ -7,10 +7,24 @@ from .. import helpers
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helpers.GITHUB_TOKEN = "test-token"
-    helpers.GITHUB_BASE_URL = "https://test-base-url.com"
-    helpers.GITHUB_ORG = "test-org"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.github_access.helpers._get_github_config",
+        return_value={
+            "GITHUB_TOKEN": "test-token",
+            "GITHUB_BASE_URL": "https://test-base-url.com",
+            "GITHUB_ORG": "test-org",
+        }
+    )
+
+
+@pytest.fixture
+def user_identity(mocker):
+    identity_mock = mocker.MagicMock()
+    identity_mock.identity = {
+        "username": user_name(),
+    }
+    return identity_mock
 
 
 @scenario("features/user.feature", "User does not exist on github")
@@ -195,8 +209,7 @@ def add_user_to_org(requests_mock, context):
     return_value = helpers.put_user(username=user_name())
     assert return_value is True
     context["expected_message"] = (
-        "Invited user test-username to join github org."
-        " Access can be granted post inivation acceptance."
+        "Invited user test-username to join github org. Access can be granted post inivation acceptance."
     )
 
 
@@ -217,9 +230,9 @@ def repo_does_not_exist(requests_mock, context):
 
 
 @when("I pass approval request", target_fixture="context_output")
-def add_user_approve(user, labels):
+def add_user_approve(user, labels, user_identity):
     github_access = access.get_object()
-    return github_access.approve(user, labels, "test-approver", "123")
+    return github_access.approve(user_identity, labels, "test-approver", "123")
 
 
 @then("return value should be False")

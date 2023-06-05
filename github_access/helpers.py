@@ -2,13 +2,26 @@ import json
 import requests
 import logging
 from . import constants
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 default_branch = ["master", "main"]
-GITHUB_TOKEN = ACCESS_MODULES["github_access"]["GITHUB_TOKEN"]
-GITHUB_BASE_URL = ACCESS_MODULES["github_access"]["GITHUB_BASE_URL"]
-GITHUB_ORG = ACCESS_MODULES["github_access"]["GITHUB_ORG"].lower()
+
+
+def _get_github_config():
+    return ACCESS_MODULES["github_access"]
+
+
+def _get_github_token():
+    return _get_github_config()["GITHUB_TOKEN"]
+
+
+def _get_github_base_url():
+    return _get_github_config()["GITHUB_BASE_URL"]
+
+
+def _get_github_org():
+    return _get_github_config()["GITHUB_ORG"].lower()
 
 
 def get_user(username):
@@ -18,8 +31,8 @@ def get_user(username):
 
 
 def _get_user(username):
-    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
-    GET_USER_URL = "%s/users/%s" % (GITHUB_BASE_URL, username)
+    headers = {"Authorization": "token %s" % _get_github_token()}
+    GET_USER_URL = "%s/users/%s" % (_get_github_base_url(), username)
     response = requests.get(GET_USER_URL, headers=headers)
     if response.status_code == 200:
         return True
@@ -33,8 +46,8 @@ def get_repo(repo):
 
 
 def _get_repo(repo):
-    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
-    GET_REPO_URL = "%s/repos/%s" % (GITHUB_BASE_URL, repo)
+    headers = {"Authorization": "token %s" % _get_github_token()}
+    GET_REPO_URL = "%s/repos/%s" % (_get_github_base_url(), repo)
     response = requests.get(GET_REPO_URL, headers=headers)
     if response.status_code == 200:
         return True
@@ -48,8 +61,8 @@ def get_org(username):
 
 
 def _get_org(username):
-    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
-    GET_ORG_URL = "%s/orgs/%s/members/%s" % (GITHUB_BASE_URL, GITHUB_ORG, username)
+    headers = {"Authorization": "token %s" % _get_github_token()}
+    GET_ORG_URL = "%s/orgs/%s/members/%s" % (_get_github_base_url(), _get_github_org(), username)
     response = str(requests.get(GET_ORG_URL, headers=headers))
     if "204" not in response:
         return False
@@ -64,8 +77,8 @@ def get_org_invite(username):
 
 
 def _get_org_invite(username):
-    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
-    GET_ORG_INVITE_URL = "%s/orgs/%s/invitations" % (GITHUB_BASE_URL, GITHUB_ORG)
+    headers = {"Authorization": "token %s" % _get_github_token()}
+    GET_ORG_INVITE_URL = "%s/orgs/%s/invitations" % (_get_github_base_url(), _get_github_org())
     response = requests.get(GET_ORG_INVITE_URL, headers=headers).json()
     return username in [member["login"] for member in response]
 
@@ -77,8 +90,8 @@ def put_user(username):
 
 
 def _put_user(username):
-    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
-    PUT_USER_URL = "%s/orgs/%s/memberships/%s" % (GITHUB_BASE_URL, GITHUB_ORG, username)
+    headers = {"Authorization": "token %s" % _get_github_token()}
+    PUT_USER_URL = "%s/orgs/%s/memberships/%s" % (_get_github_base_url(), _get_github_org(), username)
     response = str(requests.put(PUT_USER_URL, headers=headers))
     if "200" not in response:
         return False
@@ -88,11 +101,11 @@ def _put_user(username):
 
 def _get_branch_protection_enabled(repo, branch):
     headers = {
-        "Authorization": "token %s" % GITHUB_TOKEN,
+        "Authorization": "token %s" % _get_github_token(),
         "Accept": "application/vnd.github.v3+json",
     }
     GET_BRANCH_PTOTECTION_URL = "%s/repos/%s/branches/%s/protection" % (
-        GITHUB_BASE_URL,
+        _get_github_base_url(),
         repo,
         branch,
     )
@@ -109,17 +122,17 @@ def _get_branch_protection_enabled(repo, branch):
 def grant_access(repo, access_level, username):
     response = ""
     try:
-        headers = {"Authorization": "token %s" % GITHUB_TOKEN}
+        headers = {"Authorization": "token %s" % _get_github_token()}
         repo = repo.strip()
         if not get_repo(repo):
             logger.debug(
                 "Skipping git access for %s for user %s because repo does not exist"
-                " anymore" % (repo, username)
+                " anymore", repo, username
             )
             return True
         if access_level == "merge":
             headers = {
-                "Authorization": "token %s" % GITHUB_TOKEN,
+                "Authorization": "token %s" % _get_github_token(),
                 "Accept": "application/vnd.github.v3+json",
                 "Content-Type": "application/json",
             }
@@ -127,7 +140,7 @@ def grant_access(repo, access_level, username):
                 response = ""
                 GET_USERS_ACCESS_URL = (
                     "%s/repos/%s/branches/%s/protection/restrictions/users"
-                    % (GITHUB_BASE_URL, repo, branch)
+                    % (_get_github_base_url(), repo, branch)
                 )
                 res = requests.get(GET_USERS_ACCESS_URL, headers=headers)
                 protected_branch_data = res.json()
@@ -140,7 +153,7 @@ def grant_access(repo, access_level, username):
         else:
             payload = {"permission": access_level}
             PUT_COLLABORATOR_URL = "%s/repos/%s/collaborators/%s" % (
-                GITHUB_BASE_URL,
+                _get_github_base_url(),
                 repo,
                 username,
             )
@@ -156,7 +169,7 @@ def grant_access(repo, access_level, username):
         return True
     except Exception as e:
         logger.error("Error while granting repo access to user " + username)
-        logger.error(str(e))
+        logger.exception(str(e))
         return False
 
 
@@ -164,13 +177,13 @@ def _is_protection_enabled(repo, branch, protected_branch_data, username, respon
     if _get_branch_protection_enabled(repo, branch):
         data = [username]
         headers = {
-            "Authorization": "token %s" % GITHUB_TOKEN,
+            "Authorization": "token %s" % _get_github_token(),
             "Accept": "application/vnd.github.v3+json",
             "Content-Type": "application/json",
         }
         POST_USERS_ACCESS_URL = (
             "%s/repos/%s/branches/%s/protection/restrictions/users"
-            % (GITHUB_BASE_URL, repo, branch)
+            % (_get_github_base_url(), repo, branch)
         )
         res = requests.post(
             POST_USERS_ACCESS_URL, headers=headers, data=json.dumps(data)
@@ -191,10 +204,10 @@ def _is_protection_enabled(repo, branch, protected_branch_data, username, respon
 def get_org_repo_list():
     repoList = []
     headers = {
-        "Authorization": "token %s" % GITHUB_TOKEN,
+        "Authorization": "token %s" % _get_github_token(),
         "Accept": "application/vnd.github.v3+json",
     }
-    GET_ORG_REPOS_URL = "%s/orgs/%s/repos" % (GITHUB_BASE_URL, GITHUB_ORG)
+    GET_ORG_REPOS_URL = "%s/orgs/%s/repos" % (_get_github_base_url(), _get_github_org())
     response = requests.get(GET_ORG_REPOS_URL, headers=headers)
     if response.status_code == 200:
         user_orgs_data = response.json()
@@ -211,18 +224,18 @@ def revoke_access(username, repo=None):
 
 
 def _revoke_github_user(username, repo):
-    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
+    headers = {"Authorization": "token %s" % _get_github_token()}
     DELETE_ACCESS_URL = ""
     if repo is None:
         DELETE_ACCESS_URL = "%s/orgs/%s/memberships/%s" % (
-            GITHUB_BASE_URL,
-            GITHUB_ORG,
+            _get_github_base_url(),
+            _get_github_org(),
             username,
         )
     else:
         DELETE_ACCESS_URL = "%s/repos/%s/%s/collaborators/%s" % (
-            GITHUB_BASE_URL,
-            GITHUB_ORG,
+            _get_github_base_url(),
+            _get_github_org(),
             repo,
             username,
         )
@@ -235,8 +248,8 @@ def _revoke_github_user(username, repo):
 
 
 def is_email_valid(username, email):
-    headers = {"Authorization": "token %s" % GITHUB_TOKEN}
-    GET_USER_URL = "%s/users/%s" % (GITHUB_BASE_URL, username)
+    headers = {"Authorization": "token %s" % _get_github_token()}
+    GET_USER_URL = "%s/users/%s" % (_get_github_base_url(), username)
     response = requests.get(GET_USER_URL, headers=headers)
     if response.status_code == 200:
         if "email" in response.json():

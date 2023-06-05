@@ -4,11 +4,9 @@ Feature: GithubAccess Revoke
     Scenario: Revoke User Access to a repository success
         Given A git username
         And Access will be revoked
-        When I pass revoke request
-        Then Email will be sent
+        Then Access is revoked
 
     Scenario: Revoke User Access to a repository fails
         Given A git username
         And Access can not be revoked
-        When I pass revoke request
-        Then Email will be sent
+        Then Access is not revoked

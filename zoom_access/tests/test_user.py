@@ -14,34 +14,46 @@ from pytest_bdd import (
 
 
 @pytest.fixture
-def user_a(mocker):
-    user_a = mocker.MagicMock()
-    user_a.identity = {"user_email": "test@test.com"}
-    return user_a
+def user_identity_a(mocker):
+    identity_mock = mocker.MagicMock()
+    user_mock = mocker.MagicMock()
+    user_mock.email = user_email()
+    user_mock.name = user_name()
+    identity_mock.user = user_mock
+    return identity_mock
 
 
 @pytest.fixture
 def labels():
-    form_label = {
+    form_labels = [{
         "action": "zoom_access",
         "access_type": "Standard License",
-    }
-    return form_label
+    }]
+    return form_labels
 
 
 @pytest.fixture
 def usera(mocker):
     usera = mocker.MagicMock()
-    usera.email = "test@test.com"
+    usera.email = user_email()
     usera.state = 2
     return usera
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.ZOOM_API_KEY = "test-token"
-    helper.ZOOM_BASE_URL = "https://test-base-url.com/"
-    helper.ZOOM_CLIENT_SECRET = "test-secret"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_api_key",
+        return_value="test-token"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_api_base_url",
+        return_value="https://test-base-url.com/"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_client_secret",
+        return_value="test-org"
+    )
 
 
 @scenario("features/user.feature", "User does not exist on zoom")
@@ -51,9 +63,13 @@ def test_user_does_not_exist_on_zoom():
 
 
 @given("User does not exist on zoom")
-def user_does_not_exist(requests_mock):
+def user_does_not_exist(requests_mock, mocker):
+    mocker.patch(
+        'Access.access_modules.zoom_access.helper.get_token',
+        return_value="test-token"
+    )
     requests_mock.post(
-        "https://test-base-url.com/users",
+        "https://test-base-url.com/users/",
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -61,14 +77,14 @@ def user_does_not_exist(requests_mock):
         json=json.dumps(
             {
                 "action": "create",
-                "user_info": {"email": "test@test.com", "type": 1},
+                "user_info": {"email": user_email(), "type": 1},
             }
         ),
         status_code=404,
     )
 
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -83,13 +99,18 @@ def user_does_not_exist(requests_mock):
 @given("a user email")
 def user_email():
     """a user email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
+
+
+def user_name():
+    """mock user name"""
+    return "invalid_user_name"
 
 
 @when("I pass approval request", target_fixture="context_output")
-def revoke_request(usera, user_a, labels):
+def revoke_request(usera, user_identity_a, labels):
     zoom_access = access.get_object()
-    return zoom_access.approve(user_a, labels, "test-approver", usera)
+    return zoom_access.approve(user_identity_a, labels, "test-approver", usera)
 
 
 @then("return value should be False")

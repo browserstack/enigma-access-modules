@@ -1,26 +1,36 @@
 """ helper functions for zoom access module"""
-import json
-import logging
+
 from time import sleep
 import datetime
-import requests
+import json
+import logging
 import jwt
-from EnigmaAutomation.settings import ACCESS_MODULES
+import requests
+
+from enigma_automation.settings import ACCESS_MODULES
 from . import constants
 
-ZOOM_API_KEY = ACCESS_MODULES["zoom_access"]["ZOOM_API_KEY"]
-ZOOM_BASE_URL = ACCESS_MODULES["zoom_access"]["ZOOM_BASE_URL"]
-ZOOM_CLIENT_SECRET = ACCESS_MODULES["zoom_access"]["ZOOM_CLIENT_SECRET"]
-
 logger = logging.getLogger(__name__)
+
+
+def _get_api_key():
+    return ACCESS_MODULES["zoom_access"]["ZOOM_API_KEY"]
+
+
+def _get_zoom_api_base_url():
+    return ACCESS_MODULES["zoom_access"]["ZOOM_BASE_URL"]
+
+
+def _get_zoom_client_secret():
+    return ACCESS_MODULES["zoom_access"]["ZOOM_CLIENT_SECRET"]
 
 
 def get_token():
     """Returns the zoom token created using ZOOM API KEY and ZOOM CLIENT SECRET"""
     curr_dt = datetime.datetime.now() + datetime.timedelta(hours=1)
     encoded_jwt = jwt.encode(
-        {"iss": ZOOM_API_KEY, "exp": curr_dt.timestamp()},
-        ZOOM_CLIENT_SECRET,
+        {"iss": _get_api_key(), "exp": curr_dt.timestamp()},
+        _get_zoom_client_secret(),
         algorithm="HS256",
     )
     return encoded_jwt
@@ -53,15 +63,20 @@ def make_request(url, request_type="GET", data=None):
                 timeout=constants.TIMEOUT_VALUE,
             )
         elif request_type == "PATCH":
-            response = requests.patch(
-                url,
-                data=json.dumps(data),
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + zoom_jwt_token,
-                },
-                timeout=constants.TIMEOUT_VALUE,
-            )
+            try:
+                response = requests.patch(
+                    url,
+                    data=json.dumps(data),
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + zoom_jwt_token,
+                    },
+                    timeout=constants.TIMEOUT_VALUE,
+                )
+            except requests.exceptions.ChunkedEncodingError:
+                # this occurs on special case of 204 no content
+                return [204, ""]
+
         elif request_type == "DELETE":
             response = requests.delete(
                 url,
@@ -98,14 +113,14 @@ def make_request(url, request_type="GET", data=None):
     return [response.status_code, response_data]
 
 
-def grant_access(user, type):
+def grant_access(user, access_type):
     user_details = get_user(user.email)
     if user_details[0] == 200:
-        response = update_user(user.email, type)
+        response = update_user(user.email, access_type)
         if response[0] != 204:
             return False, "User updation failed" + str(response)
     else:
-        response = create_user(user.email, type)
+        response = create_user(user.email, access_type, user.name)
         if response[0] != 200 or response[0] != 201:
             return False, "User creation failed" + str(response)
 
@@ -119,9 +134,9 @@ def get_user(email):
     Returns:
         details of user
     """
-    url = ZOOM_BASE_URL + "users/"
+    url = _get_zoom_api_base_url() + "users/"
     user_details = make_request(url + email)
-    logger.info("[ZOOM] get_user - %s", str(user_details))
+    logger.debug("[ZOOM] get_user - %s", str(user_details))
     return user_details
 
 
@@ -132,7 +147,7 @@ def delete_user(email):
     Returns:
         userdetails of deleted user
     """
-    url = ZOOM_BASE_URL + "users/"
+    url = _get_zoom_api_base_url() + "users/"
     user_details = get_user(email)
     if user_details[0] != 404:
         user_id = user_details[1]["id"]
@@ -142,35 +157,35 @@ def delete_user(email):
     return [204]
 
 
-def create_user(email, type, name=None):
+def create_user(email, access_type, name=None):
     """Creates new user
     Args:
         email: email of the user to be created
         name(string): name of user
-        type: type of access to be given (1-> standard , 2-> Pro License)
+        access_type: type of access to be given (1-> standard , 2-> Pro License)
     Returns:
         userdetails of created user
     """
-    url = ZOOM_BASE_URL + "users/"
+    url = _get_zoom_api_base_url() + "users/"
     data = {
         "action": "create",
-        "user_info": {"email": email, "first_name": name, "type": type},
+        "user_info": {"email": email, "first_name": name, "type": access_type},
     }
     user_details = make_request(url, "POST", data)
     logger.info("[ZOOM] create_user - %s", str(user_details))
     return user_details
 
 
-def update_user(email, type):
+def update_user(email, access_type):
     """Updates user email
     Args:
         email (str): email of the user to be updated
-        type : login types
+        access_type : login types
     Returns:
         userdetails of updated user
     """
-    url = ZOOM_BASE_URL + "users/" + email
-    data = {"type": type}
+    url = _get_zoom_api_base_url() + "users/" + email
+    data = {"type": access_type}
     user_details = make_request(url, "PATCH", data)
     logger.info("[ZOOM] update_user - %s", str(user_details))
     return user_details
