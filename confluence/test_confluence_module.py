@@ -1,6 +1,6 @@
 """unit tests for the confluence acces module"""
 from . import access
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 
 class MockRequest:
@@ -75,7 +75,17 @@ class MockRequest:
 
 
 def test_confluence(mocker, requests_mock):
-    """unit test for the confluence access module methods"""
+    """ unit test for the confluence access module methods """
+
+    base_url = "https://invalid-domain.com"
+    mocker.patch(
+        "Access.access_modules.confluence.access.Confluence._get_confluence_config",
+        return_value={
+            "ADMIN_EMAIL": "test-email@nonexistent.com",
+            "API_TOKEN": "test-token",
+            "CONFLUENCE_BASE_URL": base_url,
+        }
+    )
     confluence_access = access.Confluence()
 
     user_mock = mocker.MagicMock()
@@ -104,12 +114,10 @@ def test_confluence(mocker, requests_mock):
     label2 = confluence_access.validate_request(form_label_2, user_mock, False)
 
     assert label1[0] == {
-        "data": {"accessWorkspace": "test", "confluenceAccessType": "View Access"},
         "access_workspace": "test",
         "access_type": "View Access",
     }
     assert label2[0] == {
-        "data": {"accessWorkspace": "test 2", "confluenceAccessType": "Edit Access"},
         "access_workspace": "test 2",
         "access_type": "Edit Access",
     }
@@ -136,8 +144,6 @@ def test_confluence(mocker, requests_mock):
         {"type": "Admin Access", "desc": "Admin Access"},
     ]
 
-    base_url = ACCESS_MODULES["confluence_module"]["CONFLUENCE_BASE_URL"]
-
     grant_url = f"{base_url}/wiki/rest/api/space/test/permission"
 
     requests_mock.post(
@@ -151,10 +157,11 @@ def test_confluence(mocker, requests_mock):
         status_code=204,
     )
 
-    mocker.patch("bootprocess.general.emailSES", return_value="")
+    mocker.patch("Access.access_modules.confluence.access.Confluence.email_via_smtp", return_value="")
     resp = confluence_access.approve(user_mock, label1, "1234", request)
     assert resp is False
 
-    resp = confluence_access.revoke(user_mock, label1[0], request)
+    resp = confluence_access.revoke(
+            user_mock, mocker.MagicMock(), label1[0], request)
 
     assert resp is False

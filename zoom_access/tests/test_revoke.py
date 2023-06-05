@@ -25,7 +25,7 @@ def labels():
 @pytest.fixture
 def usera(mocker):
     usera = mocker.MagicMock()
-    usera.email = "test@test.com"
+    usera.email = user_email()
     usera.state = 2
     return usera
 
@@ -33,15 +33,24 @@ def usera(mocker):
 @pytest.fixture
 def user_a(mocker):
     user_a = mocker.MagicMock()
-    user_a.identity = {"user_email": "test@test.com"}
+    user_a.identity = {"user_email": user_email()}
     return user_a
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.ZOOM_API_KEY = "test-token"
-    helper.ZOOM_BASE_URL = "https://test-base-url.com/"
-    helper.ZOOM_CLIENT_SECRET = "test-secret"
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_api_key",
+        return_value="test-token"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_api_base_url",
+        return_value="https://test-base-url.com/"
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.helper._get_zoom_client_secret",
+        return_value="test-org"
+    )
 
 
 @scenario("features/revoke.feature", "Revoke User Access to a zoom success")
@@ -51,22 +60,33 @@ def test_revoke_user_access_to_a_zoom_success():
 
 
 @given("Access will be revoked")
-def revoke_sucess(requests_mock):
+def revoke_sucess(requests_mock, mocker):
+    mocker.patch(
+        'Access.access_modules.zoom_access.helper.get_token',
+        return_value="test-token"
+    )
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
         },
         status_code=200,
+        json={
+            "id": user_id(),
+        },
     )
     requests_mock.delete(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/" + user_id(),
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
         },
         status_code=204,
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_revoke_email",
+        return_value=""
     )
     return_value = helper.delete_user(user_email())
     assert return_value[0] == 204
@@ -74,11 +94,19 @@ def revoke_sucess(requests_mock):
 
 @given("a user email")
 def user_email():
-    return "test@test.com"
+    return "invalid@nonexistent.com"
+
+
+def user_id():
+    return "test-id"
 
 
 @when("I pass revoke request", target_fixture="context_output")
 def revoke_request(usera, user_a, labels, mocker):
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_revoke_email",
+        return_value=True
+    )
     zoom_access = access.get_object()
     return zoom_access.revoke(usera, user_a, labels, mocker.Mock())
 
@@ -90,15 +118,19 @@ def success_message(context_output):
 
 
 @scenario("features/revoke.feature", "Revoke User Access to a zoom fails")
-def test_revoke_user_fails_to_a_zoom_success():
+def test_revoke_user_fails_to_a_zoom_fails():
     """Revoke User Access to a zoom fails."""
     pass
 
 
 @given("Access can not be revoked")
-def revoke_fails(requests_mock):
+def revoke_fails(requests_mock, mocker):
+    mocker.patch(
+        'Access.access_modules.zoom_access.helper.get_token',
+        return_value="test-token"
+    )
     requests_mock.get(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
@@ -106,12 +138,16 @@ def revoke_fails(requests_mock):
         status_code=404,
     )
     requests_mock.delete(
-        "https://test-base-url.com/users/test@test.com",
+        "https://test-base-url.com/users/" + user_email(),
         headers={
             "Authorization": "token test-token",
             "Content-Type": "application/json",
         },
         status_code=404,
+    )
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_revoke_email",
+        return_value=""
     )
     return_value = helper.delete_user(user_email())
     assert return_value[0] == 204

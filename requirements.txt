@@ -1,13 +1,6 @@
-Django==4.1.7
-pytest==7.2.0
-pytest-django==4.5.2
-pytest-cov==4.0.0
-pytest-mock==3.10.0
-pylama==8.4.1
 requests-mock==1.10.0
-pytest-bdd==6.1.1
-fabric==3.0.0
 google-api-python-client==2.71.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.8.0
 slack-sdk==3.20.2
+fabric==3.0.0

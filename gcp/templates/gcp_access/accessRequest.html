@@ -104,19 +104,15 @@
         // $("#gcpGroupComponents_to").html('');
         let optionArray = $.map(data["gcp_groups"], function(group, idx) { return `<option value="${group["email"]}"> ${group["name"]} </option>` });
         $("#gcpGroupComponents").html(optionArray.join(""));
-        console.log(data)
         if(!data["page_token"]){
-          console.log("not found token")
           $("#gcpNextPageToken").val("")
         }else {
-          console.log("found token")
           $("#gcpNextPageToken").val(data["page_token"])
         }
       });
     }
 
     $(document).on("click", "#gcpNextPageToken", () => {
-      console.log($('#gcpNextPageToken').val())
       next_page_token = $("#gcpNextPageToken").val()
       populateGCPGroups(next_page_token)
     })
