@@ -5,7 +5,6 @@ import logging
 from django.template import loader
 
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 from . import helper, constants
 
 logger = logging.getLogger(__name__)
@@ -119,8 +118,8 @@ class Zoom(BaseEmailAccess):
                 access_type = 1
             else:
                 logger.exception(
-                    "Undefined access type from label %s for user %s"
-                    % (json.dumps(label), user.email)
+                    "Undefined access type from label %s for user %s",
+                    json.dumps(label), user.email
                 )
                 return False, "Undefined access type"
 
@@ -128,8 +127,8 @@ class Zoom(BaseEmailAccess):
 
             if not result:
                 logger.exception(
-                    "Something went wrong while giving %s access to the %s: %s"
-                    % (label["access_type"], user.email, str(exception))
+                    "Something went wrong while giving %s access to the %s: %s",
+                    label["access_type"], user.email, str(exception)
                 )
                 return False, exception
 
@@ -154,13 +153,13 @@ class Zoom(BaseEmailAccess):
             user.email,
         )
         body = self.__generate_string_from_template(
-            filename="approve_email.html",
+            filename="zoom_access/approve_email.html",
             label_desc=label_desc,
             user_email=user.email,
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, body)
+        self.email_via_smtp(email_targets, email_subject, body)
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
@@ -179,7 +178,7 @@ class Zoom(BaseEmailAccess):
         )
         email_body = ""
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def revoke(self, user, user_identity, label, request):
         """Revoke access to Zoom.

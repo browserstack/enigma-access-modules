@@ -1,7 +1,7 @@
 import json
 import requests
 import logging
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 

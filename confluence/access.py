@@ -6,8 +6,7 @@ from requests.auth import HTTPBasicAuth
 import requests
 
 from Access.base_email_access.access import BaseEmailAccess
-from EnigmaAutomation.settings import ACCESS_MODULES
-from bootprocess.general import emailSES
+from enigma_automation.settings import ACCESS_MODULES
 from . import constants
 
 logger = logging.getLogger(__name__)
@@ -18,17 +17,17 @@ class Confluence(BaseEmailAccess):
 
     urlpatterns = []
 
-    def _get_confluence_config():
-        return ACCESS_MODULES.get("confluence", {})
+    def _get_confluence_config(self):
+        return ACCESS_MODULES.get(self.tag(), {})
 
-    def _get_admin_email():
-        return _get_confluence_config()["ADMIN_EMAIL"]
+    def _get_admin_email(self):
+        return self._get_confluence_config()["ADMIN_EMAIL"]
 
-    def _get_api_token():
-        return _get_confluence_config()["API_TOKEN"]
+    def _get_api_token(self):
+        return self._get_confluence_config()["API_TOKEN"]
 
-    def _get_base_url():
-        return _get_confluence_config()["CONFLUENCE_BASE_URL"]
+    def _get_base_url(self):
+        return self._get_confluence_config()["CONFLUENCE_BASE_URL"]
 
     def can_auto_approve(self):
         return False
@@ -134,8 +133,8 @@ class Confluence(BaseEmailAccess):
         """Makes confluence API calls and approves access to a confluence space."""
         try:
             auth = HTTPBasicAuth(
-                _get_admin_email(),
-                _get_api_token(),
+                self._get_admin_email(),
+                self._get_api_token(),
             )
             headers = {"Accept": "application/json", "Content-Type": "application/json"}
             payload = json.dumps(
@@ -144,7 +143,7 @@ class Confluence(BaseEmailAccess):
                     "operation": permission,
                 }
             )
-            base_url = _get_base_url()
+            base_url = self._get_base_url()
             grant_url = f"{base_url}/wiki/rest/api/space/{space_key}/permission"
             response = requests.request(
                 "POST", grant_url, data=payload, headers=headers, auth=auth
@@ -155,14 +154,14 @@ class Confluence(BaseEmailAccess):
             if response.status_code == 400:
                 return json.loads(response.text)["message"].split(" ")[-1]
             logger.error(
-                "Could not approve permission %s for response %s"
-                % (str(permission), str(response.text))
+                "Could not approve permission %s for response %s",
+                str(permission), str(response.text)
             )
             return False
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s"
-                % (str(permission), str(ex))
+                "Could not approve permission %s for error %s",
+                str(permission), str(ex)
             )
             return False
 
@@ -170,10 +169,10 @@ class Confluence(BaseEmailAccess):
         """Makes confluence API calls and revokes access to a confluence space."""
         try:
             auth = HTTPBasicAuth(
-                _get_admin_email(),
-                _get_api_token(),
+                self._get_admin_email(),
+                self._get_api_token(),
             )
-            base_url = _get_base_url()
+            base_url = self._get_base_url()
             revoke_url = (
                 f"{base_url}/wiki/rest/api/space/{space_key}/permission/{permission_id}"
             )
@@ -185,8 +184,8 @@ class Confluence(BaseEmailAccess):
 
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s"
-                % (str(permission_id), str(ex))
+                "Could not approve permission %s for error %s",
+                str(permission_id), str(ex)
             )
             return False
 
@@ -204,15 +203,15 @@ class Confluence(BaseEmailAccess):
         available_spaces = {}
         available_spaces["spaces"] = []
         auth = HTTPBasicAuth(
-            _get_admin_email(),
-            _get_api_token(),
+            self._get_admin_email(),
+            self._get_api_token(),
         )
         start = 0
         limit = 25
         while True:
             response = requests.request(
                 "GET",
-                _get_base_url()
+                self._get_base_url()
                 + "/wiki/rest/api/space?type=global&start="
                 + str(start)
                 + "&limit="
@@ -330,16 +329,16 @@ class Confluence(BaseEmailAccess):
     def __send_approve_email(self, user, request_id, access_type, approver):
         """Generates and sends email in access grant."""
         targets = self.email_targets(user)
-        subject = f"""Approved Access: {request_id} for access to
-        {self.access_desc()} for user {user.email}"""
+        subject = (f"Approved Access: {request_id} for access to"
+        f" {self.access_desc()} for user {user.email}")
 
         body = self.__generate_string_from_template(
-            filename="approve_email.html",
+            filename="confluence/approve_email.html",
             access_type=access_type,
             user_email=user.email,
             approver=approver,
         )
-        emailSES(targets, subject, body)
+        self.email_via_smtp(targets, subject, body)
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
@@ -353,7 +352,7 @@ class Confluence(BaseEmailAccess):
         email_targets = self.email_targets(user)
         email_subject = f"Revoke Request: {label_desc} for {user.email}"
         email_body = ""
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def revoke(self, user, user_identity, label, request):
         """Revoke confluence workspace access
@@ -373,7 +372,7 @@ class Confluence(BaseEmailAccess):
                 label["access_workspace"], permission["permission_id"]
             )
             if response is False:
-                logger.error("could not revoke access for %s" % str(permission))
+                logger.error("could not revoke access for %s", str(permission))
                 return False
 
         label_desc = self.get_label_desc(label)
@@ -381,7 +380,7 @@ class Confluence(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc)
             return True
         except Exception as ex:
-            logger.error("Could not send email for error %s" % str(ex))
+            logger.error("Could not send email for error %s", str(ex))
             return False
 
     def access_desc(self):
@@ -397,15 +396,15 @@ class Confluence(BaseEmailAccess):
 
     def __is_valid_identity(self, id, email):
         auth = HTTPBasicAuth(
-            _get_admin_email(),
-            _get_api_token(),
+            self._get_admin_email(),
+            self._get_api_token(),
         )
 
         headers = {"Accept": "application/json"}
 
         query = {"accountId": id}
 
-        base_url = _get_base_url()
+        base_url = self._get_base_url()
         user_url = f"{base_url}/wiki/rest/api/user"
         response = requests.request(
             "GET", user_url, headers=headers, params=query, auth=auth
