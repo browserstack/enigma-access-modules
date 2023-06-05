@@ -11,6 +11,7 @@ from Access.access_modules.github_access.helpers import (
     put_user,
     revoke_access,
     is_email_valid,
+    get_github_org,
 )
 from . import constants
 from django.template import loader
@@ -197,6 +198,9 @@ class GithubAccess(BaseEmailAccess):
 
     def fetch_access_request_form_path(self):
         return "github_access/access_request_form.html"
+    
+    def get_extra_fields(self) :
+        return {"githubOrg" : get_github_org()}
 
     def access_request_data(self, request, is_group=False):
         repo_data = [repo for repo in get_org_repo_list()]

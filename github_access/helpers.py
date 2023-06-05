@@ -39,6 +39,10 @@ def _get_user(username):
     return False
 
 
+def get_github_org():
+    return _get_github_config()["GITHUB_ORG"]
+
+
 def get_repo(repo):
     if not _get_repo(repo):
         return False
