@@ -1,7 +1,7 @@
 import json
 import logging
 
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 from slack_sdk import WebClient
 
 logger = logging.getLogger(__name__)
@@ -37,8 +37,8 @@ def _get_team_id(workspace_name):
             return None, response["error"]
     except Exception as e:
         logger.error(
-            "Could not get team-id for workspace %s. Error ocurred: %s"
-            % (workspace_name, str(e))
+            "Could not get team-id for workspace %s. Error ocurred: %s",
+            workspace_name, str(e)
         )
         return None, "Could not get team id"
 

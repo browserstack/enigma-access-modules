@@ -3,7 +3,7 @@ import logging
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 from . import constants
 
 logger = logging.getLogger(__name__)

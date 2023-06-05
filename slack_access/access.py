@@ -3,7 +3,6 @@ import json
 from django.template import loader
 
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 from .helpers import (
     invite_user,
     remove_user,
@@ -50,13 +49,13 @@ class Slack(BaseEmailAccess):
             user.email,
         )
         body = self._generate_string_from_template(
-            filename="approve_email.html",
+            filename="slack_access/approve_email.html",
             label_desc=label_desc,
             user_email=user.email,
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, body)
+        self.email_via_smtp(email_targets, email_subject, body)
 
     def __send_revoke_email(self, user, label_desc, request_id):
         """Generates and sends email in for access revoke."""
@@ -68,7 +67,7 @@ class Slack(BaseEmailAccess):
         )
         email_body = ""
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def approve(
         self,
@@ -110,7 +109,7 @@ class Slack(BaseEmailAccess):
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.exception("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False
 
     def revoke(self, user, user_identity, label, request):
@@ -139,7 +138,7 @@ class Slack(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.exception("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False
 
     def get_label_desc(self, access_label):

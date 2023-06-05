@@ -6,8 +6,7 @@ from requests.auth import HTTPBasicAuth
 import requests
 
 from Access.base_email_access.access import BaseEmailAccess
-from EnigmaAutomation.settings import ACCESS_MODULES
-from bootprocess.general import emailSES
+from enigma_automation.settings import ACCESS_MODULES
 from . import constants
 
 logger = logging.getLogger(__name__)
@@ -52,7 +51,7 @@ class Confluence(BaseEmailAccess):
         """
         return [user.email] + self.grant_owner()
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Validates the access request.
 
         Args:
@@ -64,24 +63,19 @@ class Confluence(BaseEmailAccess):
         Returns:
             arr: Array of the access labels for the request access.
         """
-        valid_access_label_array = []
-        for access_label_data in access_labels_data:
-            if not access_label_data.get(
-                "accessWorkspace"
-            ) or not access_label_data.get("confluenceAccessType"):
-                raise Exception(constants.ERROR_MESSAGES["missing_argument"])
-            if not self.__in_access_types(
-                access_label_data.get("confluenceAccessType")
-            ):
-                raise Exception(constants.ERROR_MESSAGES["valid_access_type"])
 
-            valid_access_label = {
-                "access_workspace": access_label_data.get("accessWorkspace"),
-                "access_type": access_label_data.get("confluenceAccessType"),
-            }
-            valid_access_label_array.append(valid_access_label)
+        if(not access_request_form.get("confluence_workspace") or not access_request_form.get("confluence_access_type")):
+            raise Exception(constants.ERROR_MESSAGES["missing_argument"])
+        if not self.__in_access_types(
+            access_request_form.get("confluence_access_type")
+        ):
+            raise Exception(constants.ERROR_MESSAGES["valid_access_type"])
+        valid_access_label = {
+            "access_workspace": access_request_form.get("confluence_workspace"),
+            "access_type": access_request_form.get("confluence_access_type"),
+        }
+        return [valid_access_label]
 
-        return valid_access_label_array
 
     def __in_access_types(self, access_type):
         return access_type in ["View Access", "Edit Access", "Admin Access"]
@@ -155,14 +149,14 @@ class Confluence(BaseEmailAccess):
             if response.status_code == 400:
                 return json.loads(response.text)["message"].split(" ")[-1]
             logger.error(
-                "Could not approve permission %s for response %s"
-                % (str(permission), str(response.text))
+                "Could not approve permission %s for response %s",
+                str(permission), str(response.text)
             )
             return False
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s"
-                % (str(permission), str(ex))
+                "Could not approve permission %s for error %s",
+                str(permission), str(ex)
             )
             return False
 
@@ -185,8 +179,8 @@ class Confluence(BaseEmailAccess):
 
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s"
-                % (str(permission_id), str(ex))
+                "Could not approve permission %s for error %s",
+                str(permission_id), str(ex)
             )
             return False
 
@@ -330,16 +324,16 @@ class Confluence(BaseEmailAccess):
     def __send_approve_email(self, user, request_id, access_type, approver):
         """Generates and sends email in access grant."""
         targets = self.email_targets(user)
-        subject = f"""Approved Access: {request_id} for access to
-        {self.access_desc()} for user {user.email}"""
+        subject = (f"Approved Access: {request_id} for access to"
+        f" {self.access_desc()} for user {user.email}")
 
         body = self.__generate_string_from_template(
-            filename="approve_email.html",
+            filename="confluence/approve_email.html",
             access_type=access_type,
             user_email=user.email,
             approver=approver,
         )
-        emailSES(targets, subject, body)
+        self.email_via_smtp(targets, subject, body)
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
@@ -353,7 +347,7 @@ class Confluence(BaseEmailAccess):
         email_targets = self.email_targets(user)
         email_subject = f"Revoke Request: {label_desc} for {user.email}"
         email_body = ""
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def revoke(self, user, user_identity, label, request):
         """Revoke confluence workspace access
@@ -373,7 +367,7 @@ class Confluence(BaseEmailAccess):
                 label["access_workspace"], permission["permission_id"]
             )
             if response is False:
-                logger.error("could not revoke access for %s" % str(permission))
+                logger.error("could not revoke access for %s", str(permission))
                 return False
 
         label_desc = self.get_label_desc(label)
@@ -381,7 +375,7 @@ class Confluence(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc)
             return True
         except Exception as ex:
-            logger.error("Could not send email for error %s" % str(ex))
+            logger.error("Could not send email for error %s", str(ex))
             return False
 
     def access_desc(self):
