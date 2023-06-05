@@ -97,18 +97,14 @@ def test_confluence(mocker, requests_mock):
 
     assert isinstance(confluence_access.email_targets(user_mock), list)
 
-    form_label_1 = [
-        {
-            "accessWorkspace": "test",
-            "confluenceAccessType": "View Access",
-        }
-    ]
-    form_label_2 = [
-        {
-            "accessWorkspace": "test 2",
-            "confluenceAccessType": "Edit Access",
-        }
-    ]
+    form_label_1 = {
+        "confluence_workspace": "test",
+        "confluence_access_type": "View Access",
+    }
+    form_label_2 = {
+        "confluence_workspace": "test 2",
+        "confluence_access_type": "Edit Access",
+    }
 
     label1 = confluence_access.validate_request(form_label_1, user_mock, False)
     label2 = confluence_access.validate_request(form_label_2, user_mock, False)
