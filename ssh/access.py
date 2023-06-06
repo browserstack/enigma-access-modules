@@ -66,6 +66,8 @@ class SSHAccess(BaseEmailAccess):
                 "Something went wrong while adding the %s to group %s: %s"
                 % (user.email, labels, str(error_message))
             )
+            error_msg = "Something went wrong while adding the %s to group %s: %s" % (user.email, labels, str(error_message))
+            return return_value, error_msg    
 
         try:
             self.__send_approve_email(
@@ -80,7 +82,6 @@ class SSHAccess(BaseEmailAccess):
             logger.error(
                 "%s: Could not send email for error %s", self.tag(), str(e)
             )
-            return_value = False
 
         return return_value, error_message
 
@@ -208,17 +209,17 @@ class SSHAccess(BaseEmailAccess):
                 "Something went wrong while revoking the %s from group %s: %s",
                 user.email, label, str(error_message)
             )
-            return False
+            error_msg = "Something went wrong while revoking the %s from group %s: %s" % (user.email, label, str(error_message))
+            return False, error_msg
 
         label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, request.request_id, label_desc)
-            return True
         except Exception as e:
             logger.error(
                 "%s: Could not send email for error %s", self.tag(), str(e)
             )
-            return False
+        return True
 
     def validate_request(self, access_request_form, request_user, is_group=False):
         """validates the access request for the user to the resource specified in the label

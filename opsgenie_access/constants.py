@@ -9,3 +9,4 @@ VALID_USER_TYPE_REQUIRED_ERROR = "Valid User required is required for the user"
 TEAM_LIST_ERROR = "Error in Finding teams list"
 
 GET_USER_BY_EMAIL_FAILED = "Failed to read user email address from zoom."
+REVOKE_ACCESS_FAILED_ERROR = "Something went wrong while removing %s from %s"

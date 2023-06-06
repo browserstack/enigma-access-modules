@@ -143,17 +143,16 @@ class GCPAccess(BaseEmailAccess):
             )
             if result is False:
                 logger.error(
-                    "Something went wrong while adding the %s to group %s: %s",
+                    constants.GRANT_ACCESS_FAILED_ERROR,
                     user.email, label["group"], str(exception)
                 )
-                return False
+                return False, constants.GRANT_ACCESS_FAILED_ERROR % (user.email, label["group"], str(exception))
 
         try:
             self.__send_approve_email(user, label_desc, request.request_id, approver)
-            return True
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
-            return False
+        return True
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
         """Generates and sends email in access grant."""
@@ -207,18 +206,17 @@ class GCPAccess(BaseEmailAccess):
         )
         if not result:
             logger.error(
-                f"Error while removing the user from the group {label['group']}:"
-                f" {str(exception)}"
+                constants.REVOKE_ACCESS_FAILED_ERROR,
+                label["group"], str(exception)
             )
-            return False
+            return False, constants.REVOKE_ACCESS_FAILED_ERROR % (label["group"], str(exception))
 
         label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, label_desc, request.request_id)
-            return True
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
-            return False
+        return True
 
     def access_request_data(self, request, is_group=False):
         """Creates a dictionary of GCP accounts.

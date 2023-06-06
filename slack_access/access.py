@@ -102,15 +102,14 @@ class Slack(BaseEmailAccess):
                 user.email, label["workspace_id"], workspace_name
             )
             if not invite_user_resp:
-                logger.error(constants.INVITE_USER_FAILED.format(workspace_name=workspace_name))
-                return False
+                logger.error(constants.INVITE_USER_FAILED, workspace_name) 
+                return False, constants.INVITE_USER_FAILED % (workspace_name)
 
         try:
             self.__send_approve_email(user, label_desc, request.request_id, approver)
-            return True
         except Exception as e:
             logger.exception("Could not send email for error %s", str(e))
-            return False
+        return True
 
     def revoke(self, user, user_identity, label, request):
         """Revoke access to Slack.
@@ -129,17 +128,17 @@ class Slack(BaseEmailAccess):
         )
         if not response:
             logger.error(
-                constants.REMOVE_USER_FAILED.format(access_workspace, error_message)
+                constants.REMOVE_USER_FAILED,
+                access_workspace, error_message
             )
-            return False
+            return False, constants.REMOVE_USER_FAILED % (access_workspace, error_message)
 
         label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, label_desc, request.request_id)
-            return True
         except Exception as e:
             logger.exception("Could not send email for error %s", str(e))
-            return False
+        return True
 
     def get_label_desc(self, access_label):
         """Returns access label description.

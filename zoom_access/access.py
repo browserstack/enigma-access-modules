@@ -139,10 +139,9 @@ class Zoom(BaseEmailAccess):
                 request.request_id,
                 approver
             )
-            return True, ""
         except Exception as e:
             logger.exception("Could not send email for error %s", str(e))
-            return False, str(e)
+        return True
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
         """Generates and sends email in access grant."""
@@ -201,10 +200,9 @@ class Zoom(BaseEmailAccess):
         label_desc = self.get_label_desc(label)
         try:
             self.__send_revoke_email(user, label_desc, request.request_id)
-            return True, ""
         except Exception as e:
             logger.exception("Could not send email for error %s", str(e))
-            return False, str(e)
+        return True
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.

@@ -214,10 +214,10 @@ class OpsgenieAccess(BaseEmailAccess):
                 return_value = True
         else:
             logger.error(
-                "Something went wrong while removing %s from %s",
+                constants.REVOKE_ACCESS_FAILED_ERROR,
                 user.user.username, team
             )
-            return False, ""
+            return False, constants.REVOKE_ACCESS_FAILED_ERROR % (user.user.username, team)
 
         access_description = self.get_label_desc(label)
         try:
