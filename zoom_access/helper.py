@@ -7,7 +7,7 @@ import logging
 import jwt
 import requests
 
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 from . import constants
 
 logger = logging.getLogger(__name__)

@@ -5,8 +5,6 @@ import json
 
 from . import constants, helpers, urls
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
-
 
 logger = logging.getLogger(__name__)
 
@@ -161,8 +159,8 @@ class GCPAccess(BaseEmailAccess):
             )
             if result is False:
                 logger.error(
-                    "Something went wrong while adding the %s to group %s: %s"
-                    % (user.email, label["group"], str(exception))
+                    "Something went wrong while adding the %s to group %s: %s",
+                    user.email, label["group"], str(exception)
                 )
                 return False
 
@@ -171,7 +169,7 @@ class GCPAccess(BaseEmailAccess):
                 user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.error("Could not send email for error %s", str(e))
             return False
 
     def __send_approve_email(self, user, label_desc, request_id, approver):
@@ -183,13 +181,13 @@ class GCPAccess(BaseEmailAccess):
             user.email,
         )
         body = self.__generate_string_from_template(
-            filename="approve_email.html",
+            filename="gcp_access/approve_email.html",
             label_desc=label_desc,
             user_email=user.email,
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, body)
+        self.email_via_smtp(email_targets, email_subject, body)
 
     def __send_revoke_email(self, user, label_desc, request_id):
         """Generates and sends email in for access revoke."""
@@ -201,7 +199,7 @@ class GCPAccess(BaseEmailAccess):
         )
         email_body = ""
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def __generate_string_from_template(self, filename, **kwargs):
         template = loader.get_template(filename)
@@ -236,7 +234,7 @@ class GCPAccess(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.error("Could not send email for error %s", str(e))
             return False
 
     def access_request_data(self, request, is_group=False):

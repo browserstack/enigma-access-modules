@@ -1,13 +1,22 @@
-<div class="form-group">
-  <label for="ssh_pub_key" class="col-sm-3 control-label">SSH Public Key(Only rsa format key)</label>
+<div class="form-group mt-5">
   <input type="hidden" name="modname" value="ssh">
-  {% if module.identity %}
-  <textarea class="form-control" rows ="5" placeholder=" Paste your SSH Public Key. Run the command 'ssh-keygen -b 2048 -t rsa'
-  " id="ssh_pub_key"  name="ssh_pub_key" required style="background-color:white;color:black">{{ module.identity.ssh_public_key }}</textarea>
-  {% else %}
-  <textarea class="form-control" rows ="5" placeholder=" Paste your SSH Public Key. Run the command 'ssh-keygen -b 2048 -t rsa'
-  " id="ssh_pub_key"  name="ssh_pub_key" required style="background-color:white;color:black"></textarea>
-  {% endif %}
-  <p><b>Use the command 'ssh-keygen -b 2048 -t rsa' to generate SSH key</b>.</p>
-  <p>It is recommended to keep a backup of private key at a <b>Secure</b> location. Ensure that no one apart from you had access to the backup.</p>
+  <label for="ssh_pub_key" class="block text-sm font-medium leading-5 text-gray-700">SSH Public Key(Only rsa format key)</label>
+  <div class="mt-2">
+    <textarea type="text" name="ssh_pub_key" id="ssh_pub_key" class="block w-3/4 h-36 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6 sm:leading-6 sm:font-normal" placeholder="Paste your SSH Public Key. Run the command 'ssh-keygen -b 2048 -t rsa" required>{% if module.identity %} {{ module.identity.ssh_public_key }} {% endif %}</textarea>
+  </div>
+  <div class="mt-2">
+    <div class="rounded-md bg-blue-50 p-4 w-3/4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3 flex-1 md:flex md:justify-between">
+          <p class="text-sm leading-5 font-medium text-blue-800">Use the command 'ssh-keygen -b 2048 -t rsa' to generate SSH key.<br>
+          It is recommended to keep a backup of private key at a Secure location. Ensure that no one apart from you had access to the backup.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
