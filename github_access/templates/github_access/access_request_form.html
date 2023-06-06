@@ -58,7 +58,7 @@
       <div class="col-sm-3">
         <label for="Access" class=""
           style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
-        <select id="githubaccess" name="githubAccessLevel" class="form-control">
+        <select id="githubaccess" name="githubAccessLevel" class="form-control" required>
           <option hidden disabled selected value> -- select -- </option>
           <option value="push">push</option>
           <option value="pull">pull</option>
@@ -99,10 +99,10 @@
     <div class="form-group" style="padding-left:1%;">
       <p>NOTE: Requires github username to be present.<br>
         You will be automatically added to github org when 1st github request gets approved.</p>
-      <label class="col-sm-3" for="reason"
+      <label class="col-sm-3" for="githubReason"
         style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for
         Access:</label>
-      <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024"
+      <input type="text" class="form-text1" id="githubReason" name="accessReason" style="width:60%;" maxlength="2024"
         required>
     </div>
     <input type="hidden" id="github_accessLabel" value="[]" name="accessLabel">

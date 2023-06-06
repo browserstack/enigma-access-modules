@@ -3,7 +3,6 @@ from . import helper, constants
 import logging
 import json
 from django.template import loader
-from bootprocess.general import emailSES
 
 logger = logging.getLogger(__name__)
 
@@ -147,7 +146,7 @@ class OpsgenieAccess(BaseEmailAccess):
                 auto_approve_rules,
             )
         except Exception as e:
-            logger.error("Could not send email for error %s" % str(e))
+            logger.error("Could not send email for error %s", str(e))
         return True, ""
 
     def __generate_string_from_template(self, filename, **kwargs):
@@ -167,24 +166,24 @@ class OpsgenieAccess(BaseEmailAccess):
             user.email,
         )
         email_body = self.__generate_string_from_template(
-            filename="access_email.html",
+            filename="opegenie_access/access_email.html",
             status=grant_status,
             auto_approve=auto_approve_rules,
             request_id=request_id,
             user_email=user.email,
             access_desc=self.access_desc(),
-            access_meta=label_desc,
+            label_desc=label_desc,
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def __send_revoke_email(self, user, request_id, label_desc):
         """Generates and sends email in for access revoke."""
         email_targets = self.email_targets(user)
-        email_subject = f"""Revoke Request: {request_id}
-        for access to {label_desc} for user {user.email}"""
-        emailSES(email_targets, email_subject, "")
+        email_subject = (f"Revoke Request: {request_id}"
+        f"for access to {label_desc} for user {user.email}")
+        self.email_via_smtp(email_targets, email_subject, "")
 
     def revoke(self, user, user_identity, label, request):
         """Revoke access to Opsgenie.
@@ -215,8 +214,8 @@ class OpsgenieAccess(BaseEmailAccess):
                 return_value = True
         else:
             logger.error(
-                "Something went wrong while removing %s from %s"
-                % (user.user.username, team)
+                "Something went wrong while removing %s from %s",
+                user.user.username, team
             )
             return False, ""
 
@@ -224,7 +223,7 @@ class OpsgenieAccess(BaseEmailAccess):
         try:
             self.__send_revoke_email(user, request.request_id, access_description)
         except Exception as ex:
-            logger.exception("Could not send email for error %s" % str(ex))
+            logger.exception("Could not send email for error %s", str(ex))
             return False, ""
         return return_value, response
 

@@ -3,7 +3,6 @@ import json
 from django.template import loader
 
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 from .helpers import (
     invite_user,
     remove_user,
@@ -50,13 +49,13 @@ class Slack(BaseEmailAccess):
             user.email,
         )
         body = self._generate_string_from_template(
-            filename="approve_email.html",
+            filename="slack_access/approve_email.html",
             label_desc=label_desc,
             user_email=user.email,
             approver=approver,
         )
 
-        emailSES(email_targets, email_subject, body)
+        self.email_via_smtp(email_targets, email_subject, body)
 
     def __send_revoke_email(self, user, label_desc, request_id):
         """Generates and sends email in for access revoke."""
@@ -68,7 +67,7 @@ class Slack(BaseEmailAccess):
         )
         email_body = ""
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def approve(
         self,
@@ -110,7 +109,7 @@ class Slack(BaseEmailAccess):
             self.__send_approve_email(user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
-            logger.exception("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False
 
     def revoke(self, user, user_identity, label, request):
@@ -139,7 +138,7 @@ class Slack(BaseEmailAccess):
             self.__send_revoke_email(user, label_desc, request.request_id)
             return True
         except Exception as e:
-            logger.exception("Could not send email for error %s" % str(e))
+            logger.exception("Could not send email for error %s", str(e))
             return False
 
     def get_label_desc(self, access_label):
@@ -167,38 +166,26 @@ class Slack(BaseEmailAccess):
 
         return ", ".join(label_descriptions_set)
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Combines multiple labelss.
         Args:
-            labelss_data (array): Array of access lables types.
+            access_request_form (form): Form of slack access.
             request_user (UserAccessMaping): Object of UserAccessMapping represents requested user.
         Returns:
             array (json objects): key value pair of access lable and it's access type.
         """
-        valid_labels_array = []
-
-        for label in access_labels_data:
-            slack_workspace_data = label["slackAccessWorkspace"]
-            slack_workspace_data = json.loads(slack_workspace_data.replace("'", '"'))
-
-            if slack_workspace_data is None:
-                raise Exception(constants.ERROR_MESSAGES)
-
-            if not slack_workspace_data.get("workspacename"):
-                raise Exception(constants.VALID_WORKSPACE_REQUIRED_ERROR)
-
-            if not slack_workspace_data.get("workspace_id"):
-                raise Exception(constants.VALID__WORKSPACE_ID_REQUIRED_ERROR)
-
-            valid_labels = {
+        
+        selected_workspace=access_request_form.get("slackAccessWorkspace")
+        selected_workspace=json.loads(selected_workspace.replace("'", '"'))
+        if (not selected_workspace):
+            raise Exception(constants.VALID_WORKSPACE_REQUIRED_ERROR)
+        valid_access_label = {
                 "action": "WorkspaceAccess",
-                "workspace_id": slack_workspace_data["workspace_id"],
-                "workspace_name": slack_workspace_data["workspacename"],
+                "workspace_id": selected_workspace.get("workspace_id"),
+                "workspace_name": selected_workspace.get('workspacename'),
             }
+        return [valid_access_label]
 
-            valid_labels_array.append(valid_labels)
-
-        return valid_labels_array
 
     def access_request_data(self, request, is_group=False):
         workspace_data = [workspace for workspace in get_workspace_list()]
