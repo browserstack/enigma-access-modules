@@ -102,6 +102,7 @@
     rightElem = elem.parentElement.parentElement;
     $("#selectAllAWSGroup").prop("checked", false);
     removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
+    updateSelectedAWSGroup();
   };
 
   const handleAWSGroupSelection = (elem) => {

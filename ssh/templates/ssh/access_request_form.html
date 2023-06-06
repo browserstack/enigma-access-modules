@@ -96,6 +96,7 @@
     rightElem = elem.parentElement.parentElement;
     $("#selectAllSSHMachine").prop("checked", false);
     removeSSHMachineSelectionSpanElem(rightElem, $("#ssh-machine-table").find(`tr[machine_ip="${$(rightElem).attr('machine_ip')}"]`));
+    updateSelectedSSHMachine();
   };
 
   const handleSSHMachineSelection = (elem) => {
