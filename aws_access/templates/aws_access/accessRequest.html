@@ -1,8 +1,15 @@
 <script>
 
+  var awsSelectedList = {}
+
   function clearAWSGroups() {
     $("#aws-group-table").empty();
     removeAllAWSGroups();
+    awsSelectedList = {};
+  }
+
+  const handleAWSGroupSelectionCheckbox = (elem) => {
+    $(elem).prop('checked', !$(elem).prop('checked'));
   }
 
   const handleAWSGroupSelectionView = () => {
@@ -22,42 +29,40 @@
     }
   };
 
-  const selectGroupCheckbox = (group, checked) => {
+  const selectAWSGroupCheckbox = (elem, checked) => {
     if(checked) {
-      $(`#${group}-marker`).show();
-      $(`#${group}-checkbox`).prop('checked', true);
-      $(`#${group}-tablerow`).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
-      $(`#${group}-tabledesc`).removeClass('text-gray-900').addClass('text-blue-600');
+      $(elem).find('input').prop('checked', true);
+      $(elem).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+      $(elem).children('td#description-td').removeClass('text-gray-900').addClass('text-blue-600');
     } else {
-      $(`#${group}-marker`).hide();
-      $(`#${group}-checkbox`).prop('checked', false);
-      $(`#${group}-tablerow`).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
-      $(`#${group}-tabledesc`).removeClass('text-blue-600').addClass('text-gray-900');
+      $(elem).find('input').prop('checked', false);
+      $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+      $(elem).children('td#description-td').removeClass('text-blue-600').addClass('text-gray-900');
     }
   };
 
-  const addAWSGroupSelection = (group) => {
+  const addAWSGroupSelection = (elem) => {
     const selectionList = $('#aws-group-selection-table');
     const newSpan = $("#aws-group-selection-row-template").clone(true, true);
 
-    selectGroupCheckbox(group, true);
+    selectAWSGroupCheckbox(elem, true);
+    const group = $(elem).attr("group")
 
     newSpan.appendTo(selectionList);
     newSpan.show();
     const tableData = newSpan.children('td');
     tableData[0].textContent = group;
-    newSpan.attr('id', `aws-group-selection-${group}`);
+    newSpan.attr('group', group);
 
+    awsSelectedList[group] = true;
     handleAWSGroupSelectionView();
   };
 
-  const removeGroupSelectionSpanElem = (elem) => {
-    const spanId = elem.id || elem.attr('id');
-    const group = spanId.replace('aws-group-selection-', '');
-
-    elem.remove();
-    selectGroupCheckbox(group, false);
-
+  const removeGroupSelectionSpanElem = (rightElem, leftElem) => {
+    rightElem.remove();
+    selectAWSGroupCheckbox(leftElem, false);
+    
+    awsSelectedList[$(leftElem).attr("group") || $(rightElem).attr("group")] = false;
     handleAWSGroupSelectionView();
   };
 
@@ -65,44 +70,38 @@
     const groups = $('#aws-group-selection-table').children('tr');
     $("#selectAllAWSGroup").prop("checked", false);
     for(iter = 0; iter < groups.length; iter++) {
-      removeGroupSelectionSpanElem(groups[iter]);
+      removeGroupSelectionSpanElem(groups[iter], $("#aws-group-table").find(`tr[group="${$(groups[iter]).attr('group')}"]`));
     }
     updateSelectedAWSGroup();
   };
-
-  const selectAllAWSGroup = () => {
-    const groups = $('#aws-group-table').children('tr');
-    for(iter = 0; iter < groups.length; iter++) {
-      const group = groups[iter].id.split('-tablerow')[0];
-      if(!$(`#${group}-checkbox`).prop('checked')) {
-        addAWSGroupSelection(groups[iter].id.split('-tablerow')[0]);
-      }
-    }
-    updateSelectedAWSGroup();
-  }
 
   const selectAllAWSGroupToggle = (elem) => {
     if(elem.checked) {
-      selectAllAWSGroup();
-    } else {
-      removeAllAWSGroups();
+      const groups = $("#aws-group-table").children('tr');
+
+      for(iter = 0; iter < groups.length; iter++) {
+        if(!awsSelectedList[$(groups[iter]).attr('group')]) {
+          addAWSGroupSelection(groups[iter]);
+        }
+      }
     }
   }
 
-  const removeAWSGroupSelection = (group) => {
+  const removeAWSGroupSelection = (elem) => {
     $("#selectAllAWSGroup").prop("checked", false);
-    removeGroupSelectionSpanElem($(`#aws-group-selection-${group}`));
+    removeGroupSelectionSpanElem($("#aws-group-selection-table").find(`tr[group="${$(elem).attr('group')}"]`),elem);
   };
 
   const removeAWSGroupSelectionUI = (elem) => {
-    removeGroupSelectionSpanElem(elem.parentElement.parentElement);
+    rightElem = elem.parentElement.parentElement;
+    removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
   };
 
-  const handleAWSGroupSelection = (elem, group) => {
-    if(elem.checked) {
-      addAWSGroupSelection(group);
+  const handleAWSGroupSelection = (elem) => {
+    if(!$(elem).find('input').prop('checked')) {
+      addAWSGroupSelection(elem);
     } else {
-      removeAWSGroupSelection(group);
+      removeAWSGroupSelection(elem);
     }
     updateSelectedAWSGroup();
   };
@@ -111,7 +110,7 @@
     const aws_groups = $('#aws-group-selection-table').children('tr');
     const groups = [];
     for(iter = 0; iter < aws_groups.length; iter++) {
-      groups.push(`${aws_groups[iter].id.split('aws-group-selection-')[1]}`);
+      groups.push($(aws_groups[iter]).attr("group"));
     }
 
     $('#selected-aws-groups').val(JSON.stringify(groups));
@@ -130,13 +129,11 @@
       data: {"AWSAccount": account, "marker": marker},
     }).done(function(data, statusText, xhr){
       let rows = $.map(data["AWSGroups"], function(group, idx){
-        return `<tr id="${group}-tablerow" class="hover:bg-blue-50 hover:text-blue-700">
+        return `<tr onclick="handleAWSGroupSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" group="${group}" >
             <td class="relative w-12 px-6 sm:w-16 sm:px-8">
-              <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="${group}-marker"></div>
-
-              <input type="checkbox" id="${group}-checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleAWSGroupSelection(this, '${group}');" id="${group}-checkbox"></input>
+              <input type="checkbox" id="checkbox-td" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleAWSGroupSelectionCheckbox(this)"></input>
             </td>
-            <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="${group}-tabledesc">${group}</td>
+            <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="description-td">${group}</td>
           </tr>`
       });
 
