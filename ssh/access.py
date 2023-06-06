@@ -181,8 +181,7 @@ class SSHAccess(BaseEmailAccess):
                 continue
             machineList.append({"name": key,
                                 "tagname": key,
-                                "ip": value,
-                                "machine_without_dot": key.replace('.', '--')+"__"+value.replace('.', '--')
+                                "ip": value
                                 })
         data = {"machineList": machineList}
         return data
