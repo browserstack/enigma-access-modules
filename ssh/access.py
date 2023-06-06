@@ -246,20 +246,20 @@ class SSHAccess(BaseEmailAccess):
         for machine in selected_machines:
             hostname = machine.split(" ", 1)[0]
             ip = machine.split(" ", 1)[1]
-            label = {
+            access_label = {
                 "machine": hostname,
                 "access_level": access_level,
                 "ip": ip,
             }
-            valid_access_label_array.append(label)
+            valid_access_label_array.append(access_label)
 
         for other_machine in other_machines:
-            label = {
+            access_label = {
                 "machine": "other",
                 "access_level": access_level,
                 "ip": other_machine,
             }
-            valid_access_label_array.append(label)
+            valid_access_label_array.append(access_label)
         return valid_access_label_array
 
     def fetch_access_request_form_path(self):
