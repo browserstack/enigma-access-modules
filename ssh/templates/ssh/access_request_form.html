@@ -1,8 +1,9 @@
 <script>
 
-  function clearSSHMachines() {
-    $("#ssh-machine-table").empty();
-    removeAllSSHMachines();
+  const selectedList = {}
+
+  const handleSSHMachineSelectionCheckbox = (elem) => {
+    $(elem).prop('checked', !$(elem).prop('checked'));
   }
 
   const handleSSHMachineSelectionView = () => {
@@ -22,105 +23,98 @@
     }
   };
 
-  const selectGroupCheckbox = (machine, checked) => {
+  const selectSSHMachineCheckbox = (elem, checked) => {
     if(checked) {
-      $(`#${machine}-marker`).show();
-      $(`#${machine}-checkbox`).prop('checked', true);
-      $(`#${machine}-tablerow`).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
-      $(`#${machine}-tabledesc`).removeClass('text-gray-900').addClass('text-blue-600');
+      $(elem).find('div').show();
+      $(elem).find('input').prop('checked', true);
+      $(elem).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+      $(elem).children('td#description-td').removeClass('text-gray-900').addClass('text-blue-600');
+      
     } else {
-      $(`#${machine}-marker`).hide();
-      $(`#${machine}-checkbox`).prop('checked', false);
-      $(`#${machine}-tablerow`).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
-      $(`#${machine}-tabledesc`).removeClass('text-blue-600').addClass('text-gray-900');
+      $(elem).find('div').hide();
+      $(elem).find('input').prop('checked', false);
+      $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+      $(elem).children('td#description-td').removeClass('text-blue-600').addClass('text-gray-900');
     }
   };
 
-  const addSSHMachineSelection= (machine) => {
+  const addSSHMachineSelection= (elem) => {
     const selectionList = $('#ssh-machine-selection-table');
     const newSpan = $("#ssh-machine-selection-row-template").clone(true, true);
 
-    selectGroupCheckbox(machine, true);
+    selectSSHMachineCheckbox(elem, true);
+    const machine_name = $(elem).attr("machine_name");
+    const machine_ip = $(elem).attr("machine_ip");
 
     newSpan.appendTo(selectionList);
     newSpan.show();
     const tableData = newSpan.children('td');
-    const host = machine.split('__')[0].split("--").join('.');
-    const ip = machine.split('__')[1].split("--").join('.');
-    tableData[0].textContent = host + " " + ip;
-    newSpan.attr('id', `ssh-machine-selection-${machine}`);
+    tableData[0].textContent = machine_name + " " + machine_ip;
+    newSpan.attr('machine_ip', machine_ip);
+    newSpan.attr('machine_name', machine_name);
 
+    selectedList[machine_ip] = true;
     handleSSHMachineSelectionView();
   };
 
-  const removeGroupSelectionSpanElem = (elem) => {
-    const spanId = elem.id || elem.attr('id');
-    const group = spanId.replace('ssh-machine-selection-', '');
+  const removeSSHMachineSelectionSpanElem = (rightElem, leftElem) => {
+    rightElem.remove();
+    selectSSHMachineCheckbox(leftElem, false);
 
-    elem.remove();
-    selectGroupCheckbox(group, false);
-
+    selectedList[$(leftElem).attr("machine_ip") || $(rightElem).attr("machine_ip")] = false;
     handleSSHMachineSelectionView();
   };
 
   const removeAllSSHMachines = () => {
-    const groups = $('#ssh-machine-selection-table').children('tr');
-    $("#selectAllSSHMachine").prop("checked", false);
-    for(iter = 0; iter < groups.length; iter++) {
-      removeGroupSelectionSpanElem(groups[iter]);
+    const machines = $('#ssh-machine-selection-table').children('tr');
+    for(iter = 0; iter < machines.length; iter++) {
+      removeSSHMachineSelectionSpanElem(machines[iter], $("#ssh-machine-table").find(`tr[machine_ip="${$(machines[iter]).attr('machine_ip')}"]`));
     }
+    $("#selectAllSSHMachine").prop("checked", false);
     updateSelectedSSHMachine();
   };
-
-  const selectAllSSHMachine = () => {
-    const groups = $('#ssh-machine-table').children('tr');
-    for(iter = 0; iter < groups.length; iter++) {
-      const group = groups[iter].id.split('-tablerow')[0];
-      if(!$(`#${group}-checkbox`).prop('checked')) {
-        addSSHMachineSelection(groups[iter].id.split('-tablerow')[0]);
-      }
-    }
-    updateSelectedSSHMachine();
-  }
 
   const selectAllSSHMachineToggle = (elem) => {
     if(elem.checked) {
-      selectAllSSHMachine();
+      const machines = $("#ssh-machine-table").children('tr');
+  
+      for (iter = 0; iter < machines.length; iter++) {
+        if(!selectedList[$(machines[iter]).attr('machine_ip')]) {
+          addSSHMachineSelection(machines[iter]);
+        }
+      }
     } else {
       removeAllSSHMachines();
     }
+    updateSelectedSSHMachine();
   }
 
-  const removeSSHMachineSelection = (group) => {
-    $("#selectAllSSHMachine").prop("checked", false);
-    removeGroupSelectionSpanElem($(`#ssh-machine-selection-${group}`));
+  const removeSSHMachineSelection = (elem) => {
+    removeSSHMachineSelectionSpanElem($("#ssh-machine-selection-table").find(`tr[machine_ip="${$(elem).attr('machine_ip')}"]`), elem);
   };
 
   const removeSSHMachineSelectionUI = (elem) => {
-    removeGroupSelectionSpanElem(elem.parentElement.parentElement);
+    rightElem = elem.parentElement.parentElement;
+    removeSSHMachineSelectionSpanElem(rightElem, $("#ssh-machine-table").find(`tr[machine_ip="${$(rightElem).attr('machine_ip')}"]`));
   };
 
-  const handleSSHMachineSelection = (elem, machine) => {
-    if(elem.checked) {
-      addSSHMachineSelection(machine);
+  const handleSSHMachineSelection = (elem) => {
+    if(!$(elem).find('input').prop('checked')) {
+      addSSHMachineSelection(elem);
     } else {
-      removeSSHMachineSelection(machine);
+      removeSSHMachineSelection(elem);
     }
     updateSelectedSSHMachine();
   };
 
   function updateSelectedSSHMachine() {
     const ssh_machines = $('#ssh-machine-selection-table').children('tr');
-    const groups = [];
+    const machines = [];
     for(iter = 0; iter < ssh_machines.length; iter++) {
-      const machine = `${ssh_machines[iter].id.split('ssh-machine-selection-')[1]}`
-      const host = machine.split('__')[0].split("--").join('.');
-      const ip = machine.split('__')[1].split("--").join('.');
-      const val = host + " " + ip
-      groups.push(val);
+      machines.push($(ssh_machines[iter]).attr("machine_ip"));
     }
 
-    $('#selected-ssh-machine').val(JSON.stringify(groups));
+    $('#selected-ssh-machine').val(JSON.stringify(machines));
   }
 
   function getSelectedsshaccess() {
@@ -183,12 +177,12 @@
                   <table class="min-w-full table-fixed">
                     <tbody class="bg-white" id="ssh-machine-table">
                       {% for machine in each_access.accessRequestData.machineList %}
-                      <tr id="{{machine.machine_without_dot}}-tablerow" class="hover:bg-blue-50 hover:text-blue-700">
-                        <td class="relative w-12 px-6 sm:w-16 sm:px-8">
-                          <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="{{machine.machine_without_dot}}-marker"></div>
-                          <input type="checkbox" id="{{machine.machine_without_dot}}-checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelection(this, '{{machine.machine_without_dot}}');" id="{{machine.machine_without_dot}}-checkbox"></input>
+                      <tr onclick="handleSSHMachineSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" machine_name="{{ machine.name }}" machine_ip="{{ machine.ip }}" >
+                        <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
+                          <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="marker-td"></div>
+                          <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelectionCheckbox(this)"></input>
                         </td>
-                        <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="{{machine.machine_without_dot}}-tabledesc">{{machine.name}} {{machine.ip}}</td>
+                        <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="description-td">{{machine.name}} {{machine.ip}}</td>
                       </tr>
                       {%endfor%}
                     </tbody>
@@ -238,7 +232,7 @@
 </div>
 <table class="hidden">
 <tr id="ssh-machine-selection-row-template" class="hidden max-h-4 px-6 hover:bg-blue-50 hover:text-blue-700">
-  <td class="relative w-full px-4" id="ssh-machine-selection-row-tabledesc">Group</td>
+  <td class="relative w-full px-4" id="ssh-machine-selection-row-tabledesc">Machine</td>
   <td class="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 justify-right content-right max-w-2" id="ssh-machine-selection-row-cancel">
     <button type="button" class="ml-0.5 mr-0.5 inline-flex max-w-2 flex-shrink-0 items-center justify-center rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-500 focus:text-white focus:outline-none" onclick="removeSSHMachineSelectionUI(this);">
       <span class="sr-only">Remove large option</span>
@@ -252,7 +246,7 @@
 
 <div class="mt-5">
   <label for="otherMachines" class="text-sm text-gray-900">Other IPs (comma separated):</label>
-  <input type="text" name="other_machines" id="otherMachines" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
+  <input type="text" name="other_machines" id="otherMachines" class="block w-1/2 rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
 </div>
 
 <input type="hidden" id="selected-ssh-machine" value="[]" name="selected-ssh-machine">
