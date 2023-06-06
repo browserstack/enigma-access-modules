@@ -1,18 +1,23 @@
 import json
 import requests
 import logging
-from EnigmaAutomation.settings import ACCESS_MODULES
-
-OPSGENIE_TOKEN = ACCESS_MODULES["opsgenie_access"]["OPSGENIE_TOKEN"]
-IGNORE_TEAMS = ACCESS_MODULES["opsgenie_access"]["IGNORE_TEAMS"]
+from enigma_automation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
+
+
+def _get_opsgenie_token():
+    return ACCESS_MODULES["ops_genie_access"]["OPSGENIE_TOKEN"]
+
+
+def _get_ignored_teams():
+    return ACCESS_MODULES["ops_genie_access"]["IGNORE_TEAMS"]
 
 
 def get_team_id(team_name):
     """Getting the team id from the team name."""
     api_endpoint = "https://api.opsgenie.com/v2/teams"
-    api_key = OPSGENIE_TOKEN
+    api_key = _get_opsgenie_token()
 
     headers = {
         "Content-Type": "application/json",
@@ -43,7 +48,7 @@ def remove_user_from_team(team, user_email):
     url = "https://api.opsgenie.com/v2/teams/" + team_id + "/members/" + user_email
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     try:
         response = requests.delete(url, headers=headers)
@@ -65,34 +70,32 @@ def add_user_to_opsgenie(user_name, user_email, role):
     url = "https://api.opsgenie.com/v2/users"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     data = {"username": user_email, "fullName": user_name, "role": {"name": role}}
     logger.debug("Data used to make the add user to opsgenie request" + str(data))
     try:
         response = requests.post(url, headers=headers, json=data)
-        logger.debug(response, response.content)
         return True, response.status_code
     except Exception as e:
-        logger.error(f"Could not add user to opsgenie due to exception {str(e)}")
+        logger.exception(f"Could not add user to opsgenie due to exception {str(e)}")
         return False, "Could not add user to opsgenie"
 
 
-def get_user(user_name):
+def get_user(user_email):
     """Gets user details
     Args:
-        username (str): email of the user
+        user_email (str): email of the user
     Returns:
         details of user
     """
-    url = "https://api.opsgenie.com/v2/users/" + user_name
+    url = "https://api.opsgenie.com/v2/users/" + user_email
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     try:
-        response = requests.get(url, headers=headers)
-        return response
+        return requests.get(url, headers=headers)
     except Exception as e:
         logger.error(f"Could not get an user due to exception {str(e)}")
         return None
@@ -108,14 +111,13 @@ def delete_user(user_email):
     url = "https://api.opsgenie.com/v2/users/" + user_email
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     try:
         response = requests.delete(url, headers=headers)
-        logger.debug(response, response.content)
         return response
     except Exception as e:
-        logger.error(f"Could not delete user due to exception: {str(e)}")
+        logger.exception(f"Could not delete user due to exception: {str(e)}")
         return None
 
 
@@ -138,7 +140,7 @@ def create_team_admin_role(team, user_email):
     url = "https://api.opsgenie.com/v2/teams/" + team + "/roles?teamIdentifierType=name"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     data = {
         "name": "TeamAdmin",
@@ -188,13 +190,13 @@ def create_team_admin_role(team, user_email):
 def teams_list():
     """Returns list of teams user have"""
     url = "https://api.opsgenie.com/v2/teams"
-    headers = {"Authorization": "GenieKey %s" % OPSGENIE_TOKEN}
+    headers = {"Authorization": "GenieKey %s" % _get_opsgenie_token()}
     try:
         teams_response = requests.get(url, headers=headers)
         teams_json = teams_response.json()
         all_teams = []
         for team_index in range(len(teams_json["data"])):
-            if teams_json["data"][team_index]["name"] in IGNORE_TEAMS:
+            if teams_json["data"][team_index]["name"] in _get_ignored_teams():
                 continue
             all_teams.append(teams_json["data"][team_index]["name"])
         return all_teams
@@ -213,12 +215,8 @@ def add_user_to_team(user_name, user_email, team, role):
     Returns:
         details of added user
     """
-    return_value = True
     user_details = get_user(user_email)
     if user_details.status_code not in (200, 201):
-        return_value = False
-
-    if not return_value:
         return_result, response_add_user_status_code = add_user_to_opsgenie(
             user_name, user_email, role
         )
@@ -230,7 +228,7 @@ def add_user_to_team(user_name, user_email, team, role):
     )
     headers = {
         "Content-Type": "application/json",
-        "Authorization": "GenieKey %s" % OPSGENIE_TOKEN,
+        "Authorization": "GenieKey %s" % _get_opsgenie_token(),
     }
     data = {"user": {"username": user_email}, "role": role}
     try:
@@ -239,5 +237,5 @@ def add_user_to_team(user_name, user_email, team, role):
             return False, "Could not add %s to opsgenie" % user_name
         return True, "Successfully Added User to Opsgenie"
     except Exception as e:
-        logger.error("Could not add user to opsgenie due to exception: " + str(e))
+        logger.exception("Could not add user to opsgenie due to exception: " + str(e))
         return False, "Could not add user to opsgenie"

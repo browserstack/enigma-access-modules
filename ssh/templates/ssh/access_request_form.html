@@ -1,126 +1,252 @@
-<div class="page-header">
-  <div class="container-fluid">
-    <h2 class="h5 no-margin-bottom">{{ each_access.formDesc }}</h2>
-  </div>
-</div>
+<script>
 
-<script type="text/javascript">
-  jQuery(document).ready(function($) {
-    function getSelectedMachines() {
-      return $('#search-machine_to').children().map(function () { return $(this).val() }).get()
+  const selectedList = {}
+
+  const handleSSHMachineSelectionCheckbox = (elem) => {
+    $(elem).prop('checked', !$(elem).prop('checked'));
+  }
+
+  const handleSSHMachineSelectionView = () => {
+    const finalCount = $('#ssh-machine-selection-table').children('tr').length;
+
+    if(finalCount < 1) {
+      $('#ssh-machine-selection-empty').show();
+      $('#ssh-machine-selection-list').hide();
+      $('#ssh-machine-selection-list').children('nav').hide();
+      $('#ssh-machine-selected-count').hide();
+    } else {
+      $('#ssh-machine-selection-empty').hide();
+      $('#ssh-machine-selection-list').show();
+      $('#ssh-machine-selection-list').children('nav').css('display', 'flex');
+      $('#ssh-machine-selected-count').show();
+      $('#ssh-machine-selected-count').text(finalCount + ' selected');
     }
-    function getOtherIPs() {
-      return $('#otherMachines').val()
+  };
+
+  const selectSSHMachineCheckbox = (elem, checked) => {
+    if(checked) {
+      $(elem).find('div').show();
+      $(elem).find('input').prop('checked', true);
+      $(elem).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+      $(elem).children('td#description-td').removeClass('text-gray-900').addClass('text-blue-600');
+      
+    } else {
+      $(elem).find('div').hide();
+      $(elem).find('input').prop('checked', false);
+      $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+      $(elem).children('td#description-td').removeClass('text-blue-600').addClass('text-gray-900');
     }
-    function sshAccessLevelChange(){
-      access_level = $("#sshaccess").val();
-      if(access_level=='other'){
-        $("#otherssh").show();
-      } else{
-        $("#otherssh").hide()
-        labelComponents = JSON.parse($('#sshLabel').val());
-        if(!labelComponents.length){
-          labelComponents = [{}];
+  };
+
+  const addSSHMachineSelection= (elem) => {
+    const selectionList = $('#ssh-machine-selection-table');
+    const newSpan = $("#ssh-machine-selection-row-template").clone(true, true);
+
+    selectSSHMachineCheckbox(elem, true);
+    const machine_name = $(elem).attr("machine_name");
+    const machine_ip = $(elem).attr("machine_ip");
+
+    newSpan.appendTo(selectionList);
+    newSpan.show();
+    const tableData = newSpan.children('td');
+    tableData[0].textContent = machine_name + " " + machine_ip;
+    newSpan.attr('machine_ip', machine_ip);
+    newSpan.attr('machine_name', machine_name);
+
+    selectedList[machine_ip] = true;
+    handleSSHMachineSelectionView();
+  };
+
+  const removeSSHMachineSelectionSpanElem = (rightElem, leftElem) => {
+    rightElem.remove();
+    selectSSHMachineCheckbox(leftElem, false);
+
+    selectedList[$(leftElem).attr("machine_ip") || $(rightElem).attr("machine_ip")] = false;
+    handleSSHMachineSelectionView();
+  };
+
+  const removeAllSSHMachines = () => {
+    const machines = $('#ssh-machine-selection-table').children('tr');
+    for(iter = 0; iter < machines.length; iter++) {
+      removeSSHMachineSelectionSpanElem(machines[iter], $("#ssh-machine-table").find(`tr[machine_ip="${$(machines[iter]).attr('machine_ip')}"]`));
+    }
+    $("#selectAllSSHMachine").prop("checked", false);
+    updateSelectedSSHMachine();
+  };
+
+  const selectAllSSHMachineToggle = (elem) => {
+    if(elem.checked) {
+      const machines = $("#ssh-machine-table").children('tr');
+  
+      for (iter = 0; iter < machines.length; iter++) {
+        if(!selectedList[$(machines[iter]).attr('machine_ip')]) {
+          addSSHMachineSelection(machines[iter]);
         }
-        labelComponents[0]["accessLevel"] = access_level;
-        $('#sshLabel').val(JSON.stringify(labelComponents));
       }
+    } else {
+      removeAllSSHMachines();
     }
-    function otherUsernameChange(){
-      labelComponents = JSON.parse($('#sshLabel').val());
-      username = $("#username").val();
-      if(!labelComponents.length){
-        labelComponents = [{}];
-      }
-      labelComponents[0]["accessLevel"] = username;
-      $('#sshLabel').val(JSON.stringify(labelComponents));
+    updateSelectedSSHMachine();
+  }
+
+  const removeSSHMachineSelection = (elem) => {
+    removeSSHMachineSelectionSpanElem($("#ssh-machine-selection-table").find(`tr[machine_ip="${$(elem).attr('machine_ip')}"]`), elem);
+  };
+
+  const removeSSHMachineSelectionUI = (elem) => {
+    rightElem = elem.parentElement.parentElement;
+    removeSSHMachineSelectionSpanElem(rightElem, $("#ssh-machine-table").find(`tr[machine_ip="${$(rightElem).attr('machine_ip')}"]`));
+  };
+
+  const handleSSHMachineSelection = (elem) => {
+    if(!$(elem).find('input').prop('checked')) {
+      addSSHMachineSelection(elem);
+    } else {
+      removeSSHMachineSelection(elem);
     }
-    function machineListChange() {
-      labelComponents = JSON.parse($('#sshLabel').val());
-      if(!labelComponents.length){
-        labelComponents = [{}]
-      }
-      labelComponents[0]["selected_machines"] = getSelectedMachines()
-      labelComponents[0]["other_machines"] = getOtherIPs()
-      $('#sshLabel').val(JSON.stringify(labelComponents));
+    updateSelectedSSHMachine();
+  };
+
+  function updateSelectedSSHMachine() {
+    const ssh_machines = $('#ssh-machine-selection-table').children('tr');
+    const machines = [];
+    for(iter = 0; iter < ssh_machines.length; iter++) {
+      machines.push($(ssh_machines[iter]).attr("machine_name") + " " + $(ssh_machines[iter]).attr("machine_ip"));
     }
 
-    function registerEventsOnLoad() {
-      $('#sshaccess').dropdown();
-      $("#sshaccess").on("change", sshAccessLevelChange);
-      $("#username").on("input", otherUsernameChange);
-      $("#search-machine_to").on("change", machineListChange);
-      $("#search-machine").on("change", machineListChange);
-      $("#otherMachines").on("input", machineListChange)
+    $('#selected-ssh-machine').val(JSON.stringify(machines));
+  }
 
-      $("#search-machine").multiselect({
-        search: {
-          left: '<input type="text" class="form-control" placeholder="Search..." />',
-          right: '<input type="text" class="form-control" placeholder="Search..." />',
-        },
-        fireSearch: function (value) {
-          return value.length > 1;
-        },
-        submitAllLeft: false,
-        submitAllRight: false,
-        afterMoveToRight: machineListChange,
-        afterMoveToLeft: machineListChange,
-      });
+  function getSelectedsshaccess() {
+    return $('#sshaccess').val();
+  }
+
+  function addInputforOthersAccessLabel(){
+    const selectedAccess = getSelectedsshaccess()
+    if(selectedAccess === "other"){
+       $("#sshOtherAccessLevel").removeClass("hidden")
     }
-
-    registerEventsOnLoad()
-  });
+     else{
+     $("#sshOtherAccessLevel").addClass("hidden")
+     }
+  }
 
 </script>
 
-<div class="row">
-  <div class="col-md-12">
-        <div class="row">
-          <div class="col-sm-3">
-            <label for="Access" class="" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Access Level:</label>
-            <select id="sshaccess" name="sshAccessLevel" class="form-control" required>
-                  <option hidden disabled selected value> -- select -- </option>
-                  <option value="app" >app</option>
-                  <option value="nonsudo" >non-sudo</option>
-                  <option value="sudo" >sudo</option>
-                  <option value="other">other</option>
-                </select>
+<div class="pt-4">
+  <label for="sshaccess" class="text-sm font-medium leading-5 text-gray-700">Access Level:</label>
+  <div class="mt-2 flex flex-row">
+    <select onchange="addInputforOthersAccessLabel()" id="sshaccess" name="sshAccessLevel" class="w-[460px] rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"required>
+      <option hidden disabled selected value="">Select</option>
+      <option value="app" >app</option>
+      <option value="nonsudo" >non-sudo</option>
+      <option value="sudo" >sudo</option>
+      <option value="other">other</option>
+    </select>
+
+    <div>
+      <input type="text" name="sshOtherAccessLevel" id="sshOtherAccessLevel" class="w-[460px] hidden ml-2 rounded-md border-gray-300  shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Please provide other username">
+    </div>
+
+  </div>
+</div>
+<h1 class="pt-5 text-sm text-gray-900">Ssh machines that you can select</h1>
+<div class="grid grid-cols-2 gap-4">
+  <div class="flex-col">
+    <div class="mt-4 flex flex-col">
+      <div class="flex felx-row">
+        <div class="flex-auto relative flex items-center">
+          <input type="text" name="sshSearch" id="sshSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
+          <div class="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" class="text-gray-500 h-full" width="18px" fill="currentColor" aria-hidden="true">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
           </div>
-          <div class="col-sm-9" style="font-weight: bolder; min-height:0px; ">
-            <div id="otherssh" style="display:none">
-              <label for="otherssh" class="" style="font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Other Username:</label>
-              <div class="wrapper">
-                <input type="text" class="form-text1" id="username" name="otherUsername" style="width:60%;" maxlength="2048" placeholder="Provide Other Username">
+        </div>
+        <div class="flex-none flex">
+          <input type="checkbox" onclick="selectAllSSHMachineToggle(this)" name="select-all-ssh-machine" id="selectAllSSHMachine" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
+        </div>
+      </div>
+      <div class="h-80 ml-1 overflow-y-auto bg-white mt-6 rounded-md border-0 ring-1 ring-gray-200">
+        <div class="px-4 sm:px-6 lg:px-8">
+          <div class="flex flex-col">
+            <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div class="inline-block min-w-full align-middle">
+                <div class="relative overflow-hidden">
+                  <table class="min-w-full table-fixed">
+                    <tbody class="bg-white" id="ssh-machine-table">
+                      {% for machine in each_access.accessRequestData.machineList %}
+                      <tr onclick="handleSSHMachineSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" machine_name="{{ machine.name }}" machine_ip="{{ machine.ip }}" >
+                        <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
+                          <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="marker-td"></div>
+                          <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelectionCheckbox(this)"></input>
+                        </td>
+                        <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="description-td">{{machine.name}} {{machine.ip}}</td>
+                      </tr>
+                      {%endfor%}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <div class="row">
-          <div class="col-xs-5 col-md-5">
-            <select id="search-machine" class="form-control" size="8" multiple="multiple">
-              {% for machine in each_access.accessRequestData.machineList %}
-                <option value="{{machine.tagname}},{{machine.ip}}">{{machine.name}}</option>
-              {%endfor%}
-            </select>
-          </div>
-
-          <div class="col-xs-2 col-md-2" style="margin-top:1%;">
-            <button type="button" id="search-machine_rightSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-right" style="font-size:24px"></i></button>
-            <button type="button" id="search-machine_leftSelected" class="btn btn-block btn-primary"><i class="fa fa-angle-left" style="font-size:24px"></i></button>
-          </div>
-
-          <div class="col-xs-5 col-md-5">
-            <select id="search-machine_to" class="form-control" size="8" multiple="multiple"></select>
+      </div>
+    </div>
+  </div>
+  <div class="mt-3 ml-2 flex flex-col">
+    <div class="flex flex-row items-center mb-10">
+      <h1 class="text-xl text-gray-900">Your selection</h1>
+      <span class="inline-flex items-center rounded-full bg-green-100 ml-4 px-2.5 py-0.5 text-xs font-medium text-green-800 hidden" id="ssh-machine-selected-count">0 selected</span>
+    </div>
+    <div class="rounded-md border-0 ring-1 ring-inset ring-gray-200 py-24 px-6 sm:py-32 bg-white justify-center lg:px-8 flex h-80" id="ssh-machine-selection-empty">
+      <div class="mx-auto max-w-2xl">
+        <div class="flex gap-4 content-center justify-center min-w-full min-h-full">
+          <div class="block m-auto content-center justify-center">
+            <div class="m-auto content-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" height="40px" viewBox="0 96 960 960" width="40px" class="text-gray-400 flex-shrink-0 justify-center content-center block m-auto" fill="currentColor" aria-hidden="true">
+                  <path d="M479.754 801Q504 801 519.5 786.246q15.5-14.755 15.5-39Q535 723 519.746 707q-15.255-16-39.5-16Q456 691 440.5 706.982 425 722.965 425 747.211q0 24.245 15.254 39.017Q455.509 801 479.754 801ZM436 624h94V354h-94v270Zm44.404 377q-88.872 0-166.125-33.084-77.254-33.083-135.183-91.012-57.929-57.929-91.012-135.119Q55 664.594 55 575.638q0-88.957 33.084-166.285 33.083-77.328 90.855-134.809 57.772-57.482 135.036-91.013Q391.238 150 480.279 150q89.04 0 166.486 33.454 77.446 33.453 134.853 90.802 57.407 57.349 90.895 134.877Q906 486.66 906 575.734q0 89.01-33.531 166.247-33.531 77.237-91.013 134.86-57.481 57.623-134.831 90.891Q569.276 1001 480.404 1001Zm.096-94q137.5 0 234-96.372T811 575.5q0-137.5-96.312-234Q618.375 245 479.5 245q-137.5 0-234 96.312Q149 437.625 149 576.5q0 137.5 96.372 234T480.5 907Zm-.5-331Z"/>
+                </svg>
+            </div>
+            <h4 class="text-sm[14px] leading-5 font-medium tracking-tight text-center text-gray-900 sm:text-lg mt-2">You have not selected any machine yet</h4>
+            <p class="mt-2 text-sm[14px] leading-5 font-normal text-center text-gray-700">Please select ssh machines from the left panel.</p>
           </div>
         </div>
-
-        <div class="form-group" style="padding-left:1%;">
-          <label class="col-sm-3" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;" for="otherMachines">Other IPs (comma separated): </label>
-          <input type="text" class="form-text1" style="width:60%;" maxlength="2024" id="otherMachines" name="other_ips"><br><br>
-          <label class="col-sm-3" for="reason" style="padding-left:15px; font-weight: bolder; min-height:0px; margin-top:10px; font-size:medium;">Reason for Access:</label>
-          <input type="text" class="form-text1" id="reason" name="accessReason" style="width:60%;" maxlength="2024" required>
-        </div>
-        <input type="hidden" id="sshLabel" value="[]" name="accessLabel">
+      </div>
+    </div>
+    <div class="h-80 w-full bg-white flex flex-col justify-center md:flex-col rounded-md border-0 ring-1 ring-inset ring-gray-200 md:flex hidden" style="display: none;" id="ssh-machine-selection-list">
+      <div class="flex-1 relative overflow-y-auto space-y-1 inline-block rounded-md min-w-full align-middle">
+          <table class="min-w-full border-l border-t border-r table-fixed rounded-md divide-gray-300">
+            <tbody class="divide-gray-200 bg-white" id="ssh-machine-selection-table">
+            </tbody>
+          </table>
+      </div>
+      <nav class="flex flex-shrink-0 px-4 items-center justify-between align-bottom border-t border-gray-200 pt-4 pb-4 hidden">
+        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllSSHMachines();">
+          Remove all
+        </button>
+      </nav>
+    </div>
   </div>
 </div>
+<table class="hidden">
+<tr id="ssh-machine-selection-row-template" class="hidden max-h-4 px-6 hover:bg-blue-50 hover:text-blue-700">
+  <td class="relative w-full px-4" id="ssh-machine-selection-row-tabledesc">Machine</td>
+  <td class="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900 justify-right content-right max-w-2" id="ssh-machine-selection-row-cancel">
+    <button type="button" class="ml-0.5 mr-0.5 inline-flex max-w-2 flex-shrink-0 items-center justify-center rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-500 focus:text-white focus:outline-none" onclick="removeSSHMachineSelectionUI(this);">
+      <span class="sr-only">Remove large option</span>
+      <svg class="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+        <path stroke-linecap="round" stroke-width="1.5" d="M1 1l6 6m0-6L1 7" />
+      </svg>
+    </button>
+  </td>
+</tr>
+</table>
+
+<div class="mt-5">
+  <label for="otherMachines" class="text-sm text-gray-900">Other IPs (comma separated):</label>
+  <input type="text" name="other_machines" id="otherMachines" class="block w-1/2 rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Other machine IPs comma seperated">
+</div>
+
+<input type="hidden" id="selected-ssh-machine" value="[]" name="selected-ssh-machine">

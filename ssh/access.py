@@ -1,7 +1,7 @@
 import logging
+import json
 
 from Access.base_email_access.access import BaseEmailAccess
-from bootprocess.general import emailSES
 from . import helpers
 
 from django.template import loader
@@ -14,6 +14,9 @@ class SSHAccess(BaseEmailAccess):
 
     available = True
     urlpatterns = []
+
+    def __init__(self):
+        helpers.init()
 
     def email_targets(self, user):
         """returns email targets
@@ -75,7 +78,7 @@ class SSHAccess(BaseEmailAccess):
             )
         except Exception as e:
             logger.error(
-                "%s: Could not send email for error %s", {self.tag()}, {str(e)}
+                "%s: Could not send email for error %s", self.tag(), str(e)
             )
             return_value = False
 
@@ -116,7 +119,7 @@ class SSHAccess(BaseEmailAccess):
                 % (label_desc, self.access_desc(), user.email, approver)
             )
 
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def __send_revoke_email(self, user, request_id, label_desc):
         """generates and sends email in for access revoke"""
@@ -129,7 +132,7 @@ class SSHAccess(BaseEmailAccess):
             "Access successfully revoked for %s for %s to %s.<br>No futher action"
             " needed" % (label_desc, self.access_desc(), user.email)
         )
-        emailSES(email_targets, email_subject, email_body)
+        self.email_via_smtp(email_targets, email_subject, email_body)
 
     def get_label_desc(self, access_label):
         """gets the access label description
@@ -176,7 +179,10 @@ class SSHAccess(BaseEmailAccess):
         for key, value in helpers.ssh_machine_list.items():
             if key == "hostname" and value == "ip":
                 continue
-            machineList.append({"name": key, "tagname": key, "ip": value})
+            machineList.append({"name": key,
+                                "tagname": key,
+                                "ip": value
+                                })
         data = {"machineList": machineList}
         return data
 
@@ -199,8 +205,8 @@ class SSHAccess(BaseEmailAccess):
 
         if not is_revoked:
             logger.error(
-                "Something went wrong while revoking the %s from group %s: %s"
-                % (user.email, label, str(error_message))
+                "Something went wrong while revoking the %s from group %s: %s",
+                user.email, label, str(error_message)
             )
             return False
 
@@ -210,47 +216,50 @@ class SSHAccess(BaseEmailAccess):
             return True
         except Exception as e:
             logger.error(
-                "%s: Could not send email for error %s", {self.tag()}, {str(e)}
+                "%s: Could not send email for error %s", self.tag(), str(e)
             )
             return False
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """validates the access request for the user to the resource specified in the label
         and sends an email to the user and the module owners with the details of the access.
         If the user does not have access to the resource, the request is rejected.
 
         Args:
-            access_labels_data (array): Array of access labels
+            access_request_form (form): Access module request form.
             request_user (User): User whose access is being changed
             is_group (bool, optional): If the request is for a group. Defaults to False.
 
         Returns:
             bool: True if the request is approved, False otherwise
         """
+
         valid_access_label_array = []
+        access_level = access_request_form.get('sshAccessLevel')
+        selected_machines = json.loads(
+            access_request_form.get('selected-ssh-machine'))
+        other_machines = access_request_form.get('other_machines').split(',')
 
-        for label_data in access_labels_data:
-            for machine in label_data["selected_machines"]:
-                hostname = machine.split(",", 1)[0]
-                ip = machine.split(",", 1)[1]
-                label = {
-                    "machine": hostname,
-                    "access_level": label_data["accessLevel"],
-                    "ip": ip,
-                }
-                valid_access_label_array.append(label)
+        if access_level == 'other':
+            access_level = access_request_form.get('sshOtherAccessLevel')
 
-            if label_data["other_machines"]:
-                label_data["other_machines"] = label_data["other_machines"].split(",")
+        for machine in selected_machines:
+            hostname = machine.split(" ", 1)[0]
+            ip = machine.split(" ", 1)[1]
+            access_label = {
+                "machine": hostname,
+                "access_level": access_level,
+                "ip": ip,
+            }
+            valid_access_label_array.append(access_label)
 
-            for other_machine in label_data["other_machines"]:
-                label = {
-                    "machine": "other",
-                    "access_level": label_data["accessLevel"],
-                    "ip": other_machine,
-                }
-                valid_access_label_array.append(label)
-
+        for other_machine in other_machines:
+            access_label = {
+                "machine": "other",
+                "access_level": access_level,
+                "ip": other_machine,
+            }
+            valid_access_label_array.append(access_label)
         return valid_access_label_array
 
     def fetch_access_request_form_path(self):
@@ -290,6 +299,8 @@ class SSHAccess(BaseEmailAccess):
 
     def verify_identity(self, request, email):
         ssh_public_key = request["ssh_pub_key"]
+        if not ssh_public_key or ssh_public_key == '':
+            return {}
         return {"ssh_public_key": ssh_public_key}
 
     def can_auto_approve(self):

@@ -23,15 +23,29 @@ def user_labels():
 
 
 @pytest.fixture(autouse=True)
-def setup_test_config():
-    helper.OPSGENIE_TOKEN = ("test-token",)
-    helper.IGNORE_TEAMS = ["team_1", "team_2"]
+def setup_test_config(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_opsgenie_token",
+        return_value="test-token",
+    )
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.helper._get_ignored_teams",
+        return_value=["team_1", "team_2"],
+    )
+
+
+@pytest.fixture
+def patched_revoke_email(mocker):
+    mocker.patch(
+        "Access.access_modules.opsgenie_access.access.OpsgenieAccess._OpsgenieAccess__send_revoke_email",
+        return_value=""
+    )
 
 
 @pytest.fixture
 def user(mocker):
     user = mocker.MagicMock()
-    user.email = "test@test.com"
+    user.email = "invalid@nonexistent.com"
     user.user.username = "test-user"
     user.state = 2
     return user
@@ -53,7 +67,7 @@ def test_revoke_user_access_to_a_opsgenie_success():
 def revoke_fail(requests_mock):
     """Access can not be revoked."""
     requests_mock.delete(
-        "https://api.opsgenie.com/v2/users/" + "test@test.com",
+        "https://api.opsgenie.com/v2/users/" + "invalid@nonexistent.com",
         headers={
             "Content-Type": "application/json",
             "Authorization": "GenieKey GenieKey test-token",
@@ -69,7 +83,7 @@ def revoke_fail(requests_mock):
 def revoke_success(requests_mock):
     """Access will be revoked."""
     requests_mock.delete(
-        "https://api.opsgenie.com/v2/users/" + "test@test.com",
+        "https://api.opsgenie.com/v2/users/" + "invalid@nonexistent.com",
         headers={
             "Content-Type": "application/json",
             "Authorization": "GenieKey GenieKey test-token",
@@ -87,14 +101,14 @@ def revoke_success(requests_mock):
 @given("a user email")
 def user_email():
     """a user email."""
-    return "test@test.com"
+    return "invalid@nonexistent.com"
 
 
 @when("I pass revoke request", target_fixture="context_output")
-def revoke_request(user, user_labels, mocker):
+def revoke_request(user, user_labels, mocker, patched_revoke_email):
     """I pass revoke request."""
     opsgenie_access = access.get_object()
-    return opsgenie_access.revoke(user, user, user_labels, mocker.Mock())
+    return opsgenie_access.revoke(user, user, user_labels[0], mocker.Mock())
 
 
 @then("Approved Email will be sent")
