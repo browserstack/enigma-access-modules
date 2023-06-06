@@ -235,20 +235,20 @@ class SSHAccess(BaseEmailAccess):
         """
 
         valid_access_label_array = []
-        access_label = access_request_form.get('sshAccessLevel')
+        access_level = access_request_form.get('sshAccessLevel')
         selected_machines = json.loads(
             access_request_form.get('selected-ssh-machine'))
         other_machines = access_request_form.get('other_machines').split(',')
 
-        if access_label == 'other':
-            access_label = access_request_form.get('othersAccessLabel')
+        if access_level == 'other':
+            access_level = access_request_form.get('sshOtherAccessLevel')
 
         for machine in selected_machines:
             hostname = machine.split(" ", 1)[0]
             ip = machine.split(" ", 1)[1]
             label = {
                 "machine": hostname,
-                "access_level": access_label,
+                "access_level": access_level,
                 "ip": ip,
             }
             valid_access_label_array.append(label)
@@ -256,7 +256,7 @@ class SSHAccess(BaseEmailAccess):
         for other_machine in other_machines:
             label = {
                 "machine": "other",
-                "access_level": access_label,
+                "access_level": access_level,
                 "ip": other_machine,
             }
             valid_access_label_array.append(label)

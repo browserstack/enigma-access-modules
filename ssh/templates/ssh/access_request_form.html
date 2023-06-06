@@ -111,7 +111,7 @@
     const ssh_machines = $('#ssh-machine-selection-table').children('tr');
     const machines = [];
     for(iter = 0; iter < ssh_machines.length; iter++) {
-      machines.push($(ssh_machines[iter]).attr("machine_ip"));
+      machines.push($(ssh_machines[iter]).attr("machine_name") + " " + $(ssh_machines[iter]).attr("machine_ip"));
     }
 
     $('#selected-ssh-machine').val(JSON.stringify(machines));
@@ -124,10 +124,10 @@
   function addInputforOthersAccessLabel(){
     const selectedAccess = getSelectedsshaccess()
     if(selectedAccess === "other"){
-       $("#othersAccessLabel").removeClass("hidden")
+       $("#sshOtherAccessLevel").removeClass("hidden")
     }
      else{
-     $("#othersAccessLabel").addClass("hidden")
+     $("#sshOtherAccessLevel").addClass("hidden")
      }
   }
 
@@ -145,7 +145,7 @@
     </select>
 
     <div>
-      <input type="text" name="othersAccessLabel" id="othersAccessLabel" class="w-[460px] hidden ml-2 rounded-md border-gray-300  shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Please provide other username">
+      <input type="text" name="sshOtherAccessLevel" id="sshOtherAccessLevel" class="w-[460px] hidden ml-2 rounded-md border-gray-300  shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Please provide other username">
     </div>
 
   </div>
@@ -156,7 +156,7 @@
     <div class="mt-4 flex flex-col">
       <div class="flex felx-row">
         <div class="flex-auto relative flex items-center">
-          <input type="text" name="search" id="search" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
+          <input type="text" name="sshSearch" id="sshSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
           <div class="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" class="text-gray-500 h-full" width="18px" fill="currentColor" aria-hidden="true">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -246,7 +246,7 @@
 
 <div class="mt-5">
   <label for="otherMachines" class="text-sm text-gray-900">Other IPs (comma separated):</label>
-  <input type="text" name="other_machines" id="otherMachines" class="block w-1/2 rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
+  <input type="text" name="other_machines" id="otherMachines" class="block w-1/2 rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Other machine IPs comma seperated">
 </div>
 
 <input type="hidden" id="selected-ssh-machine" value="[]" name="selected-ssh-machine">
