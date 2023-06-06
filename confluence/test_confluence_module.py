@@ -1,6 +1,6 @@
 """unit tests for the confluence acces module"""
 from . import access
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 
 class MockRequest:
@@ -97,18 +97,14 @@ def test_confluence(mocker, requests_mock):
 
     assert isinstance(confluence_access.email_targets(user_mock), list)
 
-    form_label_1 = [
-        {
-            "accessWorkspace": "test",
-            "confluenceAccessType": "View Access",
-        }
-    ]
-    form_label_2 = [
-        {
-            "accessWorkspace": "test 2",
-            "confluenceAccessType": "Edit Access",
-        }
-    ]
+    form_label_1 = {
+        "confluence_workspace": "test",
+        "confluence_access_type": "View Access",
+    }
+    form_label_2 = {
+        "confluence_workspace": "test 2",
+        "confluence_access_type": "Edit Access",
+    }
 
     label1 = confluence_access.validate_request(form_label_1, user_mock, False)
     label2 = confluence_access.validate_request(form_label_2, user_mock, False)
@@ -157,7 +153,7 @@ def test_confluence(mocker, requests_mock):
         status_code=204,
     )
 
-    mocker.patch("bootprocess.general.emailSES", return_value="")
+    mocker.patch("Access.access_modules.confluence.access.Confluence.email_via_smtp", return_value="")
     resp = confluence_access.approve(user_mock, label1, "1234", request)
     assert resp is False
 

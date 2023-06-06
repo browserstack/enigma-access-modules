@@ -2,7 +2,7 @@ import json
 import requests
 import logging
 from . import constants
-from EnigmaAutomation.settings import ACCESS_MODULES
+from enigma_automation.settings import ACCESS_MODULES
 
 logger = logging.getLogger(__name__)
 default_branch = ["master", "main"]
@@ -37,6 +37,10 @@ def _get_user(username):
     if response.status_code == 200:
         return True
     return False
+
+
+def get_github_org():
+    return _get_github_config()["GITHUB_ORG"]
 
 
 def get_repo(repo):
@@ -130,7 +134,7 @@ def grant_access(repo, access_level, username):
         if not get_repo(repo):
             logger.debug(
                 "Skipping git access for %s for user %s because repo does not exist"
-                " anymore" % (repo, username)
+                " anymore", repo, username
             )
             return True
         if access_level == "merge":
