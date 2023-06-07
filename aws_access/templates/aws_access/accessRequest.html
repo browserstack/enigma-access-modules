@@ -33,7 +33,7 @@
     if(checked) {
       $(elem).find('input').prop('checked', true);
       $(elem).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
-      $(elem).children('td#description-td').removeClass('text-gray-900').addClass('text-blue-600');
+      $(elem).children('td#aws-description-td').removeClass('text-gray-900').addClass('text-blue-600');
     } else {
       $(elem).find('input').prop('checked', false);
       $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
@@ -75,15 +75,21 @@
     updateSelectedAWSGroup();
   };
 
+  const selectAllAWSGroup = () => {
+    const groups = $('#aws-group-table').children('tr');
+    for(iter = 0; iter < groups.length; iter++) {
+      if(!awsSelectedList[$(groups[iter]).attr("group")]) {
+        addAWSGroupSelection(groups[iter]);
+      }
+    }
+    updateSelectedAWSGroup();
+  }
+
   const selectAllAWSGroupToggle = (elem) => {
     if(elem.checked) {
-      const groups = $("#aws-group-table").children('tr');
-
-      for(iter = 0; iter < groups.length; iter++) {
-        if(!awsSelectedList[$(groups[iter]).attr('group')]) {
-          addAWSGroupSelection(groups[iter]);
-        }
-      }
+      selectAllAWSGroup();
+    } else {
+      removeAllAWSGroups();
     }
   }
 
@@ -94,7 +100,9 @@
 
   const removeAWSGroupSelectionUI = (elem) => {
     rightElem = elem.parentElement.parentElement;
+    $("#selectAllAWSGroup").prop("checked", false);
     removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
+    updateSelectedAWSGroup();
   };
 
   const handleAWSGroupSelection = (elem) => {
@@ -121,6 +129,7 @@
   }
 
   function fetchAWSGroups() {
+    $('#awsAccount').prop("disabled",true);
     let account = getSelectedAWSAccount();
     clearAWSGroups();
     marker=null;
@@ -138,6 +147,7 @@
       });
 
       $('#aws-group-table').append(rows.join(""));
+      $('#awsAccount').prop("disabled",false);
 
     })
   }
