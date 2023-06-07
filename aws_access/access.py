@@ -24,7 +24,28 @@ class AWSModuleValidationError(Exception):
 class AWSAccess(BaseEmailAccess):
     """AWS Access module."""
 
+    account_groups = {}
+
     urlpatterns = urls.urlpatterns
+
+    @staticmethod
+    def get_account_groups(account):
+        if AWSAccess.account_groups.get(account):
+            return AWSAccess.account_groups.get(account)
+
+        groups = []
+        found_marker = True
+        marker = None
+        while found_marker:
+            account_groups = helpers.get_aws_groups(account, marker)
+            groups += account_groups["Groups"]
+            if account_groups.get("IsTruncated"):
+                marker = account_groups["Marker"]
+            else:
+                found_marker = False
+
+        AWSAccess.account_groups[account] = groups
+        return AWSAccess.account_groups.get(account)
 
     def can_auto_approve(self):
         return False
