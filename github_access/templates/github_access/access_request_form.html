@@ -1,8 +1,9 @@
 <script>
 
-  function clearGithubRepos() {
-    $("#github-repo-table").empty();
-    removeAllGithubRepos();
+  const selectedList = {}
+
+  const handleGithubRepoSelectionCheckbox = (elem) => {
+    $(elem).prop('checked', !$(elem).prop('checked'));
   }
 
   const handleGithubReposelectionView = () => {
@@ -22,65 +23,69 @@
     }
   };
 
-  const selectRepoCheckbox = (repo, checked) => {
+  const selectGithubRepoCheckbox = (elem, checked) => {
     if(checked) {
-      $(`#${repo}-marker`).show();
-      $(`#${repo}-checkbox`).prop('checked', true);
-      $(`#${repo}-tablerow`).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
-      $(`#${repo}-tabledesc`).removeClass('text-gray-900').addClass('text-blue-600');
+      $(elem).find('div').show();
+      $(elem).find('input').prop('checked', true);
+      $(elem).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+      $(elem).children('td#description-td').removeClass('text-gray-900').addClass('text-blue-600');
+
     } else {
-      $(`#${repo}-marker`).hide();
-      $(`#${repo}-checkbox`).prop('checked', false);
-      $(`#${repo}-tablerow`).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
-      $(`#${repo}-tabledesc`).removeClass('text-blue-600').addClass('text-gray-900');
+      $(elem).find('div').hide();
+      $(elem).find('input').prop('checked', false);
+      $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+      $(elem).children('td#description-td').removeClass('text-blue-600').addClass('text-gray-900');
     }
   };
 
-  const addGithubReposelection = (repo) => {
+  const addGithubReposelection = (elem) => {
     const selectionList = $('#github-repo-selection-table');
     const newSpan = $("#github-repo-selection-row-template").clone(true, true);
 
-    selectRepoCheckbox(repo, true);
+    selectGithubRepoCheckbox(elem, true);
+    const org_name = $(elem).attr("org_name");
+    const repo_name = $(elem).attr("repo_name");
+    const repo_id = $(elem).attr("repo_id");
 
     newSpan.appendTo(selectionList);
     newSpan.show();
     const tableData = newSpan.children('td');
-    const orgName = repo.split('--')[0];
-    const repoName = repo.split('--')[1]
 
-    tableData[0].textContent = orgName + "/" + repoName;
-    newSpan.attr('id', `github-repo-selection-${repo}`);
+    tableData[0].textContent = org_name + "/" + repo_name;
+    newSpan.attr('org_name', org_name);
+    newSpan.attr('repo_name', repo_name);
+    newSpan.attr('repo_id', repo_id)
+    selectedList[repo_name] = true;
 
     handleGithubReposelectionView();
   };
 
-  const removeRepoSelectionSpanElem = (elem) => {
-    const spanId = elem.id || elem.attr('id');
-    const repo = spanId.replace('github-repo-selection-', '');
-    elem.remove();
-    selectRepoCheckbox(repo, false);
+  const removeRepoSelectionSpanElem = (rightElem, leftElem) => {
+    rightElem.remove();
+    selectGithubRepoCheckbox(leftElem, false)
 
+    selectedList[$(leftElem).attr("repo_id") || $(rightElem).attr("repo_id")] = false;
     handleGithubReposelectionView();
   };
 
   const removeAllGithubRepos = () => {
     const repos = $('#github-repo-selection-table').children('tr');
-    $("#selectAllGithubRepo").prop("checked", false);
+
     for(iter = 0; iter < repos.length; iter++) {
-      removeRepoSelectionSpanElem(repos[iter]);
+      removeRepoSelectionSpanElem(repos[iter], $("#github-repo-table").find(`tr[repo_id="${$(repos[iter]).attr('repo_id')}"]`));
     }
+    $("#selectAllGithubRepo").prop("checked", false);
     updateSelectedGithubRepo();
   };
 
   const selectAllGithubRepo = () => {
     const repos = $('#github-repo-table').children('tr');
-    for(iter = 0; iter < repos.length; iter++) {
-      const repo = repos[iter].id.split('-tablerow')[0];
-      if(!$(`#${repo}-checkbox`).prop('checked')) {
-        addGithubReposelection(repos[iter].id.split('-tablerow')[0]);
+
+    for (iter = 0; iter < repos.length; iter++) {
+      if(!selectedList[$(repos[iter]).attr('repo_id')]) {
+        addGithubReposelection(repos[iter]);
       }
     }
-    updateSelectedGithubRepo();
   }
 
   const selectAllGithubRepoToggle = (elem) => {
@@ -89,22 +94,24 @@
     } else {
       removeAllGithubRepos();
     }
+    updateSelectedGithubRepo();
   }
 
-  const removeGithubReposelection = (repo) => {
+  const removeGithubReposelection = (elem) => {
     $("#selectAllGithubRepo").prop("checked", false);
-    removeRepoSelectionSpanElem($(`#github-repo-selection-${repo}`));
+    removeRepoSelectionSpanElem($("#github-repo-selection-table").find(`tr[repo_id="${$(elem).attr('repo_id')}"]`), elem);
   };
 
   const removeGithubReposelectionUI = (elem) => {
-    removeRepoSelectionSpanElem(elem.parentElement.parentElement);
+    rightElem = elem.parentElement.parentElement;
+    removeRepoSelectionSpanElem(rightElem, $("#github-repo-table").find(`tr[repo_id="${$(rightElem).attr('repo_id')}"]`));
   };
 
-  const handleGithubReposelection = (elem, repo) => {
-    if(elem.checked) {
-      addGithubReposelection(repo);
+  const handleGithubReposelection = (elem) => {
+    if(!$(elem).find('input').prop('checked')) {
+      addGithubReposelection(elem);
     } else {
-      removeGithubReposelection(repo);
+      removeGithubReposelection(elem);
     }
     updateSelectedGithubRepo();
   };
@@ -113,10 +120,7 @@
     const github_repos = $('#github-repo-selection-table').children('tr');
     const repos = [];
     for(iter = 0; iter < github_repos.length; iter++) {
-      let repo = `${github_repos[iter].id.split('github-repo-selection-')[1]}`;
-      const orgName = repo.split('--')[0];
-      const repoName = repo.split('--')[0];
-      repo = orgName + "/" + repoName
+      let repo = $(github_repos[iter]).attr("org_name") + "/" + $(github_repos[iter]).attr("repo_name")
       repos.push(repo);
     }
 
@@ -174,13 +178,13 @@
                   <table class="min-w-full table-fixed">
                     <tbody class="bg-white" id="github-repo-table">
                       {% for repo in each_access.accessRequestData.githubRepoList %}
-                      <tr id="{{repo.orgName}}--{{repo.repoName}}-tablerow" class="hover:bg-blue-50 hover:text-blue-700">
-                         <td class="relative w-12 px-6 sm:w-16 sm:px-8">
-                           <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="{{repo.orgName}}--{{repo.repoName}}-marker"></div>
-                      
-                           <input type="checkbox" id="{{repo.orgName}}--{{repo.repoName}}-checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGithubReposelection(this, '{{repo.orgName}}--{{repo.repoName}}');" id="{{repo.orgName}}--{{repo.repoName}}-checkbox"></input>
+                      <tr onclick="handleGithubReposelection(this)" org_name="{{repo.orgName}}" repo_name="{{repo.repoName}}" repo_id="{{repo.orgName}}/{{repo.repoName}}" class="hover:bg-blue-50 hover:text-blue-700">
+                         <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
+                           <div class="absolute inset-y-0 left-0 w-0.5 bg-blue-600 hidden" id="marker-td"></div>
+
+                           <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGithubRepoSelectionCheckbox(this)"></input>
                          </td>
-                         <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="{{repo.orgName}}--{{repo.repoName}}-tabledesc">{{repo.orgName}}/{{repo.repoName}}</td>
+                         <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="description-td">{{repo.orgName}}/{{repo.repoName}}</td>
                          </tr>
                        {%endfor%}
                     </tbody>
