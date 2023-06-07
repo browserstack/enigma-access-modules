@@ -61,7 +61,7 @@
   const removeGroupSelectionSpanElem = (rightElem, leftElem) => {
     rightElem.remove();
     selectAWSGroupCheckbox(leftElem, false);
-    
+
     awsSelectedList[$(leftElem).attr("group") || $(rightElem).attr("group")] = false;
     handleAWSGroupSelectionView();
   };
@@ -128,14 +128,34 @@
     return $('#awsAccount').val();
   }
 
-  function fetchAWSGroups() {
+  const awsGroupPageChange = (page) => {
+    if(page !== 'None'){
+      fetchAWSGroups(get_aws_group_search_val(), Number(page));
+    }
+  }
+
+  function searchAWSGroup(event, elem) {
+    if(event.key === "Enter") {
+      fetchAWSGroups($(elem).val(), undefined);
+    }
+  }
+
+  function get_aws_group_search_val() {
+    return $("#awsSearch").val();
+  }
+
+  function fetchAWSGroups(search=undefined, page=undefined) {
     $('#awsAccount').prop("disabled",true);
+    $('#awsSearch').prop("disabled", true);
+    $("#selectAllAWSGroup").prop("disabled", true);
+    $("#prev_page").hide();
+    $("#next_page").hide();
+
     let account = getSelectedAWSAccount();
     clearAWSGroups();
-    marker=null;
     $.ajax({
       url: "/api/v1/aws/account/groups/",
-      data: {"AWSAccount": account, "marker": marker},
+      data: {"AWSAccount": account, "search": search, "page": page},
     }).done(function(data, statusText, xhr){
       let rows = $.map(data["AWSGroups"], function(group, idx){
         return `<tr onclick="handleAWSGroupSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" group="${group}" >
@@ -146,9 +166,30 @@
           </tr>`
       });
 
+      if(data["next_page"]) {
+        $("#next_page").show();
+        $("#next_page").attr("onclick", `awsGroupPageChange('${data["next_page"]}')`);
+      } else {
+        $("#next_page").attr("onclick", `awsGroupPageChange('None')`);
+        $("#next_page").hide();
+      }
+
+      if(data["prev_page"]) {
+        $("#prev_page").show();
+        $("#prev_page").attr("onclick", `awsGroupPageChange('${data["prev_page"]}')`);
+      } else {
+        $("#prev_page").attr("onclick", `awsGroupPageChange('None')`);
+        $("#prev_page").hide();
+      }
+
+      if(data["search_error"]) {
+        show_notification("No exact match found", data["search_error"])
+      }
+
       $('#aws-group-table').append(rows.join(""));
       $('#awsAccount').prop("disabled",false);
-
+      $('#awsSearch').prop("disabled", false);
+      $("#selectAllAWSGroup").prop("disabled", false);
     })
   }
 </script>
@@ -170,7 +211,7 @@
     <div class="mt-4 flex flex-col">
       <div class="flex felx-row">
         <div class="flex-auto relative flex items-center">
-          <input type="text" name="awsSearch" id="awsSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search AWS groups">
+          <input disabled onkeydown="searchAWSGroup(event, this)" type="text" name="awsSearch" id="awsSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search AWS groups">
           <div class="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" class="text-gray-500 h-full" width="18px" fill="currentColor" aria-hidden="true">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -178,7 +219,7 @@
           </div>
         </div>
         <div class="flex-none flex">
-          <input type="checkbox" onclick="selectAllAWSGroupToggle(this)" name="select-all-aws-group" id="selectAllAWSGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <input disabled type="checkbox" onclick="selectAllAWSGroupToggle(this)" name="select-all-aws-group" id="selectAllAWSGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
           <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
         </div>
       </div>
@@ -193,6 +234,10 @@
 
                     </tbody>
                   </table>
+                  <div class="grid grid-cols-2">
+                    <button hidden type="button" id="prev_page" class="col-start-1" onclick="awsGroupPageChange('{{ previous_page }}')" >previous</button>
+                    <button hidden type="button" id="next_page" class="col-start-2" onclick="awsGroupPageChange('{{ next_page }}')">next</button>
+                  </div>
                 </div>
               </div>
             </div>
