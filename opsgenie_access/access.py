@@ -40,16 +40,16 @@ class OpsgenieAccess(BaseEmailAccess):
         total_teams_list = helper.teams_list()
         if total_teams_list is None:
             raise Exception(constants.TEAM_LIST_ERROR)
-        for access_label_data in access_labels_data[0]["teams_list"]:
+        for access_label_data in json.loads(access_labels_data.get("selected-opsgenie-teams")):
             if access_label_data not in total_teams_list:
                 raise Exception(constants.VALID_TEAM_REQUIRED_ERROR)
 
-            if access_labels_data[0]["UserType"] not in ("user", "team_admin"):
+            if access_labels_data.get("opsgenie-access-level") not in ("user", "team_admin"):
                 raise Exception(constants.VALID_USER_TYPE_REQUIRED_ERROR)
 
             valid_access_label = {
                 "team": access_label_data,
-                "usertype": access_labels_data[0]["UserType"],
+                "usertype": access_labels_data.get("opsgenie-access-level"),
             }
             valid_access_label_array.append(valid_access_label)
         return valid_access_label_array
