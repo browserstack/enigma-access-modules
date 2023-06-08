@@ -36,6 +36,4 @@ def get_gcp_groups(request):
     if not groups:
         response["search_error"] = ("Please try adjusting your search criteria or"
         " browse by filters to find what you're looking for.")
-    return JsonResponse(response)
-
-    
+    return JsonResponse(response)   
