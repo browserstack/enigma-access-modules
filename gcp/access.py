@@ -1,11 +1,24 @@
 """access module for GCP"""
 from django.template import loader
 import logging
+import json
 
 from . import constants, helpers, urls
 from Access.base_email_access.access import BaseEmailAccess
 
 logger = logging.getLogger(__name__)
+
+
+class GCPModuleValidationError(Exception):
+    """Validation Error Exception.
+
+    Args:
+        Exception (str): Validation error string.
+    """
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 
 class GCPAccess(BaseEmailAccess):
@@ -75,11 +88,11 @@ class GCPAccess(BaseEmailAccess):
         """
         return access_label
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Validates the access request.
 
         Args:
-            access_labels_data (str): Access Label representing the access requested.
+            access_request_form (form): Access module request form.
             request_user (User): User requesting the access.
             is_group (bool, optional): Whether the access is being requested for a group.
             Defaults to False.
@@ -87,29 +100,32 @@ class GCPAccess(BaseEmailAccess):
         Returns:
             arr: Array of the access labels for the request access.
         """
-        # try:
+        if not access_request_form.get("gcp-domain"):
+            raise GCPModuleValidationError(
+                constants.VALID_DOMAIN_REQUIRED_ERROR
+            )
+
+        gcp_groups = json.loads(access_request_form.get("selected-gcp-groups"))
+        gcp_domain = access_request_form.get("gcp-domain")
+
+        if not access_request_form.get("selected-gcp-groups") or len(gcp_groups) <= 0:
+            raise GCPModuleValidationError(
+                constants.VALID_SELECT_GROUP_ERROR)
+
+        if type(gcp_groups) != list:
+            raise GCPModuleValidationError(
+                constants.VALID_GROUP_REQUIRED_ERROR
+            )
+
         valid_access_label_array = []
-        for access_label_data in access_labels_data:
-            if (
-                not access_label_data.get("action")
-                and access_label_data["action"] != constants.group_access
-            ):
-                raise Exception(constants.VALID_ACTION_REQUIRED_ERROR)
-            if not access_label_data.get(
-                "domain"
-            ) and not helpers.get_gcp_domain_details(access_label_data["domain"]):
-                raise Exception(constants.VALID_DOMAIN_REQUIRED_ERROR)
-            if not access_label_data.get("group") and not helpers.gcp_group_exists(
-                access_label_data["domain"], access_label_data["group"]
-            ):
-                raise Exception(constants.VALID_GROUP_REQUIRED_ERROR)
+        for group in gcp_groups:
+
             valid_access_label = {
-                "action": access_label_data["action"],
-                "domain": access_label_data["domain"],
-                "group": access_label_data["group"],
+                "action": constants.GROUP_ACCESS,
+                "domain": gcp_domain,
+                "group": group,
             }
             valid_access_label_array.append(valid_access_label)
-
         return valid_access_label_array
 
     def approve(
@@ -149,7 +165,8 @@ class GCPAccess(BaseEmailAccess):
                 return False
 
         try:
-            self.__send_approve_email(user, label_desc, request.request_id, approver)
+            self.__send_approve_email(
+                user, label_desc, request.request_id, approver)
             return True
         except Exception as e:
             logger.error("Could not send email for error %s", str(e))
