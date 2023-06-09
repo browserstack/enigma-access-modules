@@ -2,7 +2,7 @@ import logging
 import json
 
 from Access.base_email_access.access import BaseEmailAccess
-from . import helpers
+from . import helpers, urls
 
 from django.template import loader
 
@@ -13,7 +13,7 @@ class SSHAccess(BaseEmailAccess):
     """SSH Access Module"""
 
     available = True
-    urlpatterns = []
+    urlpatterns = urls.urlpatterns
 
     def __init__(self):
         helpers.init()
@@ -175,16 +175,7 @@ class SSHAccess(BaseEmailAccess):
         return {}
 
     def access_request_data(self, request, is_group=False):
-        machineList = []
-        for key, value in helpers.ssh_machine_list.items():
-            if key == "hostname" and value == "ip":
-                continue
-            machineList.append({"name": key,
-                                "tagname": key,
-                                "ip": value
-                                })
-        data = {"machineList": machineList}
-        return data
+        return {}
 
     def revoke(self, user, user_identity, label, request):
         """revokes the access for the user to the resource specified in the label and
