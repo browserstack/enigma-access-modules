@@ -100,14 +100,14 @@ def list_empty(context_output):
 
 @pytest.fixture
 def labels():
-    access_labels_data = {
+    access_request_form = {
             "selected-github-repos": json.dumps([
                 "org/repo1",
                 "org/repo2",
             ]),
             "githubAccessLabel": "merge",
         }
-    return access_labels_data
+    return access_request_form
 
 
 @when("View requests validation", target_fixture="context_output")
