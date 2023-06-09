@@ -1,6 +1,6 @@
 <script>
 
-  const selectedList = {}
+  const sshSelectedList = {}
 
   const handleSSHMachineSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
@@ -51,7 +51,7 @@
     newSpan.attr('machine_ip', machine_ip);
     newSpan.attr('machine_name', machine_name);
 
-    selectedList[machine_ip] = true;
+    sshSelectedList[machine_ip] = true;
     handleSSHMachineSelectionView();
   };
 
@@ -59,7 +59,7 @@
     rightElem.remove();
     selectSSHMachineCheckbox(leftElem, false);
 
-    selectedList[$(leftElem).attr("machine_ip") || $(rightElem).attr("machine_ip")] = false;
+    sshSelectedList[$(leftElem).attr("machine_ip") || $(rightElem).attr("machine_ip")] = false;
     handleSSHMachineSelectionView();
   };
 
@@ -77,7 +77,7 @@
       const machines = $("#ssh-machine-table").children('tr');
 
       for (iter = 0; iter < machines.length; iter++) {
-        if(!selectedList[$(machines[iter]).attr('machine_ip')]) {
+        if(!sshSelectedList[$(machines[iter]).attr('machine_ip')]) {
           addSSHMachineSelection(machines[iter]);
         }
       }
@@ -143,34 +143,43 @@
       }
     }).done(function(data, statusText, xhr){
       $("#ssh-machine-table tr").remove();
-      console.log(data)
       let rows = data["machineList"].map(function(machine){
-        return `<tr onclick="handleSSHMachineSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" machine_name="${machine.name}" machine_ip="${ machine.ip }" >
+        return `<tr onclick="handleSSHMachineSelection(this)" class="${sshSelectedList[machine.ip]? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" machine_name="${machine.name}" machine_ip="${ machine.ip }" >
           <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
-            <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelectionCheckbox(this)"></input>
+            <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelectionCheckbox(this)" ${ sshSelectedList[machine.ip]? "checked": ""}></input>
           </td>
-          <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="description-td">${machine.name} ${machine.ip}</td>
+          <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${ sshSelectedList[machine.ip]? "text-blue-600" : "text-gray-900"}" id="description-td">${machine.name} ${machine.ip}</td>
         </tr>`
       })
 
       $('#ssh-machine-table').append(rows)
 
       if(data["next_page"]) {
+        $("#sshPaginationNav").removeClass("hidden")
         $("#ssh_next_page").attr("onclick", `changeSSHMachinesPage('${data["next_page"]}')`);
       } else {
+        $("#sshPaginationNav").removeClass("hidden")
         $("#ssh_next_page").attr("onclick", `changeSSHMachinesPage('None')`);
       }
 
       if(data["prev_page"]) {
+        $("#sshPaginationNav").removeClass("hidden")
         $("#ssh_prev_page").attr("onclick", `changeSSHMachinesPage('${data["prev_page"]}')`);
       } else {
+        $("#sshPaginationNav").removeClass("hidden")
         $("#ssh_prev_page").attr("onclick", `changeSSHMachinesPage('None')`);
+      }
+
+      if(!data["next_page"] && !data["prev_page"]) {
+        $("#sshPaginationNav").addClass("hidden")
       }
 
       if(data["search_error"]) {
         alert(data["search_error"])
         showNotificiation(data["search_error"])
       }
+
+      $("#sshGroupsScrollBar").scrollTop(0)
     });
   }
 
@@ -179,7 +188,7 @@
   }
   function searchSSHMachines(event, elem) {
     if(event.key === "Enter") {
-      console.log("sent")
+      event.preventDefault();
       fetchSSHMachines($(elem).val(), undefined);
     }
   }
@@ -232,7 +241,7 @@
           <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
         </div>
       </div>
-      <div class="h-80 ml-1 overflow-y-auto bg-white mt-6 rounded-md border-0 ring-1 ring-gray-200">
+      <div id="sshGroupsScrollBar" class="h-80 ml-1 overflow-y-auto bg-white mt-6 rounded-md border-0 ring-1 ring-gray-200">
         <div class="px-4 sm:px-6 lg:px-8">
           <div class="flex flex-col">
             <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -243,8 +252,8 @@
 
                     </tbody>
                   </table>
-                  <nav
-                    class="flex flex-shrink-0 px-4 items-center rounded-b-lg justify-between align-bottom border-t border-gray-200 bg-white pt-4 pb-4 sticky">
+                  <nav id="sshPaginationNav"
+                    class="hidden flex flex-shrink-0 px-4 items-center rounded-b-lg justify-between align-bottom border-t border-gray-200 bg-white pt-4 pb-4 sticky">
                     <button type="button" id="ssh_prev_page"
                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 sticky">
                       <svg xmlns="http://www.w3.org/2000/svg" class="rotate-180 fill-gray-400 mr-4" height="20" viewBox="0 -960 960 960" width="20">
