@@ -10,5 +10,5 @@ services:
     env_file:
     - ./secrets/ops_app_test.env
     volumes:
-    - .:/srv/code/dev
     - ./mounts/logs/:/ebs/logs/
+    - ./:/srv/code/dev/Access/access_modules/

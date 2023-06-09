@@ -1,0 +1,14 @@
+name: Unit Tests
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup make
+      run: |
+        sudo apt-get install make
+    - name: Build docker container
+      run: make build
+    - name: Run unit tests
+      run: make test
