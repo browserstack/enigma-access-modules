@@ -1,5 +1,6 @@
 """Github Module Display Repos feature tests."""
 
+import json
 import pytest
 from pytest_bdd import given, scenario, then, when
 from .. import access
@@ -58,7 +59,7 @@ def get_org_repo_list_success(requests_mock):
     )
 
     return_value = helpers.get_org_repo_list()
-    assert return_value == ["org/repo1", "org/repo2"]
+    assert return_value == [{'orgName': 'org', 'repoName': 'repo1'}, {'orgName': 'org', 'repoName': 'repo2'}]
 
 
 @given("Orgs repo list does not exist")
@@ -88,7 +89,7 @@ def access_request_data(mocker):
 @then("githubRepoList is not empty")
 def list_not_empty(context_output):
     return_value = context_output
-    assert return_value == {"githubRepoList": ["org/repo1", "org/repo2"]}
+    assert return_value == {'githubRepoList': [{'orgName': 'org', 'repoName': 'repo1'}, {'orgName': 'org', 'repoName': 'repo2'}]}
 
 
 @then("githubRepoList is empty")
@@ -99,15 +100,13 @@ def list_empty(context_output):
 
 @pytest.fixture
 def labels():
-    access_labels_data = [
-        {
-            "repoList": [
+    access_labels_data = {
+            "selected-github-repos": json.dumps([
                 "org/repo1",
                 "org/repo2",
-            ],
-            "accessLevel": "merge",
+            ]),
+            "githubAccessLabel": "merge",
         }
-    ]
     return access_labels_data
 
 
