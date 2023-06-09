@@ -28,7 +28,7 @@
       $(elem).find('input').prop('checked', true);
       $(elem).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
       $(elem).children('td#description-td').removeClass('text-gray-900').addClass('text-blue-600');
-      
+
     } else {
       $(elem).find('input').prop('checked', false);
       $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
@@ -75,7 +75,7 @@
   const selectAllSSHMachineToggle = (elem) => {
     if(elem.checked) {
       const machines = $("#ssh-machine-table").children('tr');
-  
+
       for (iter = 0; iter < machines.length; iter++) {
         if(!selectedList[$(machines[iter]).attr('machine_ip')]) {
           addSSHMachineSelection(machines[iter]);
@@ -132,6 +132,69 @@
      }
   }
 
+  function fetchSSHMachines(search=undefined, page=undefined) {
+    $.ajax({
+      url: "/api/v1/ssh/machines/",
+      data: {"search": search, "page": page},
+      error: function (XMLHttpRequest, textStatus, errorThrown) {
+        const msg = XMLHttpRequest.responseJSON;
+        alert(msg["error"]);
+        showNotificiation("Failed", msg["error"]);
+      }
+    }).done(function(data, statusText, xhr){
+      $("#ssh-machine-table tr").remove();
+      console.log(data)
+      let rows = data["machineList"].map(function(machine){
+        return `<tr onclick="handleSSHMachineSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" machine_name="${machine.name}" machine_ip="${ machine.ip }" >
+          <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
+            <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelectionCheckbox(this)"></input>
+          </td>
+          <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="description-td">${machine.name} ${machine.ip}</td>
+        </tr>`
+      })
+
+      $('#ssh-machine-table').append(rows)
+
+      if(data["next_page"]) {
+        $("#ssh_next_page").attr("onclick", `changeSSHMachinesPage('${data["next_page"]}')`);
+      } else {
+        $("#ssh_next_page").attr("onclick", `changeSSHMachinesPage('None')`);
+      }
+
+      if(data["prev_page"]) {
+        $("#ssh_prev_page").attr("onclick", `changeSSHMachinesPage('${data["prev_page"]}')`);
+      } else {
+        $("#ssh_prev_page").attr("onclick", `changeSSHMachinesPage('None')`);
+      }
+
+      if(data["search_error"]) {
+        alert(data["search_error"])
+        showNotificiation(data["search_error"])
+      }
+    });
+  }
+
+  function getSSHSearchValue() {
+    return $("#sshSearch").val()
+  }
+  function searchSSHMachines(event, elem) {
+    if(event.key === "Enter") {
+      console.log("sent")
+      fetchSSHMachines($(elem).val(), undefined);
+    }
+  }
+
+  function changeSSHMachinesPage(page) {
+    if(page !== 'None'){
+      fetchSSHMachines(getSSHSearchValue(), Number(page));
+    }
+  }
+
+  $(window).on("load", ()=> {
+    fetchSSHMachines()
+  })
+
+
 </script>
 
 <div class="pt-4">
@@ -157,7 +220,7 @@
     <div class="mt-4 flex flex-col">
       <div class="flex felx-row">
         <div class="flex-auto relative flex items-center">
-          <input type="text" name="sshSearch" id="sshSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
+          <input onkeydown="searchSSHMachines(event, this)" type="search" name="sshSearch" id="sshSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search ssh machines">
           <div class="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" class="text-gray-500 h-full" width="18px" fill="currentColor" aria-hidden="true">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -177,16 +240,26 @@
                 <div class="relative overflow-hidden">
                   <table class="min-w-full table-fixed">
                     <tbody class="bg-white" id="ssh-machine-table">
-                      {% for machine in each_access.accessRequestData.machineList %}
-                      <tr onclick="handleSSHMachineSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" machine_name="{{ machine.name }}" machine_ip="{{ machine.ip }}" >
-                        <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
-                          <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleSSHMachineSelectionCheckbox(this)"></input>
-                        </td>
-                        <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="description-td">{{machine.name}} {{machine.ip}}</td>
-                      </tr>
-                      {%endfor%}
+
                     </tbody>
                   </table>
+                  <nav
+                    class="flex flex-shrink-0 px-4 items-center rounded-b-lg justify-between align-bottom border-t border-gray-200 bg-white pt-4 pb-4 sticky">
+                    <button type="button" id="ssh_prev_page"
+                      class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 sticky">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="rotate-180 fill-gray-400 mr-4" height="20" viewBox="0 -960 960 960" width="20">
+                        <path d="m691-265-68-67 100-100H103v-94h621L623-626l67-67 214 214-213 214Z"/>
+                      </svg>
+                      Previous
+                    </button>
+                    <button type="button" id="ssh_next_page"
+                      class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 sticky">
+                      Next
+                      <svg xmlns="http://www.w3.org/2000/svg" class="fill-gray-400 ml-4" height="20" viewBox="0 -960 960 960" width="20">
+                        <path d="m691-265-68-67 100-100H103v-94h621L623-626l67-67 214 214-213 214Z"/>
+                      </svg>
+                    </button>
+                  </nav>
                 </div>
               </div>
             </div>
