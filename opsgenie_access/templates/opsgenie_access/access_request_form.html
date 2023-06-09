@@ -1,6 +1,6 @@
 <script>
 
-  const selectedList = {}
+  const opsgenieSelectedList = {}
 
   const handleOpsgenieTeamSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
@@ -51,7 +51,7 @@
     newSpan.attr('team_desc', team_desc);
     newSpan.attr('team_name', team_name);
 
-    selectedList[team_name] = true;
+    opsgenieSelectedList[team_name] = true;
     handleOpsgenieTeamSelectionView();
   };
 
@@ -59,7 +59,7 @@
     rightElem.remove();
     selectOpsgenieTeamCheckbox(leftElem, false);
 
-    selectedList[$(leftElem).attr("team_name") || $(rightElem).attr("team_name")] = false;
+    opsgenieSelectedList[$(leftElem).attr("team_name") || $(rightElem).attr("team_name")] = false;
     handleOpsgenieTeamSelectionView();
   };
 
@@ -76,11 +76,10 @@
     const teams = $("#opsgenie-team-table").children('tr');
 
     for (iter = 0; iter < teams.length; iter++) {
-      if(!selectedList[$(teams[iter]).attr('team_name')]) {
+      if(!opsgenieSelectedList[$(teams[iter]).attr('team_name')]) {
         addOpsgenieTeamSelection(teams[iter]);
       }
     }
-    updateSelectedOpsgenieTeam();
   }
 
   const selectAllOpsgenieTeamToggle = (elem) => {
