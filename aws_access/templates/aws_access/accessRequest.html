@@ -187,8 +187,10 @@
       }
 
       if(data["prev_page"]) {
+        $("#awsPaginationNav").removeClass("hidden");
         $("#aws_prev_page").attr("onclick", `awsGroupPageChange('${data["prev_page"]}')`);
       } else {
+        $("#awsPaginationNav").removeClass("hidden");
         $("#aws_prev_page").attr("onclick", `awsGroupPageChange('None')`);
       }
 
