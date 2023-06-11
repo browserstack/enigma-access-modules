@@ -1,7 +1,7 @@
-from django.urls import re_path
+from django.urls import path
 
 from .views import get_gcp_groups
 
 urlpatterns = [
-    re_path(r"^api/v1/gcp/domain/groups", get_gcp_groups),
+    path("api/v1/gcp/domain/groups", get_gcp_groups, name="getGCPGroups"),
 ]
