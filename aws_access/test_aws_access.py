@@ -1,5 +1,6 @@
 """aws access module unit tests"""
 import pytest
+import json
 
 from . import constants, helpers, access
 
@@ -152,7 +153,18 @@ def test_aws_access(mocker):
     mocker.patch(
             "Access.access_modules.aws_access.helpers.revoke_aws_access",
             return_value=(True, ""))
+    mocker.patch(
+            "Access.access_modules.aws_access.helpers.aws_group_exists",
+            return_value=True)
+    mocker.patch(
+            "Access.access_modules.aws_access.helpers.aws_account_exists",
+            return_value=True)
     aws_access = access.AWSAccess()
+
+    form_data_1 = {
+        "aws-account": "test 1",
+        "selected-aws-groups": json.dumps(['test 1'])
+    }
 
     label_1 = {
         "action": constants.GROUP_ACCESS,
@@ -189,7 +201,7 @@ def test_aws_access(mocker):
     assert combined_label_meta == expected_combined_meta
 
     assert isinstance(aws_access.access_request_data("test"), dict)
-    assert aws_access.validate_request([label_1], None) == [label_1]
+    assert aws_access.validate_request(form_data_1, None) == [label_1]
 
     return_value = aws_access.approve(user_mock, [label_1], None, request_mock)
     assert return_value is True

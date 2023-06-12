@@ -1,3 +1,4 @@
+import json
 import pytest
 from . import helpers
 from . import access
@@ -133,9 +134,14 @@ def test_GCPAccess(mocker):
         }
     ]
 
-    label = gcp_access.validate_request(form_label, userMock)
+    form_label_1 = {
+        "gcp-domain": "example.com",
+        "selected-gcp-groups": json.dumps(['group@example.com'])
+    }
 
-    assert label == [form_label[0]]
+    label = gcp_access.validate_request(form_label_1, userMock)
+
+    assert label == form_label
 
     label_desc = gcp_access.get_label_desc(label[0])
     assert label_desc == "GroupAccess for group: " + form_label[0]["group"]
