@@ -1,3 +1,4 @@
+import json
 import pytest
 from . import helpers
 from . import access
@@ -127,9 +128,8 @@ def test_GCPAccess(mocker):
 
     form_label = [
         {
-            "action": "GroupAccess",
-            "domain": "example.com",
-            "group": "group@example.com",
+            "gcp-domain": "example.com",
+            "selected-gcp-groups": json.dumps(['test 1'])
         }
     ]
 
