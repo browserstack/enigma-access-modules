@@ -128,12 +128,18 @@ def test_GCPAccess(mocker):
 
     form_label = [
         {
-            "gcp-domain": "example.com",
-            "selected-gcp-groups": json.dumps(['test 1'])
+            "action": "GroupAccess",
+            "domain": "example.com",
+            "group": "group@example.com",
         }
     ]
 
-    label = gcp_access.validate_request(form_label[0], userMock)
+    form_label_1 = {
+        "gcp-domain": "example.com",
+        "selected-gcp-groups": json.dumps(['group@example.com'])
+    }
+
+    label = gcp_access.validate_request(form_label_1, userMock)
 
     assert label == [form_label[0]]
 
