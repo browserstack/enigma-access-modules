@@ -141,7 +141,7 @@ def test_GCPAccess(mocker):
 
     label = gcp_access.validate_request(form_label_1, userMock)
 
-    assert label == [form_label[0]]
+    assert label == form_label
 
     label_desc = gcp_access.get_label_desc(label[0])
     assert label_desc == "GroupAccess for group: " + form_label[0]["group"]
