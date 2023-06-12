@@ -133,7 +133,7 @@ def test_GCPAccess(mocker):
         }
     ]
 
-    label = gcp_access.validate_request(form_label, userMock)
+    label = gcp_access.validate_request(form_label[0], userMock)
 
     assert label == [form_label[0]]
 
