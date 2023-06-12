@@ -1,5 +1,5 @@
 from Access.base_email_access.access import BaseEmailAccess
-from . import helper, constants
+from . import helper, constants, urls
 import logging
 import json
 from django.template import loader
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class OpsgenieAccess(BaseEmailAccess):
     """Opsgenie Access module."""
 
-    urlpatterns = []
+    urlpatterns = urls.urlpatterns
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.
@@ -246,9 +246,7 @@ class OpsgenieAccess(BaseEmailAccess):
         Returns:
             dict: Dictionary of opsgenie access.
         """
-        user_accesses = {}
-        user_accesses["opsgenie"] = self.__all_possible_accesses()
-        return user_accesses
+        return {}
 
     def verify_identity(self, request, email):
         """Verifying user Identity.
