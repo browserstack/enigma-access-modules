@@ -44,7 +44,7 @@ def get_aws_groups(request):
             response["search_error"] = ("Please try adjusting your search criteria or"
             " browse by filters to find what you're looking for.")
         return response
-    except Exception as e:
+    except Exception:
         return JsonResponse({
             "error": "Something went wrong while fetching AWS groups."
         }, status=500)
