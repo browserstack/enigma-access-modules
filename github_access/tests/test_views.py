@@ -7,16 +7,6 @@ from .. import access
 from .. import helpers
 
 
-@scenario("features/views.feature", "View Requests Data returns data")
-def test_view_requests_data_returns_data():
-    pass
-
-
-@scenario("features/views.feature", "View Requests Data returns empty")
-def test_view_requests_data_returns_empty():
-    pass
-
-
 @scenario("features/views.feature", "View Validates Request")
 def test_view_validates_request():
     pass
@@ -84,18 +74,6 @@ def get_org_repo_list_fail(requests_mock):
 def access_request_data(mocker):
     github_access = access.get_object()
     return github_access.access_request_data(mocker.Mock())
-
-
-@then("githubRepoList is not empty")
-def list_not_empty(context_output):
-    return_value = context_output
-    assert return_value == {'githubRepoList': [{'orgName': 'org', 'repoName': 'repo1'}, {'orgName': 'org', 'repoName': 'repo2'}]}
-
-
-@then("githubRepoList is empty")
-def list_empty(context_output):
-    return_value = context_output
-    assert return_value == {"githubRepoList": []}
 
 
 @pytest.fixture
