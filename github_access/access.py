@@ -14,7 +14,7 @@ from Access.access_modules.github_access.helpers import (
     is_email_valid,
     get_github_org,
 )
-from . import constants
+from . import constants, urls
 from django.template import loader
 from django.shortcuts import render
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class GithubAccess(BaseEmailAccess):
     ACCESS_LABEL = "repository_access"
-    urlpatterns = []
+    urlpatterns = urls.urlpatterns
 
     def email_targets(self, user):
         return [user.email] + self.grant_owner()
@@ -203,14 +203,9 @@ class GithubAccess(BaseEmailAccess):
 
     def fetch_access_request_form_path(self):
         return "github_access/access_request_form.html"
-    
+
     def get_extra_fields(self) :
         return {"githubOrg" : get_github_org()}
-
-    def access_request_data(self, request, is_group=False):
-        repo_data = [repo for repo in get_org_repo_list()]
-        data = {"githubRepoList": repo_data}
-        return data
 
     def fetch_access_approve_email(self, request, data):
         context_details = {

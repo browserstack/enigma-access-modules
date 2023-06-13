@@ -135,10 +135,10 @@
       $("#opsgenie-team-table tr").remove();
       let rows = data["teamsList"].map(function(team_name, idx){
         return `<tr onclick="handleOpsgenieTeamSelection(this)" class="${opsgenieSelectedList[team_name]? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" team_name="${team_name}" >
-          <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
+          <td id="opsgenie-checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
             <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleOpsgenieTeamSelectionCheckbox(this)" ${ opsgenieSelectedList[team_name]? "checked": ""}></input>
           </td>
-          <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${ opsgenieSelectedList[team_name]? "text-blue-600" : "text-gray-900"}" id="description-td">${team_name}</td>
+          <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${ opsgenieSelectedList[team_name]? "text-blue-600" : "text-gray-900"}" id="opsgenie-description-td">${team_name}</td>
         </tr>`
       })
 
