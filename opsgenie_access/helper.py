@@ -7,11 +7,11 @@ logger = logging.getLogger(__name__)
 
 
 def _get_opsgenie_token():
-    return ACCESS_MODULES["ops_genie_access"]["OPSGENIE_TOKEN"]
+    return ACCESS_MODULES["opsgenie_access"]["OPSGENIE_TOKEN"]
 
 
 def _get_ignored_teams():
-    return ACCESS_MODULES["ops_genie_access"]["IGNORE_TEAMS"]
+    return ACCESS_MODULES["opsgenie_access"]["IGNORE_TEAMS"]
 
 
 def get_team_id(team_name):
