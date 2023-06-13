@@ -237,17 +237,6 @@ class OpsgenieAccess(BaseEmailAccess):
             logger.error("Exception while getting possible accesses: " + str(e))
             teams_list = {}, {}, {}
 
-    def access_request_data(self, request, is_group=False):
-        """Creates a dictionary of Opsgenie access.
-        Args:
-            request (dict): A request form representing the http form request.
-            is_group (bool, optional): whether the access is requested
-            for an Enigma Group. Defaults to False.
-        Returns:
-            dict: Dictionary of opsgenie access.
-        """
-        return {}
-
     def verify_identity(self, request, email):
         """Verifying user Identity.
         Args:
