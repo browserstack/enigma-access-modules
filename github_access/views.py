@@ -2,7 +2,6 @@
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 
-from create_users import randomword
 from . import helpers
 from Access.paginator_decorators import paginator
 
@@ -14,9 +13,6 @@ def get_github_repos(request):
         search = (data["search"] if data.get("search") else "")
 
         all_repos = helpers.get_org_repo_list()
-
-        for i in range(50):
-            all_repos.append({"orgName": "BrowserStack", "repoName": randomword(6) })
         selected_repos = []
 
         for repo in all_repos:
