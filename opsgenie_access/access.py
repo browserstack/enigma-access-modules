@@ -28,10 +28,10 @@ class OpsgenieAccess(BaseEmailAccess):
         """
         return [user.email] + self.grant_owner()
 
-    def validate_request(self, access_labels_data, request_user, is_group=False):
+    def validate_request(self, access_request_form, request_user, is_group=False):
         """Combines multiple access_labels.
         Args:
-            access_labels_data (array): Array of access lables types.
+            access_request_form (array): Array of access lables types.
             request_user (UserAccessMaping): Object of UserAccessMapping represents requested user.
         Returns:
             array (json objects): key value pair of access lable and it's access type.
@@ -40,16 +40,16 @@ class OpsgenieAccess(BaseEmailAccess):
         total_teams_list = helper.teams_list()
         if total_teams_list is None:
             raise Exception(constants.TEAM_LIST_ERROR)
-        for access_label_data in access_labels_data[0]["teams_list"]:
+        for access_label_data in json.loads(access_request_form.get("selected-opsgenie-teams")):
             if access_label_data not in total_teams_list:
                 raise Exception(constants.VALID_TEAM_REQUIRED_ERROR)
 
-            if access_labels_data[0]["UserType"] not in ("user", "team_admin"):
+            if access_request_form.get("opsgenie-access-level") not in ("user", "team_admin"):
                 raise Exception(constants.VALID_USER_TYPE_REQUIRED_ERROR)
 
             valid_access_label = {
                 "team": access_label_data,
-                "usertype": access_labels_data[0]["UserType"],
+                "usertype": access_request_form.get("opsgenie-access-level"),
             }
             valid_access_label_array.append(valid_access_label)
         return valid_access_label_array

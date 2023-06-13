@@ -26,6 +26,23 @@ class GCPAccess(BaseEmailAccess):
 
     group_access = "GroupAccess"
     urlpatterns = urls.urlpatterns
+    domain_groups = {}
+
+    @staticmethod
+    def get_domain_groups(gcp_domain, page_token=None):
+        if GCPAccess.domain_groups.get(gcp_domain):
+            return GCPAccess.domain_groups.get(gcp_domain)
+        groups = []
+        page_token = None
+        found_page_token = True
+        while found_page_token :
+            account_groups, page_token = helpers.get_gcp_groups(gcp_domain, page_token)
+            groups += account_groups
+            if page_token != None:
+                found_page_token = False
+        GCPAccess.domain_groups[gcp_domain] = groups
+        return GCPAccess.domain_groups.get(gcp_domain)
+
 
     def email_targets(self, user):
         """Returns email targets.

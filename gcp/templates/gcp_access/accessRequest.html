@@ -3,7 +3,6 @@
   var gcpSelectedList = {};
 
   function clearGCPGroups() {
-    $("#gcp-group-table").empty();
     removeAllGCPGroups();
     gcpSelectedList = {};
   }
@@ -128,25 +127,81 @@
     return $('#gcpDomain').val();
   }
 
-  function fetchGCPGroups(page_token = null) {
+  const gcpGroupPageChange = (page) => {
+    if(page !== 'None'){
+      fetchGCPGroups(get_gcp_group_search_val(), Number(page));
+    }
+  }
+
+  function searchGCPGroup(event, elem) {
+    if(event.key === "Enter") {
+      fetchGCPGroups($(elem).val(), undefined);
+    }
+  }
+
+  function get_gcp_group_search_val() {
+    return $("#gcpSearch").val();
+  }
+
+  function showGCPGroups(){
+     clearGCPGroups();
+     fetchGCPGroups();
+   }
+
+  function fetchGCPGroups(search=undefined, page=undefined) {
+    $('#gcpDomain').prop("disabled",true);
+    $('#gcpSearch').prop("disabled", true);
+    $("#selectAllGCPGroup").prop("disabled", true);
+
     let GCPDomain = getSelectedgcpDomain();
     clearGCPGroups();
-    marker=null;
     $.ajax({
       url: "/api/v1/gcp/domain/groups/",
-      data: {"gcp_domain": GCPDomain, "page_token": page_token},
+      data: {"gcp_domain": GCPDomain, "search": search, "page": page},
+      error: function (XMLHttpRequest, textStatus, errorThrown) {
+         const msg = XMLHttpRequest.responseJSON;
+         alert(msg["error"]);
+         showNotificiation("Failed", msg["error"]);
+         $('#gcpDomain').prop("disabled",false);
+         $('#gcpSearch').prop("disabled", false);
+         $("#selectAllGCPGroup").prop("disabled", false);
+       }
     }).done(function(data, statusText, xhr){
+      $("#gcp-group-table").empty();
       let rows = $.map(data["gcp_groups"], function(group, idx){
-        return `<tr onclick="handleGCPGroupSelection(this)" class="hover:bg-blue-50 hover:text-blue-700" group="${group}">
+        return `<tr onclick="handleGCPGroupSelection(this)" class="${gcpSelectedList[group]? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" group="${group}">
             <td class="relative w-12 px-6 sm:w-16 sm:px-8">
-              <input type="checkbox" id="gcp-checkbox-td" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGCPGroupSelectionCheckbox(this)"></input>
+              <input type="checkbox" id="gcp-checkbox-td" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGCPGroupSelectionCheckbox(this)" ${ gcpSelectedList[group]? "checked": ""}></input>
             </td>
-            <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900" id="gcp-description-td">${group}</td>
+            <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${gcpSelectedList[group]? "text-blue-600" : "text-gray-900"}" id="gcp-description-td">${group}</td>
           </tr>`
       });
 
-      $('#gcp-group-table').append(rows.join(""));
+      if(data["next_page"]) {
+        $("#gcpPaginationNav").removeClass("hidden");
+        $("#gcp_next_page").attr("onclick", `gcpGroupPageChange('${data["next_page"]}')`);
+      } else {
+        $("#gcpPaginationNav").removeClass("hidden");
+        $("#gcp_next_page").attr("onclick", `gcpGroupPageChange('None')`);
+      }
 
+      if(data["prev_page"]) {
+        $("#gcpPaginationNav").removeClass("hidden");
+        $("#gcp_prev_page").attr("onclick", `gcpGroupPageChange('${data["prev_page"]}')`);
+      } else {
+        $("#gcpPaginationNav").removeClass("hidden");
+        $("#gcp_prev_page").attr("onclick", `gcpGroupPageChange('None')`);
+      }
+
+      if(data["search_error"]) {
+        show_notification("No exact match found", data["search_error"]);
+      }
+      $("#gcpGroupsScrollBar").scrollTop(0);
+
+      $('#gcp-group-table').append(rows.join(""));
+      $('#gcpDomain').prop("disabled", false);
+      $('#gcpSearch').prop("disabled", false);
+      $("#selectAllGCPGroup").prop("disabled", false);
     })
   }
 </script>
@@ -154,7 +209,7 @@
 <div class="pt-4">
   <label for="gcpDomain" class="text-sm font-medium leading-5 text-gray-700">GCP Domain</label>
   <div class="mt-2">
-    <select onchange="fetchGCPGroups()" id="gcpDomain" name="gcp-domain" class="w-[460px] rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"required>
+    <select onchange="showGCPGroups()" id="gcpDomain" name="gcp-domain" class="w-[460px] rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"required>
       <option hidden disabled selected value="">Select</option>
       {% for each_account in each_access.accessRequestData.domains %}
       <option value="{{ each_account }}">{{ each_account }}</option>
@@ -168,7 +223,7 @@
     <div class="mt-4 flex flex-col">
       <div class="flex felx-row">
         <div class="flex-auto relative flex items-center">
-          <input type="text" name="gcpSearch" id="gcpSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search GCP groups">
+          <input disabled type="text" name="gcpSearch" id="gcpSearch" class="block w-full rounded-md border-gray-300 pr-12 shadow-sm focus:border-blue-600 focus:ring-blue-600 sm:text-sm" placeholder="Search GCP groups" onkeydown="searchGCPGroup(event, this)">
           <div class="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 0 24 24" class="text-gray-500 h-full" width="18px" fill="currentColor" aria-hidden="true">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
@@ -176,11 +231,11 @@
           </div>
         </div>
         <div class="flex-none flex">
-          <input type="checkbox" onclick="selectAllGCPGroupToggle(this)" name="select-all-gcp-group" id="selectAllGCPGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <input disabled type="checkbox" onclick="selectAllGCPGroupToggle(this)" name="select-all-gcp-group" id="selectAllGCPGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
           <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
         </div>
       </div>
-      <div class="h-80 ml-1 overflow-y-auto bg-white mt-6 rounded-md border-0 ring-1 ring-gray-200">
+      <div id="gcpGroupsScrollBar" class="h-80 ml-1 overflow-y-auto bg-white mt-6 rounded-md border-0 ring-1 ring-gray-200">
         <div class="px-4 sm:px-6 lg:px-8">
           <div class="flex flex-col">
             <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -191,6 +246,23 @@
 
                     </tbody>
                   </table>
+                  <nav id="gcpPaginationNav"
+                    class="hidden flex flex-shrink-0 px-4 items-center rounded-b-lg justify-between align-bottom border-t border-gray-200 bg-white pt-4 pb-4 sticky">
+                    <button type="button" id="gcp_prev_page"
+                      class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 sticky">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="rotate-180 fill-gray-400 mr-4" height="20" viewBox="0 -960 960 960" width="20">
+                        <path d="m691-265-68-67 100-100H103v-94h621L623-626l67-67 214 214-213 214Z"/>
+                      </svg>
+                      Previous
+                    </button>
+                    <button type="button" id="gcp_next_page"
+                      class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 sticky">
+                      Next
+                      <svg xmlns="http://www.w3.org/2000/svg" class="fill-gray-400 ml-4" height="20" viewBox="0 -960 960 960" width="20">
+                        <path d="m691-265-68-67 100-100H103v-94h621L623-626l67-67 214 214-213 214Z"/>
+                      </svg>
+                    </button>
+                  </nav>
                 </div>
               </div>
             </div>
