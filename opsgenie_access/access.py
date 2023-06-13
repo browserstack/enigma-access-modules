@@ -1,5 +1,5 @@
 from Access.base_email_access.access import BaseEmailAccess
-from . import helper, constants
+from . import helper, constants, urls
 import logging
 import json
 from django.template import loader
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class OpsgenieAccess(BaseEmailAccess):
     """Opsgenie Access module."""
 
-    urlpatterns = []
+    urlpatterns = urls.urlpatterns
 
     def can_auto_approve(self):
         """Checks if access can be auto approved or manual approval is needed.
@@ -236,19 +236,6 @@ class OpsgenieAccess(BaseEmailAccess):
         except Exception as e:
             logger.error("Exception while getting possible accesses: " + str(e))
             teams_list = {}, {}, {}
-
-    def access_request_data(self, request, is_group=False):
-        """Creates a dictionary of Opsgenie access.
-        Args:
-            request (dict): A request form representing the http form request.
-            is_group (bool, optional): whether the access is requested
-            for an Enigma Group. Defaults to False.
-        Returns:
-            dict: Dictionary of opsgenie access.
-        """
-        user_accesses = {}
-        user_accesses["opsgenie"] = self.__all_possible_accesses()
-        return user_accesses
 
     def verify_identity(self, request, email):
         """Verifying user Identity.
