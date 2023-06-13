@@ -1,7 +1,9 @@
 from . import helpers
 from django.http import JsonResponse
 from Access.paginator_decorators import paginator
+from django.contrib.auth.decorators import login_required
 
+@login_required
 @paginator
 def get_ssh_machines(request):
     try:
