@@ -85,11 +85,11 @@
   }
 
   const selectAllAWSGroupToggle = (elem) => {
-    if(elem.checked) {
-      selectAllAWSGroup();
-    } else {
-      removeAllAWSGroups();
-    }
+    // if(elem.checked) {
+    //   selectAllAWSGroup();
+    // } else {
+    //   removeAllAWSGroups();
+    // }
   }
 
   const removeAWSGroupSelection = (elem) => {
@@ -236,7 +236,7 @@
           </div>
         </div>
         <div class="flex-none flex">
-          <input disabled type="checkbox" onclick="selectAllAWSGroupToggle(this)" name="select-all-aws-group" id="selectAllAWSGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <input disabled type="checkbox" onclick="selectAllAWSGroupToggle(this)" name="select-all-aws-groups" id="selectAllAWSGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
           <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
         </div>
       </div>
