@@ -1,8 +1,9 @@
-<div class="form-group mt-5">
+<div class="form-group">
+  <hr class="my-8 w-3/4">
   <input type="hidden" name="modname" value="ssh">
   <label for="ssh_pub_key" class="block text-sm font-medium leading-5 text-gray-700">SSH Public Key(Only rsa format key)</label>
   <div class="mt-2">
-    <textarea type="text" name="ssh_pub_key" id="ssh_pub_key" class="block w-3/4 h-36 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6 sm:leading-6 sm:font-normal" placeholder="Paste your SSH Public Key. Run the command 'ssh-keygen -b 2048 -t rsa" required>{% if module.identity %} {{ module.identity.ssh_public_key }} {% endif %}</textarea>
+    <textarea type="text" name="ssh_pub_key" id="ssh_pub_key" class="block w-3/4 h-36 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Paste your SSH Public Key. Run the command 'ssh-keygen -b 2048 -t rsa" required>{% if module.identity %} {{ module.identity.ssh_public_key }} {% endif %}</textarea>
   </div>
   <div class="mt-2">
     <div class="rounded-md bg-blue-50 p-4 w-3/4">
