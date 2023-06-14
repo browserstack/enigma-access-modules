@@ -1,8 +1,9 @@
-<div class="form-group mt-5">
+<div class="form-group">
+  <hr class="my-8 w-3/4">
   <input type="hidden" name="modname" value="confluence_module">
   <label for="name" class="block text-sm font-medium leading-5 text-gray-700">Confluence ID</label>
   <div class="mt-2">
-    <input type="text" name="confluence_id" id="confluence_id" class="block w-3/4 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-base sm:leading-6 sm:font-normal" placeholder="Confluence ID" {% if module.identity %} value="{{ module.identity }}" {% endif %} required>
+    <input type="text" name="confluence_id" id="confluence_id" class="block w-3/4 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="Confluence ID" {% if module.identity.id %} value="{{ module.identity.id }}" {% endif %} required>
   </div>
   <div class="mt-2">
     <div class="rounded-md bg-blue-50 p-4 w-3/4">
