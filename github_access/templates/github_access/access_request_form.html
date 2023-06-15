@@ -1,13 +1,17 @@
 <script>
 
-  const githubSelectedList = {}
+  var githubSelectedList = {}
+  var githubDisabled = false
 
   const handleGithubRepoSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
   }
 
   const handleGithubReposelectionView = () => {
-    const finalCount = $('#github-repo-selection-table').children('tr').length;
+    let finalCount = $('#github-repo-selection-table').children('tr').length;
+    if(githubDisabled) {
+      finalCount = 'All';
+    }
 
     if(finalCount < 1) {
       $('#github-repo-selection-empty').show();
@@ -33,6 +37,26 @@
       $(elem).find('input').prop('checked', false);
       $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
       $(elem).children('td#github-description-td').removeClass('text-blue-600').addClass('text-gray-900');
+    }
+  };
+
+  const githubHandleDisableMode = () => {
+    githubSelectedList = {};
+    const repos = $('#github-repo-table').children('tr');
+    for(iter = 0; iter < repos.length; iter++) {
+      if (githubDisabled) {
+        $(repos[iter]).find('input').prop('checked', true);
+        $(repos[iter]).removeAttr("onclick");
+        $(repos[iter]).find('input').attr("disabled", true);
+        $(repos[iter]).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+        $(repos[iter]).children('td#github-description-td').removeClass('text-gray-900').addClass('text-blue-600');
+      } else {
+        $(repos[iter]).attr("onclick", "handleGithubReposelection(this)");
+        $(repos[iter]).find('input').attr("disabled", false);
+        $(repos[iter]).find('input').prop('checked', false);
+        $(repos[iter]).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+        $(repos[iter]).children('td#github-description-td').removeClass('text-blue-600').addClass('text-gray-900');
+      }
     }
   };
 
@@ -66,34 +90,42 @@
     handleGithubReposelectionView();
   };
 
-  const removeAllGithubRepos = () => {
+  const removeAllGithubRepos = (disabledState) => {
+    githubDisabled = disabledState;
     const repos = $('#github-repo-selection-table').children('tr');
-
     for(iter = 0; iter < repos.length; iter++) {
-      removeRepoSelectionSpanElem(repos[iter], $("#github-repo-table").find(`tr[repo_id="${$(repos[iter]).attr('repo_id')}"]`));
-    }
-    $("#selectAllGithubRepo").prop("checked", false);
-    updateSelectedGithubRepo();
-  };
-
-  const selectAllGithubRepo = () => {
-    const repos = $('#github-repo-table').children('tr');
-
-    for (iter = 0; iter < repos.length; iter++) {
-      if(!githubSelectedList[$(repos[iter]).attr('repo_id')]) {
-        addGithubReposelection(repos[iter]);
+      if($(repos[iter]).attr('selectAll')){
+        $(repos[iter]).remove();
+        $("#selectAllGithubRepo").prop("checked", false);
+      } else {
+        removeRepoSelectionSpanElem(repos[iter], $("#github-repo-table").find(`tr[repo_id="${$(repos[iter]).attr('repo_id')}"]`));
       }
     }
+    githubHandleDisableMode();
+    updateSelectedGithubRepo();
+    handleGithubReposelectionView();
+  };
+
+  const selectAllGithubRepo = (elem) => {
+    removeAllGithubRepos(true);
+    const selectionList = $('#github-repo-selection-table');
+    const newSpan = $("#github-repo-selection-row-template").clone(true, true);
+    newSpan.appendTo(selectionList);
+    newSpan.show();
+    const tableData = newSpan.children('td');
+    tableData[0].textContent = "All Repos Selected";
+    newSpan.attr("selectAll", true);
+    $(elem).attr("checked", true);
     updateSelectedGithubRepo();
   }
 
   const selectAllGithubRepoToggle = (elem) => {
-    // if(elem.checked) {
-    //   selectAllGithubRepo();
-    // } else {
-    //   removeAllGithubRepos();
-    // }
-    // updateSelectedGithubRepo();
+    if(elem.checked) {
+      selectAllGithubRepo(elem);
+    } else {
+      removeAllGithubRepos(false);
+    }
+    handleGithubReposelectionView();
   }
 
   const removeGithubReposelection = (elem) => {
@@ -103,8 +135,15 @@
 
   const removeGithubReposelectionUI = (elem) => {
     rightElem = elem.parentElement.parentElement;
-    $("#selectAllGithubRepo").prop("checked", false);
-    removeRepoSelectionSpanElem(rightElem, $("#github-repo-table").find(`tr[repo_id="${$(rightElem).attr('repo_id')}"]`));
+    if($(rightElem).attr("selectAll")){
+      $("#selectAllGithubRepo").prop("checked", false);
+      githubDisabled = false;
+      githubHandleDisableMode();
+      $(rightElem).remove();
+      handleGithubReposelectionView();
+    } else {
+      removeRepoSelectionSpanElem(rightElem, $("#github-repo-table").find(`tr[repo_id="${$(rightElem).attr('repo_id')}"]`));
+    }
     updateSelectedGithubRepo();
   };
 
@@ -129,6 +168,8 @@
   }
 
   function fetchGithubRepos(search=undefined, page=undefined) {
+    $("#selectAllGithubRepo").prop("disabled", true);
+    $("#githubsearch").prop("disabled", true);
     $.ajax({
       url: "/api/v1/github/repos/",
       data: {"search": search, "page": page},
@@ -177,6 +218,9 @@
       }
 
       $("#githubScrollBar").scrollTop(0)
+
+      $("#selectAllGithubRepo").prop("disabled", false);
+      $("#githubsearch").prop("disabled", false);
     });
   }
 
@@ -306,7 +350,7 @@
           </table>
       </div>
       <nav class="flex flex-shrink-0 px-4 items-center justify-between align-bottom border-t border-gray-200 pt-4 pb-4 hidden">
-        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllGithubRepos();">
+        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllGithubRepos(false);">
           Remove all
         </button>
       </nav>
