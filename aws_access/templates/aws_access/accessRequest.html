@@ -13,8 +13,10 @@
   }
 
   const handleAWSGroupSelectionView = () => {
-    const finalCount = $('#aws-group-selection-table').children('tr').length;
-
+    let finalCount = $('#aws-group-selection-table').children('tr').length;
+    if(awsDisabled) {
+      finalCount = 'All';
+    }
     if(finalCount < 1) {
       $('#aws-group-selection-empty').show();
       $('#aws-group-selection-list').hide();
@@ -49,11 +51,14 @@
         $(groups[iter]).find('input').prop('checked', true);
         $(groups[iter]).removeAttr("onclick");
         $(groups[iter]).find('input').attr("disabled", true);
+        $(groups[iter]).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+        $(groups[iter]).children('td#aws-description-td').removeClass('text-gray-900').addClass('text-blue-600');
       } else {
-        console.log("yes");
         $(groups[iter]).attr("onclick", "handleAWSGroupSelection(this)");
         $(groups[iter]).find('input').attr("disabled", false);
         $(groups[iter]).find('input').prop('checked', false);
+        $(groups[iter]).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+        $(groups[iter]).children('td#aws-description-td').removeClass('text-blue-600').addClass('text-gray-900');
       }
     }
   };
@@ -96,6 +101,7 @@
     }
     awsHandleDisableMode();
     updateSelectedAWSGroup();
+    handleAWSGroupSelectionView();
   };
 
   const selectAllAWSGroup = (elem) => {
@@ -104,7 +110,6 @@
     const newSpan = $("#aws-group-selection-row-template").clone(true, true);
     newSpan.appendTo(selectionList);
     newSpan.show();
-    console.log(newSpan)
     const tableData = newSpan.children('td');
     tableData[0].textContent = "All Groups Selected";
     newSpan.attr("selectAll", true);
@@ -133,6 +138,7 @@
       awsDisabled = false;
       awsHandleDisableMode();
       $(rightElem).remove();
+      handleAWSGroupSelectionView();
     } else {
       removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
     }
