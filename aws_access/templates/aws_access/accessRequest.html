@@ -104,7 +104,7 @@
     handleAWSGroupSelectionView();
   };
 
-  const selectAllAWSGroup = (elem) => {
+  const selectAllAWSGroup = () => {
     removeAllAWSGroups(true);
     const selectionList = $('#aws-group-selection-table');
     const newSpan = $("#aws-group-selection-row-template").clone(true, true);
@@ -113,13 +113,12 @@
     const tableData = newSpan.children('td');
     tableData[0].textContent = "All Groups Selected";
     newSpan.attr("selectAll", true);
-    $(elem).attr("checked", true);
     updateSelectedAWSGroup();
   }
 
   const selectAllAWSGroupToggle = (elem) => {
     if(elem.checked) {
-      selectAllAWSGroup(elem);
+      selectAllAWSGroup();
     } else {
       removeAllAWSGroups(false);
     }
