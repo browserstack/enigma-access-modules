@@ -1,6 +1,7 @@
 <script>
 
   var awsSelectedList = {}
+  var awsDisabled = false
 
   function clearAWSGroups() {
     removeAllAWSGroups();
@@ -40,6 +41,23 @@
     }
   };
 
+  const awsHandleDisableMode = () => {
+    awsSelectedList = {};
+    const groups = $('#aws-group-table').children('tr');
+    for (iter = 0; iter < groups.length; iter++) {
+      if (awsDisabled) {
+        $(groups[iter]).find('input').prop('checked', true);
+        $(groups[iter]).removeAttr("onclick");
+        $(groups[iter]).find('input').attr("disabled", true);
+      } else {
+        console.log("yes");
+        $(groups[iter]).attr("onclick", "handleAWSGroupSelection(this)");
+        $(groups[iter]).find('input').attr("disabled", false);
+        $(groups[iter]).find('input').prop('checked', false);
+      }
+    }
+  };
+
   const addAWSGroupSelection = (elem) => {
     const selectionList = $('#aws-group-selection-table');
     const newSpan = $("#aws-group-selection-row-template").clone(true, true);
@@ -65,31 +83,42 @@
     handleAWSGroupSelectionView();
   };
 
-  const removeAllAWSGroups = () => {
+  const removeAllAWSGroups = (disabledState) => {
+    awsDisabled = disabledState;
     const groups = $('#aws-group-selection-table').children('tr');
-    $("#selectAllAWSGroup").prop("checked", false);
     for(iter = 0; iter < groups.length; iter++) {
-      removeGroupSelectionSpanElem(groups[iter], $("#aws-group-table").find(`tr[group="${$(groups[iter]).attr('group')}"]`));
+      if($(groups[iter]).attr('selectAll')){
+        $(groups[iter]).remove();
+        $("#selectAllAWSGroup").prop("checked", false);
+      } else {
+        removeGroupSelectionSpanElem(groups[iter], $("#aws-group-table").find(`tr[group="${$(groups[iter]).attr('group')}"]`));
+      }
     }
+    awsHandleDisableMode();
     updateSelectedAWSGroup();
   };
 
-  const selectAllAWSGroup = () => {
-    const groups = $('#aws-group-table').children('tr');
-    for(iter = 0; iter < groups.length; iter++) {
-      if(!awsSelectedList[$(groups[iter]).attr("group")]) {
-        addAWSGroupSelection(groups[iter]);
-      }
-    }
+  const selectAllAWSGroup = (elem) => {
+    removeAllAWSGroups(true);
+    const selectionList = $('#aws-group-selection-table');
+    const newSpan = $("#aws-group-selection-row-template").clone(true, true);
+    newSpan.appendTo(selectionList);
+    newSpan.show();
+    console.log(newSpan)
+    const tableData = newSpan.children('td');
+    tableData[0].textContent = "All Groups Selected";
+    newSpan.attr("selectAll", true);
+    $(elem).attr("checked", true);
     updateSelectedAWSGroup();
   }
 
   const selectAllAWSGroupToggle = (elem) => {
-    // if(elem.checked) {
-    //   selectAllAWSGroup();
-    // } else {
-    //   removeAllAWSGroups();
-    // }
+    if(elem.checked) {
+      selectAllAWSGroup(elem);
+    } else {
+      removeAllAWSGroups(false);
+    }
+    handleAWSGroupSelectionView();
   }
 
   const removeAWSGroupSelection = (elem) => {
@@ -99,8 +128,14 @@
 
   const removeAWSGroupSelectionUI = (elem) => {
     rightElem = elem.parentElement.parentElement;
-    $("#selectAllAWSGroup").prop("checked", false);
-    removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
+    if($(rightElem).attr("selectAll")){
+      $("#selectAllAWSGroup").prop("checked", false);
+      awsDisabled = false;
+      awsHandleDisableMode();
+      $(rightElem).remove();
+    } else {
+      removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
+    }
     updateSelectedAWSGroup();
   };
 
@@ -170,11 +205,11 @@
 
       $("#aws-group-table").empty();
       let rows = $.map(data["AWSGroups"], function(group, idx){
-        return `<tr onclick="handleAWSGroupSelection(this)" class="${awsSelectedList[group]? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" group="${group}" >
+        return `<tr onclick="handleAWSGroupSelection(this)" class="(${(awsSelectedList[group] || awsDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" group="${group}" >
             <td class="relative w-12 px-6 sm:w-16 sm:px-8">
-              <input type="checkbox" id="aws-checkbox-td" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleAWSGroupSelectionCheckbox(this)" ${ awsSelectedList[group]? "checked": ""}></input>
+              <input type="checkbox" id="aws-checkbox-td" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleAWSGroupSelectionCheckbox(this)" ${(awsSelectedList[group] || awsDisabled)? "checked": ""}></input>
             </td>
-            <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${ awsSelectedList[group]? "text-blue-600" : "text-gray-900"}" id="aws-description-td">${group}</td>
+            <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${(awsSelectedList[group] || awsDisabled)? "text-blue-600" : "text-gray-900"}" id="aws-description-td">${group}</td>
           </tr>`
       });
 
@@ -304,7 +339,7 @@
           </table>
       </div>
       <nav class="flex flex-shrink-0 px-4 items-center justify-between align-bottom border-t border-gray-200 pt-4 pb-4 hidden">
-        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllAWSGroups();">
+        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllAWSGroups(false);">
           Remove all
         </button>
       </nav>
