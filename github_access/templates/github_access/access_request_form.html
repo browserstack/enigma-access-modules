@@ -106,7 +106,7 @@
     handleGithubReposelectionView();
   };
 
-  const selectAllGithubRepo = (elem) => {
+  const selectAllGithubRepo = () => {
     removeAllGithubRepos(true);
     const selectionList = $('#github-repo-selection-table');
     const newSpan = $("#github-repo-selection-row-template").clone(true, true);
@@ -115,13 +115,12 @@
     const tableData = newSpan.children('td');
     tableData[0].textContent = "All Repos Selected";
     newSpan.attr("selectAll", true);
-    $(elem).attr("checked", true);
     updateSelectedGithubRepo();
   }
 
   const selectAllGithubRepoToggle = (elem) => {
     if(elem.checked) {
-      selectAllGithubRepo(elem);
+      selectAllGithubRepo();
     } else {
       removeAllGithubRepos(false);
     }
