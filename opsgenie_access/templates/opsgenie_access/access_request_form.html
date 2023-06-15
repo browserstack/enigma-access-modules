@@ -83,12 +83,12 @@
   }
 
   const selectAllOpsgenieTeamToggle = (elem) => {
-    if(elem.checked) {
-      selectAllOpsgenieTeam();
-    } else {
-      removeAllOpsgenieTeams();
-    }
-    updateSelectedOpsgenieTeam();
+    // if(elem.checked) {
+    //   selectAllOpsgenieTeam();
+    // } else {
+    //   removeAllOpsgenieTeams();
+    // }
+    // updateSelectedOpsgenieTeam();
   }
 
   const removeOpsgenieTeamSelection = (elem) => {
@@ -219,7 +219,7 @@
           </div>
         </div>
         <div class="flex-none flex">
-          <input type="checkbox" onclick="selectAllOpsgenieTeamToggle(this)" name="select-all-opsgenie-team" id="selectAllOpsgenieTeam" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <input type="checkbox" onclick="selectAllOpsgenieTeamToggle(this)" name="select-all-opsgenie-teams" id="selectAllOpsgenieTeam" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
           <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
         </div>
       </div>
