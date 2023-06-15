@@ -227,9 +227,22 @@ class SSHAccess(BaseEmailAccess):
 
         valid_access_label_array = []
         access_level = access_request_form.get('sshAccessLevel')
-        selected_machines = json.loads(
-            access_request_form.get('selected-ssh-machine'))
-        other_machines = access_request_form.get('other_machines').split(',')
+        if not access_level:
+            return Exception("Vald access level of ssh machine required")
+
+        select_all_machines = access_request_form.get("select-all-ssh-machines") == "on"
+        selected_machines = []
+
+        if select_all_machines:
+            selected_machines = [f"{machine['name']} {machine['ip']}" for machine in helpers.get_all_ssh_machines()]
+        else:
+            selected_machines = json.loads(
+                access_request_form.get('selected-ssh-machine'))
+        other_machines = access_request_form.get('other_machines')
+        if other_machines:
+            other_machines = other_machines.split(',')
+        else:
+            other_machines = []
 
         if access_level == 'other':
             access_level = access_request_form.get('sshOtherAccessLevel')
