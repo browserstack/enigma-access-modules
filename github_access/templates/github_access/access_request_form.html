@@ -181,11 +181,11 @@
       $("#github-repo-table tr").remove();
       let rows = data["githubRepoList"].map(function(repo, idx){
         const repo_id = repo["orgName"]+"/"+repo["repoName"]
-        return `<tr onclick="handleGithubReposelection(this)" org_name="${repo["orgName"]}" repo_name="${repo["repoName"]}" repo_id="${repo_id}" class="${githubSelectedList[repo_id]? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" >
+        return `<tr onclick="handleGithubReposelection(this)" org_name="${repo["orgName"]}" repo_name="${repo["repoName"]}" repo_id="${repo_id}" class="${(githubSelectedList[repo_id] || githubDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" >
           <td id="github-checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
-            <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGithubRepoSelectionCheckbox(this)" ${ githubSelectedList[repo_id]? "checked": ""}></input>
+            <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGithubRepoSelectionCheckbox(this)" ${(githubSelectedList[repo_id] || githubDisabled)? "checked": ""}></input>
           </td>
-          <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${ githubSelectedList[repo_id]? "text-blue-600" : "text-gray-900"}" id="github-description-td">${repo_id}</td>
+          <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${(githubSelectedList[repo_id] || githubDisabled)? "text-blue-600" : "text-gray-900"}" id="github-description-td">${repo_id}</td>
         </tr>`
       })
 
