@@ -159,9 +159,10 @@
       url: "/api/v1/aws/account/groups/",
       data: {"AWSAccount": account, "search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
-        const msg = XMLHttpRequest.responseJSON;
-        alert(msg["error"]);
-        showNotificiation("Failed", msg["error"]);
+        if(XMLHttpRequest.responseJSON) {
+          const msg = XMLHttpRequest.responseJSON;
+          showNotificiation("failed", msg["error"]);
+        }
         $('#awsAccount').prop("disabled",false);
         $('#awsSearch').prop("disabled", false);
         $("#selectAllAWSGroup").prop("disabled", false);
@@ -199,7 +200,7 @@
       }
 
       if(data["search_error"]) {
-        show_notification("No exact match found", data["search_error"]);
+        showNotification("failed", data["search_error"], "No exact match found");
       }
       $("#awsGroupsScrollBar").scrollTop(0)
 
