@@ -2,6 +2,7 @@
 
   var githubSelectedList = {}
   var githubDisabled = false
+  SELECTION_LIMIT = 25
 
   const handleGithubRepoSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
@@ -125,6 +126,7 @@
       removeAllGithubRepos(false);
     }
     handleGithubReposelectionView();
+    $('#max-repository-selected').hide();
   }
 
   const removeGithubReposelection = (elem) => {
@@ -144,16 +146,34 @@
       removeRepoSelectionSpanElem(rightElem, $("#github-repo-table").find(`tr[repo_id="${$(rightElem).attr('repo_id')}"]`));
     }
     updateSelectedGithubRepo();
+    $('#max-repository-selected').hide();
   };
+
+  const findSelectedListLength = () => {
+    let count = 0;
+    Object.values(githubSelectedList).forEach(val => {
+      if(val) count++;
+    })
+    return count;
+  }
 
   const handleGithubReposelection = (elem) => {
     if(githubDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
+      if(findSelectedListLength() === SELECTION_LIMIT) {
+        $('#max-repository-selected').show();
+        return;
+      }
       addGithubReposelection(elem);
     } else {
       removeGithubReposelection(elem);
     }
     updateSelectedGithubRepo();
+    if(findSelectedListLength() === SELECTION_LIMIT) {
+      $('#max-repository-selected').show();
+    } else {
+      $('#max-repository-selected').hide();
+    }
   };
 
   function updateSelectedGithubRepo() {
@@ -175,8 +195,7 @@
       data: {"search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
         const msg = XMLHttpRequest.responseJSON;
-        alert(msg["error"]);
-        showNotificiation("Failed", msg["error"]);
+        showNotification("failed", msg["error"]);
       }
     }).done(function(data, statusText, xhr){
       $("#github-repo-table tr").remove();
@@ -213,8 +232,7 @@
       }
 
       if(data["search_error"]) {
-        alert(data["search_error"])
-        showNotificiation(data["search_error"])
+        showNotification("failed", data["search_error"])
       }
 
       $("#githubScrollBar").scrollTop(0)
@@ -266,6 +284,22 @@
       <option value="admin">admin</option>
       <option value="merge">push + merge</option>
     </select>
+  </div>
+</div>
+
+<div id="max-repository-selected" class="hidden mt-5 rounded-md bg-yellow-50 p-4">
+  <div class="flex">
+    <div class="flex-shrink-0">
+      <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <div class="ml-3">
+      <div class="text-yellow-700 text-[14px] font-[400] leading-[20px]">
+      <span class="text-[14px] font-[500] text-yellow-800">Max number of repository selected - </span>
+      Deselect some selections or Submit request to select more repositories.
+      </div>
+    </div>
   </div>
 </div>
 
