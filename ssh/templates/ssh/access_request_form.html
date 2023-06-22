@@ -2,6 +2,7 @@
 
   var sshSelectedList = {}
   var sshDisabled = false
+  const SELECTION_LIMIT = 20
 
   const handleSSHMachineSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
@@ -122,6 +123,7 @@
       removeAllSSHMachines(false);
     }
     handleSSHMachineSelectionView();
+    $('#max-machines-selected-warning').hide();
   }
 
   const removeSSHMachineSelection = (elem) => {
@@ -142,16 +144,34 @@
       removeSSHMachineSelectionSpanElem(rightElem, $("#ssh-machine-table").find(`tr[machine_ip="${$(rightElem).attr('machine_ip')}"]`));
     }
     updateSelectedSSHMachine();
+    $('#max-machines-selected-warning').hide();
   };
+
+  const findSshSelectedListLength = () => {
+    let count = 0;
+    Object.values(sshSelectedList).forEach(val => {
+      if(val) count++;
+    })
+    return count;
+  }
 
   const handleSSHMachineSelection = (elem) => {
     if(sshDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
+      if(findSshSelectedListLength() === SELECTION_LIMIT) {
+        $('#max-machines-selected-warning').show();
+        return;
+      }
       addSSHMachineSelection(elem);
     } else {
       removeSSHMachineSelection(elem);
     }
     updateSelectedSSHMachine();
+    if(findSshSelectedListLength() === SELECTION_LIMIT) {
+      $('#max-machines-selected-warning').show();
+    } else {
+      $('#max-machines-selected-warning').hide();
+    }
   };
 
   function updateSelectedSSHMachine() {
@@ -255,6 +275,7 @@
 
 
 </script>
+{% load reusable_components %}
 
 <div class="pt-4">
   <label for="sshaccess" class="text-sm font-medium leading-5 text-gray-700">Access Level:</label>
@@ -273,6 +294,11 @@
 
   </div>
 </div>
+
+<div id="max-machines-selected-warning" class="hidden">
+  {% get_error_panel_with_message "Max number of ssh machines selected" "Deselect some selections or Submit request to select more machines." %}
+</div>
+
 <h1 class="pt-5 text-sm text-gray-900">Ssh machines that you can select</h1>
 <div class="grid grid-cols-2 gap-4">
   <div class="flex-col">
