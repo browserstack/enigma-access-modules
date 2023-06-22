@@ -133,9 +133,10 @@
       url: "/api/v1/github/repos/",
       data: {"search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
-        const msg = XMLHttpRequest.responseJSON;
-        alert(msg["error"]);
-        showNotificiation("Failed", msg["error"]);
+        if(XMLHttpRequest) {
+          const msg = XMLHttpRequest.responseJSON;
+          showNotificiation("failed", msg["error"]);
+        }
       }
     }).done(function(data, statusText, xhr){
       $("#github-repo-table tr").remove();
@@ -172,8 +173,7 @@
       }
 
       if(data["search_error"]) {
-        alert(data["search_error"])
-        showNotificiation(data["search_error"])
+        showNotificiation("failed", data["search_error"])
       }
 
       $("#githubScrollBar").scrollTop(0)
