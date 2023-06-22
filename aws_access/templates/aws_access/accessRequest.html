@@ -2,6 +2,7 @@
 
   var awsSelectedList = {}
   var awsDisabled = false
+  const SELECTION_LIMIT = 20
 
   function clearAWSGroups() {
     removeAllAWSGroups();
@@ -123,6 +124,7 @@
       removeAllAWSGroups(false);
     }
     handleAWSGroupSelectionView();
+    $('#max-groups-selected-warning').hide();
   }
 
   const removeAWSGroupSelection = (elem) => {
@@ -142,16 +144,34 @@
       removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
     }
     updateSelectedAWSGroup();
+    $('#max-groups-selected-warning').hide();
   };
+
+  const findAWSSelectedListLength = () => {
+    let count = 0;
+    Object.values(awsSelectedList).forEach(val => {
+      if(val) count++;
+    })
+    return count;
+  }
 
   const handleAWSGroupSelection = (elem) => {
     if(awsDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
+      if(findAWSSelectedListLength() === SELECTION_LIMIT) {
+        $('#max-groups-selected-warning').show();
+        return;
+      }
       addAWSGroupSelection(elem);
     } else {
       removeAWSGroupSelection(elem);
     }
     updateSelectedAWSGroup();
+    if(findAWSSelectedListLength() === SELECTION_LIMIT) {
+      $('#max-groups-selected-warning').show();
+    } else {
+      $('#max-groups-selected-warning').hide();
+    }
   };
 
   function updateSelectedAWSGroup() {
@@ -251,6 +271,7 @@
     })
   }
 </script>
+{% load reusable_components %}
 
 <div class="pt-4">
   <label for="awsAccount" class="text-sm font-medium leading-5 text-gray-700">AWS Account</label>
@@ -263,6 +284,11 @@
     </select>
   </div>
 </div>
+
+<div id="max-groups-selected-warning" class="hidden">
+  {% get_error_panel_with_message "Max number of groups selected" "Deselect some selections or Submit request to select more groups." %}
+</div>
+
 <h1 class="pt-5 text-sm text-gray-900">AWS groups that you should be a part of</h1>
 <div class="grid grid-cols-2 gap-4">
   <div class="flex-col">
