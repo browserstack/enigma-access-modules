@@ -2,7 +2,7 @@
 
   var opsgenieSelectedList = {}
   var opsgenieDisabled = false
-  const SELECTION_LIMIT = 20
+  const OPSGENIE_TEAM_SELECTION_LIMIT = 20
 
   const handleOpsgenieTeamSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
@@ -102,6 +102,7 @@
     opsgenieHandleDisableMode();
     updateSelectedOpsgenieTeam();
     handleOpsgenieTeamSelectionView();
+    $('#max-team-selected-warning').hide();
   };
 
   const selectAllOpsgenieTeam = () => {
@@ -123,7 +124,6 @@
       removeAllOpsgenieTeams(false);
     }
     handleOpsgenieTeamSelectionView();
-    $('#max-team-selected-warning').hide();
   }
 
   const removeOpsgenieTeamSelection = (elem) => {
@@ -157,7 +157,7 @@
   const handleOpsgenieTeamSelection = (elem) => {
     if(opsgenieDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
-      if(findOpsgenieSelectedListLength() === SELECTION_LIMIT) {
+      if(findOpsgenieSelectedListLength() === OPSGENIE_TEAM_SELECTION_LIMIT) {
         $('#max-team-selected-warning').show();
         return;
       }
@@ -166,7 +166,7 @@
       removeOpsgenieTeamSelection(elem);
     }
     updateSelectedOpsgenieTeam();
-    if(findOpsgenieSelectedListLength() === SELECTION_LIMIT) {
+    if(findOpsgenieSelectedListLength() === OPSGENIE_TEAM_SELECTION_LIMIT) {
       $('#max-team-selected-warning').show();
     } else {
       $('#max-team-selected-warning').hide();
