@@ -2,7 +2,7 @@
 
   var sshSelectedList = {}
   var sshDisabled = false
-  const SELECTION_LIMIT = 20
+  const SSH_MACHINE_SELECTION_LIMIT = 20
 
   const handleSSHMachineSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
@@ -102,6 +102,7 @@
     SSHMachineHandleDisableMode();
     updateSelectedSSHMachine();
     handleSSHMachineSelectionView();
+    $('#max-machines-selected-warning').hide();
   };
 
   const selectAllSSHMachines = () => {
@@ -123,7 +124,6 @@
       removeAllSSHMachines(false);
     }
     handleSSHMachineSelectionView();
-    $('#max-machines-selected-warning').hide();
   }
 
   const removeSSHMachineSelection = (elem) => {
@@ -158,7 +158,7 @@
   const handleSSHMachineSelection = (elem) => {
     if(sshDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
-      if(findSshSelectedListLength() === SELECTION_LIMIT) {
+      if(findSshSelectedListLength() === SSH_MACHINE_SELECTION_LIMIT) {
         $('#max-machines-selected-warning').show();
         return;
       }
@@ -167,7 +167,7 @@
       removeSSHMachineSelection(elem);
     }
     updateSelectedSSHMachine();
-    if(findSshSelectedListLength() === SELECTION_LIMIT) {
+    if(findSshSelectedListLength() === SSH_MACHINE_SELECTION_LIMIT) {
       $('#max-machines-selected-warning').show();
     } else {
       $('#max-machines-selected-warning').hide();
