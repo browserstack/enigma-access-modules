@@ -2,7 +2,7 @@
 
   var gcpSelectedList = {};
   var gcpDisabled = false;
-  const SELECTION_LIMIT = 20;
+  const GCP_GROUP_SELECTION_LIMIT = 20;
 
   function clearGCPGroups() {
     removeAllGCPGroups();
@@ -105,6 +105,7 @@
     gcpHandleDisableMode();
     updateSelectedGCPGroup();
     handleGCPGroupSelectionView();
+    $('#max-gcp-group-selected-warning').hide();
   };
 
   const selectAllGCPGroup = () => {
@@ -134,7 +135,6 @@
       removeAllGCPGroups(false);
     }
     handleGCPGroupSelectionView();
-    $('#max-group-selected-warning').hide();
   }
 
   const removeGCPGroupSelection = (elem) => {
@@ -153,7 +153,7 @@
       removeGroupSelectionSpanElem(rightElem, $("#gcp-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
     }
     updateSelectedGCPGroup();
-    $('#max-group-selected-warning').hide();
+    $('#max-gcp-group-selected-warning').hide();
   };
 
   const findGcpSelectedListLength = () => {
@@ -167,8 +167,8 @@
   const handleGCPGroupSelection = (elem) => {
     if(gcpDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
-      if(findGcpSelectedListLength() === SELECTION_LIMIT) {
-        $('#max-group-selected-warning').show();
+      if(findGcpSelectedListLength() === GCP_GROUP_SELECTION_LIMIT) {
+        $('#max-gcp-group-selected-warning').show();
         return;
       }
       addGCPGroupSelection(elem);
@@ -176,10 +176,10 @@
       removeGCPGroupSelection(elem);
     }
     updateSelectedGCPGroup();
-    if(findGcpSelectedListLength() === SELECTION_LIMIT) {
-      $('#max-group-selected-warning').show();
+    if(findGcpSelectedListLength() === GCP_GROUP_SELECTION_LIMIT) {
+      $('#max-gcp-group-selected-warning').show();
     } else {
-      $('#max-group-selected-warning').hide();
+      $('#max-gcp-group-selected-warning').hide();
     }
   };
 
@@ -229,8 +229,10 @@
       url: "/api/v1/gcp/domain/groups",
       data: {"gcp_domain": GCPDomain, "search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
-         const msg = XMLHttpRequest.responseJSON;
-         showNotification("failed", msg["error"]);
+        if(XMLHttpRequest.responseJSON) {
+          const msg = XMLHttpRequest.responseJSON;
+          showNotification("failed", msg["error"]);
+        }
          $('#gcpDomain').prop("disabled",false);
          $('#gcpSearch').prop("disabled", false);
          $("#selectAllGCPGroup").prop("disabled", false);
@@ -263,7 +265,7 @@
       }
 
       if(data["search_error"]) {
-        showNotification("failed", "No exact match found", data["search_error"]);
+        showNotification("failed", data["search_error"], "No exact match found");
       }
       $("#gcpGroupsScrollBar").scrollTop(0);
 
@@ -288,7 +290,7 @@
   </div>
 </div>
 
-<div id="max-group-selected-warning" class="hidden">
+<div id="max-gcp-group-selected-warning" class="hidden">
   {% get_error_panel_with_message "Max number of GCP groups selected" "Deselect some selections or Submit request to select more groups." %}
 </div>
 
