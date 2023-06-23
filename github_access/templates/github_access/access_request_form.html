@@ -2,7 +2,7 @@
 
   var githubSelectedList = {}
   var githubDisabled = false
-  const SELECTION_LIMIT = 20
+  const GITHUB_REPO_SELECTION_LIMIT = 20
 
   const handleGithubRepoSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
@@ -105,6 +105,7 @@
     githubHandleDisableMode();
     updateSelectedGithubRepo();
     handleGithubReposelectionView();
+    $('#max-repository-selected-warning').hide();
   };
 
   const selectAllGithubRepo = () => {
@@ -126,7 +127,6 @@
       removeAllGithubRepos(false);
     }
     handleGithubReposelectionView();
-    $('#max-repository-selected-warning').hide();
   }
 
   const removeGithubReposelection = (elem) => {
@@ -149,7 +149,7 @@
     $('#max-repository-selected-warning').hide();
   };
 
-  const findSelectedListLength = () => {
+  const findGithubSelectedListLength = () => {
     let count = 0;
     Object.values(githubSelectedList).forEach(val => {
       if(val) count++;
@@ -160,7 +160,7 @@
   const handleGithubReposelection = (elem) => {
     if(githubDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
-      if(findSelectedListLength() === SELECTION_LIMIT) {
+      if(findGithubSelectedListLength() === GITHUB_REPO_SELECTION_LIMIT) {
         $('#max-repository-selected-warning').show();
         return;
       }
@@ -169,7 +169,7 @@
       removeGithubReposelection(elem);
     }
     updateSelectedGithubRepo();
-    if(findSelectedListLength() === SELECTION_LIMIT) {
+    if(findGithubSelectedListLength() === GITHUB_REPO_SELECTION_LIMIT) {
       $('#max-repository-selected-warning').show();
     } else {
       $('#max-repository-selected-warning').hide();
