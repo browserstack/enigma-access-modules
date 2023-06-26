@@ -265,22 +265,30 @@ class AWSAccess(BaseEmailAccess):
         Returns:
             arr: Array of the access labels for the request access.
         """
+        aws_groups = []
         if not access_request_form.get(
             "aws-account"
         ) and not helpers.aws_account_exists(access_request_form.get("aws-account")):
             raise AWSModuleValidationError(
                 constants.ERROR_MESSAGES["valid_account_required"]
             )
-        if not access_request_form.get("selected-aws-groups"):
+
+        aws_account = access_request_form.get("aws-account")
+        aws_groups = access_request_form.get("selected-aws-groups")
+        selected_all = access_request_form.get("select-all-aws-groups") == "on"
+
+        if selected_all:
+            aws_groups = [group_details["GroupName"] for group_details in AWSAccess.get_account_groups(aws_account)]
+        elif not aws_groups or not json.loads(aws_groups):
             raise AWSModuleValidationError(constants.ERROR_MESSAGES["select_group"])
 
-        aws_groups = json.loads(access_request_form.get("selected-aws-groups"))
-        aws_account = access_request_form.get("aws-account")
+        if not selected_all:
+            aws_groups = json.loads(aws_groups)
 
-        if type(aws_groups) != list:
-            raise AWSModuleValidationError(
-                constants.ERROR_MESSAGES["valid_groups_required"]
-            )
+            if type(aws_groups) != list:
+                raise AWSModuleValidationError(
+                    constants.ERROR_MESSAGES["valid_groups_required"]
+                )
 
         valid_access_label_array = []
 

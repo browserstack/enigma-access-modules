@@ -91,7 +91,7 @@
       removeAllGCPGroups();
     }
   }
-  
+
   const removeGCPGroupSelection = (elem) => {
     $("#selectAllGCPGroup").prop("checked", false);
     removeGroupSelectionSpanElem($("#gcp-group-selection-table").find(`tr[group="${$(elem).attr('group')}"]`),elem);
@@ -159,9 +159,10 @@
       url: "/api/v1/gcp/domain/groups/",
       data: {"gcp_domain": GCPDomain, "search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
-         const msg = XMLHttpRequest.responseJSON;
-         alert(msg["error"]);
-         showNotificiation("Failed", msg["error"]);
+        if(XMLHttpRequest.responseJSON) {
+          const msg = XMLHttpRequest.responseJSON;
+          showNotificiation("failed", msg["error"]);
+        }
          $('#gcpDomain').prop("disabled",false);
          $('#gcpSearch').prop("disabled", false);
          $("#selectAllGCPGroup").prop("disabled", false);
@@ -194,7 +195,7 @@
       }
 
       if(data["search_error"]) {
-        show_notification("No exact match found", data["search_error"]);
+        showNotification("failed", data["search_error"], "No exact match found");
       }
       $("#gcpGroupsScrollBar").scrollTop(0);
 

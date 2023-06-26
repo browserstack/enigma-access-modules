@@ -26,6 +26,21 @@ def _get_inventory_file_path():
     raise SSHModuleError("Inventory file path not initialized")
 
 
+def get_all_ssh_machines():
+    all_machines = []
+    for key, value in ssh_machine_list.items():
+        if (key == "hostname" and value == "ip"):
+            continue
+
+        all_machines.append({
+            "name": key,
+            "tagname": key,
+            "ip": value
+        })
+
+    return all_machines
+
+
 def init():
     """ Initialize the ssh machine list """
     inventory_path = ""
