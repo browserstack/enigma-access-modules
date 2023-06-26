@@ -1,6 +1,8 @@
 <script>
 
   var gcpSelectedList = {};
+  var gcpDisabled = false;
+  const GCP_GROUP_SELECTION_LIMIT = 20;
 
   function clearGCPGroups() {
     removeAllGCPGroups();
@@ -12,7 +14,10 @@
   }
 
   const handleGCPGroupSelectionView = () => {
-    const finalCount = $('#gcp-group-selection-table').children('tr').length;
+    let finalCount = $('#gcp-group-selection-table').children('tr').length;
+    if(gcpDisabled) {
+      finalCount = 'All';
+    }
 
     if(finalCount < 1) {
       $('#gcp-group-selection-empty').show();
@@ -37,6 +42,26 @@
       $(elem).find('input').prop('checked', false);
       $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
       $(elem).children('td#gcp-description-td').removeClass('text-blue-600').addClass('text-gray-900');
+    }
+  };
+
+  const gcpHandleDisableMode = () => {
+    gcpSelectedList = {};
+    const groups = $('#gcp-group-table').children('tr');
+    for(iter = 0; iter < groups.length; iter++) {
+      if (gcpDisabled) {
+        $(groups[iter]).find('input').prop('checked', true);
+        $(groups[iter]).removeAttr("onclick");
+        $(groups[iter]).find('input').attr("disabled", true);
+        $(groups[iter]).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+        $(groups[iter]).children('td#gcp-description-td').removeClass('text-gray-900').addClass('text-blue-600');
+      } else {
+        $(groups[iter]).attr("onclick", "handleGCPGroupSelection(this)");
+        $(groups[iter]).find('input').attr("disabled", false);
+        $(groups[iter]).find('input').prop('checked', false);
+        $(groups[iter]).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+        $(groups[iter]).children('td#gcp-description-td').removeClass('text-blue-600').addClass('text-gray-900');
+      }
     }
   };
 
@@ -65,22 +90,33 @@
     handleGCPGroupSelectionView();
   };
 
-  const removeAllGCPGroups = () => {
+  const removeAllGCPGroups = (disabledState) => {
+    gcpDisabled = disabledState;
     const groups = $('#gcp-group-selection-table').children('tr');
-    $("#selectAllGCPGroup").prop("checked", false);
+
     for(iter = 0; iter < groups.length; iter++) {
-      removeGroupSelectionSpanElem(groups[iter], $("#gcp-group-table").find(`tr[group="${$(groups[iter]).attr('group')}"]`));
+      if($(groups[iter]).attr('selectAll')) {
+        $(groups[iter]).remove();
+        $("#selectAllGCPGroup").prop("checked", false);
+      } else {
+        removeGroupSelectionSpanElem(groups[iter], $("#gcp-group-table").find(`tr[group="${$(groups[iter]).attr('group')}"]`));
+      }
     }
+    gcpHandleDisableMode();
     updateSelectedGCPGroup();
+    handleGCPGroupSelectionView();
+    $('#max-gcp-group-selected-warning').hide();
   };
 
   const selectAllGCPGroup = () => {
-    const groups = $('#gcp-group-table').children('tr');
-    for(iter = 0; iter < groups.length; iter++) {
-      if(!gcpSelectedList[$(groups[iter]).attr('group')]) {
-        addGCPGroupSelection(groups[iter]);
-      }
-    }
+    removeAllGCPGroups(true);
+    const selectionList = $('#gcp-group-selection-table');
+    const newSpan = $("#gcp-group-selection-row-template").clone(true, true);
+    newSpan.appendTo(selectionList);
+    newSpan.show();
+    const tableData = newSpan.children('td');
+    tableData[0].textContent = "All Groups Selected";
+    newSpan.attr("selectAll", true);
     updateSelectedGCPGroup();
   }
 
@@ -88,8 +124,9 @@
     if(elem.checked) {
       selectAllGCPGroup();
     } else {
-      removeAllGCPGroups();
+      removeAllGCPGroups(false);
     }
+    handleGCPGroupSelectionView();
   }
 
   const removeGCPGroupSelection = (elem) => {
@@ -99,25 +136,51 @@
 
   const removeGCPGroupSelectionUI = (elem) => {
     rightElem = elem.parentElement.parentElement;
-    $("#selectAllGCPGroup").prop("checked", false);
-    removeGroupSelectionSpanElem(rightElem, $("#gcp-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
+    if($(rightElem).attr("selectAll")) {
+      $("#selectAllGCPGroup").prop("checked", false);
+      gcpDisabled = false;
+      gcpHandleDisableMode();
+      $(rightElem).remove();
+      handleGCPGroupSelectionView();
+    } else {
+      removeGroupSelectionSpanElem(rightElem, $("#gcp-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
+    }
     updateSelectedGCPGroup();
+    $('#max-gcp-group-selected-warning').hide();
   };
 
+  const findGcpSelectedListLength = () => {
+    let count = 0;
+    Object.values(gcpSelectedList).forEach(val => {
+      if(val) count++;
+    })
+    return count;
+  }
+
   const handleGCPGroupSelection = (elem) => {
+    if(gcpDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
+      if(findGcpSelectedListLength() === GCP_GROUP_SELECTION_LIMIT) {
+        $('#max-gcp-group-selected-warning').show();
+        return;
+      }
       addGCPGroupSelection(elem);
     } else {
       removeGCPGroupSelection(elem);
     }
     updateSelectedGCPGroup();
+    if(findGcpSelectedListLength() === GCP_GROUP_SELECTION_LIMIT) {
+      $('#max-gcp-group-selected-warning').show();
+    } else {
+      $('#max-gcp-group-selected-warning').hide();
+    }
   };
 
   function updateSelectedGCPGroup() {
     const gcp_groups = $('#gcp-group-selection-table').children('tr');
     const groups = [];
     for(iter = 0; iter < gcp_groups.length; iter++) {
-      groups.push($(gcp_groups[iter].attr("group")));
+      groups.push($(gcp_groups[iter]).attr("group"));
     }
 
     $('#selected-gcp-groups').val(JSON.stringify(groups));
@@ -154,14 +217,14 @@
     $("#selectAllGCPGroup").prop("disabled", true);
 
     let GCPDomain = getSelectedgcpDomain();
-    clearGCPGroups();
+
     $.ajax({
-      url: "/api/v1/gcp/domain/groups/",
+      url: "/api/v1/gcp/domain/groups",
       data: {"gcp_domain": GCPDomain, "search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
         if(XMLHttpRequest.responseJSON) {
           const msg = XMLHttpRequest.responseJSON;
-          showNotificiation("failed", msg["error"]);
+          showNotification("failed", msg["error"]);
         }
          $('#gcpDomain').prop("disabled",false);
          $('#gcpSearch').prop("disabled", false);
@@ -170,9 +233,9 @@
     }).done(function(data, statusText, xhr){
       $("#gcp-group-table").empty();
       let rows = $.map(data["gcp_groups"], function(group, idx){
-        return `<tr onclick="handleGCPGroupSelection(this)" class="${gcpSelectedList[group]? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" group="${group}">
+        return `<tr onclick="handleGCPGroupSelection(this)" class="${(gcpSelectedList[group] || gcpDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" group="${group}">
             <td class="relative w-12 px-6 sm:w-16 sm:px-8">
-              <input type="checkbox" id="gcp-checkbox-td" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGCPGroupSelectionCheckbox(this)" ${ gcpSelectedList[group]? "checked": ""}></input>
+              <input type="checkbox" id="gcp-checkbox-td" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleGCPGroupSelectionCheckbox(this)" ${ (gcpSelectedList[group] || gcpDisabled)? "checked": ""}></input>
             </td>
             <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${gcpSelectedList[group]? "text-blue-600" : "text-gray-900"}" id="gcp-description-td">${group}</td>
           </tr>`
@@ -206,6 +269,7 @@
     })
   }
 </script>
+{% load reusable_components %}
 
 <div class="pt-4">
   <label for="gcpDomain" class="text-sm font-medium leading-5 text-gray-700">GCP Domain</label>
@@ -218,6 +282,11 @@
     </select>
   </div>
 </div>
+
+<div id="max-gcp-group-selected-warning" class="hidden">
+  {% get_error_panel_with_message "Max number of GCP groups selected" "Deselect some selections or Submit request to select more groups." %}
+</div>
+
 <h1 class="pt-5 text-sm text-gray-900">GCP groups that you should be a part of</h1>
 <div class="grid grid-cols-2 gap-4">
   <div class="flex-col">
@@ -232,7 +301,7 @@
           </div>
         </div>
         <div class="flex-none flex">
-          <input disabled type="checkbox" onclick="selectAllGCPGroupToggle(this)" name="select-all-gcp-group" id="selectAllGCPGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <input disabled type="checkbox" onclick="selectAllGCPGroupToggle(this)" name="select-all-gcp-groups" id="selectAllGCPGroup" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
           <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
         </div>
       </div>
@@ -300,7 +369,7 @@
           </table>
       </div>
       <nav class="flex flex-shrink-0 px-4 items-center justify-between align-bottom border-t border-gray-200 pt-4 pb-4 hidden">
-        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllGCPGroups();">
+        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllGCPGroups(false);">
           Remove all
         </button>
       </nav>

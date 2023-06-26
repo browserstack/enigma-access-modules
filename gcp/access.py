@@ -122,17 +122,23 @@ class GCPAccess(BaseEmailAccess):
                 constants.VALID_DOMAIN_REQUIRED_ERROR
             )
 
-        gcp_groups = json.loads(access_request_form.get("selected-gcp-groups"))
         gcp_domain = access_request_form.get("gcp-domain")
+        gcp_groups = access_request_form.get("selected-gcp-groups")
+        select_all_groups = access_request_form.get("select-all-gcp-groups") == "on"
 
-        if not access_request_form.get("selected-gcp-groups") or len(gcp_groups) <= 0:
+        if select_all_groups:
+            gcp_groups = GCPAccess.get_domain_groups(gcp_domain)
+        elif not gcp_groups or not json.loads(gcp_groups):
             raise GCPModuleValidationError(
                 constants.VALID_SELECT_GROUP_ERROR)
 
-        if type(gcp_groups) != list:
-            raise GCPModuleValidationError(
-                constants.VALID_GROUP_REQUIRED_ERROR
-            )
+        if not select_all_groups:
+            gcp_groups = json.loads(gcp_groups)
+
+            if type(gcp_groups) != list:
+                raise GCPModuleValidationError(
+                    constants.VALID_GROUP_REQUIRED_ERROR
+                )
 
         valid_access_label_array = []
         for group in gcp_groups:
