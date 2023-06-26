@@ -239,3 +239,10 @@ def add_user_to_team(user_name, user_email, team, role):
     except Exception as e:
         logger.exception("Could not add user to opsgenie due to exception: " + str(e))
         return False, "Could not add user to opsgenie"
+
+def check_team_exist(team):
+    all_teams_list = teams_list()
+    if team in all_teams_list:
+        return True
+
+    return False
