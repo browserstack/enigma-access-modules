@@ -228,10 +228,23 @@ class GithubAccess(BaseEmailAccess):
 
     def validate_request(self, access_request_form, request_user, is_group=False):
         valid_access_label_array = []
-        repos = json.loads(access_request_form.get('selected-github-repos'))
+        repos = access_request_form.get('selected-github-repos')
+        select_all_repos = access_request_form.get('select-all-github-repos') == 'on'
 
-        if len(repos) == 0:
+        if select_all_repos:
+            all_repos = get_org_repo_list()
+            repos = [ f"{repo['orgName']}/{repo['repoName']}" for repo in all_repos]
+        elif not repos or not json.loads(repos):
             raise Exception(constants.SELECT_REPO_ERROR)
+
+        if not access_request_form.get("githubAccessLabel"):
+            raise Exception(constants.SELECT_ACCESS_LEVEL_ERROR)
+
+        if not select_all_repos:
+            repos = json.loads(repos)
+
+        if type(repos) != list:
+            raise Exception(constants.VALID_REPOS_ERROR)
 
         for repo_name in repos:
             access_level = access_request_form.get("githubAccessLabel")
