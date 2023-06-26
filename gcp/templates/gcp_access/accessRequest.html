@@ -2,7 +2,7 @@
 
   var gcpSelectedList = {};
   var gcpDisabled = false;
-  const GCP_GROUP_SELECTION_LIMIT = 20;
+  const GCP_GROUP_SELECTION_LIMIT = 2;
 
   function clearGCPGroups() {
     removeAllGCPGroups();
@@ -14,7 +14,7 @@
   }
 
   const handleGCPGroupSelectionView = () => {
-    const finalCount = $('#gcp-group-selection-table').children('tr').length;
+    let finalCount = $('#gcp-group-selection-table').children('tr').length;
     if(gcpDisabled) {
       finalCount = 'All';
     }
@@ -118,14 +118,6 @@
     tableData[0].textContent = "All Groups Selected";
     newSpan.attr("selectAll", true);
     updateSelectedGCPGroup();
-
-    const groups = $('#gcp-group-table').children('tr');
-    for(iter = 0; iter < groups.length; iter++) {
-      if(!gcpSelectedList[$(groups[iter]).attr('group')]) {
-        addGCPGroupSelection(groups[iter]);
-      }
-    }
-    updateSelectedGCPGroup();
   }
 
   const selectAllGCPGroupToggle = (elem) => {
@@ -146,6 +138,7 @@
     rightElem = elem.parentElement.parentElement;
     if($(rightElem).attr("selectAll")) {
       $("#selectAllGCPGroup").prop("checked", false);
+      gcpDisabled = false;
       gcpHandleDisableMode();
       $(rightElem).remove();
       handleGCPGroupSelectionView();
@@ -187,7 +180,7 @@
     const gcp_groups = $('#gcp-group-selection-table').children('tr');
     const groups = [];
     for(iter = 0; iter < gcp_groups.length; iter++) {
-      groups.push($(gcp_groups[iter].attr("group")));
+      groups.push($(gcp_groups[iter]).attr("group"));
     }
 
     $('#selected-gcp-groups').val(JSON.stringify(groups));
@@ -224,7 +217,7 @@
     $("#selectAllGCPGroup").prop("disabled", true);
 
     let GCPDomain = getSelectedgcpDomain();
-    clearGCPGroups();
+
     $.ajax({
       url: "/api/v1/gcp/domain/groups",
       data: {"gcp_domain": GCPDomain, "search": search, "page": page},
