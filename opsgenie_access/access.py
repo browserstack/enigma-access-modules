@@ -37,19 +37,29 @@ class OpsgenieAccess(BaseEmailAccess):
             array (json objects): key value pair of access lable and it's access type.
         """
         valid_access_label_array = []
-        total_teams_list = helper.teams_list()
-        if total_teams_list is None:
+
+        opsgenie_teams = access_request_form.get("selected-opsgenie-teams")
+        select_all_teams = access_request_form.get("select-all-opsgenie-teams") == "on"
+
+        if select_all_teams:
+            opsgenie_teams = helper.teams_list()
+        elif not opsgenie_teams or not json.loads(opsgenie_teams):
             raise Exception(constants.TEAM_LIST_ERROR)
-        for access_label_data in json.loads(access_request_form.get("selected-opsgenie-teams")):
-            if access_label_data not in total_teams_list:
+        else:
+            opsgenie_teams = json.loads(opsgenie_teams)
+
+        access_level = access_request_form.get("opsgenie-access-level")
+        if not access_level or access_level not in ("user", "team_admin"):
+            raise Exception(constants.VALID_USER_TYPE_REQUIRED_ERROR)
+
+
+        for team in opsgenie_teams:
+            if not helper.check_team_exist(team):
                 raise Exception(constants.VALID_TEAM_REQUIRED_ERROR)
 
-            if access_request_form.get("opsgenie-access-level") not in ("user", "team_admin"):
-                raise Exception(constants.VALID_USER_TYPE_REQUIRED_ERROR)
-
             valid_access_label = {
-                "team": access_label_data,
-                "usertype": access_request_form.get("opsgenie-access-level"),
+                "team": team,
+                "usertype": access_level,
             }
             valid_access_label_array.append(valid_access_label)
         return valid_access_label_array

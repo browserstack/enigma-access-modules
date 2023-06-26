@@ -1,13 +1,18 @@
 <script>
 
-  const opsgenieSelectedList = {}
+  var opsgenieSelectedList = {}
+  var opsgenieDisabled = false
+  const OPSGENIE_TEAM_SELECTION_LIMIT = 20
 
   const handleOpsgenieTeamSelectionCheckbox = (elem) => {
     $(elem).prop('checked', !$(elem).prop('checked'));
   }
 
   const handleOpsgenieTeamSelectionView = () => {
-    const finalCount = $('#opsgenie-team-selection-table').children('tr').length;
+    let finalCount = $('#opsgenie-team-selection-table').children('tr').length;
+    if(opsgenieDisabled) {
+      finalCount = 'All';
+    }
 
     if(finalCount < 1) {
       $('#opsgenie-team-selection-empty').show();
@@ -33,6 +38,26 @@
       $(elem).find('input').prop('checked', false);
       $(elem).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
       $(elem).children('td#opsgenie-description-td').removeClass('text-blue-600').addClass('text-gray-900');
+    }
+  };
+
+  const opsgenieHandleDisableMode = () => {
+    opsgenieSelectedList = {};
+    const teams = $('#opsgenie-team-table').children('tr');
+    for(iter = 0; iter < teams.length; iter++) {
+      if (opsgenieDisabled) {
+        $(teams[iter]).find('input').prop('checked', true);
+        $(teams[iter]).removeAttr("onclick");
+        $(teams[iter]).find('input').attr("disabled", true);
+        $(teams[iter]).removeClass('hover:bg-blue-50 hover:text-blue-700').addClass('bg-gray-50');
+        $(teams[iter]).children('td#opsgenie-description-td').removeClass('text-gray-900').addClass('text-blue-600');
+      } else {
+        $(teams[iter]).attr("onclick", "handleOpsgenieTeamSelection(this)");
+        $(teams[iter]).find('input').attr("disabled", false);
+        $(teams[iter]).find('input').prop('checked', false);
+        $(teams[iter]).removeClass('bg-gray-50').addClass('hover:bg-blue-50 hover:text-blue-700');
+        $(teams[iter]).children('td#opsgenie-description-td').removeClass('text-blue-600').addClass('text-gray-900');
+      }
     }
   };
 
@@ -63,32 +88,42 @@
     handleOpsgenieTeamSelectionView();
   };
 
-  const removeAllOpsgenieTeams = () => {
+  const removeAllOpsgenieTeams = (disabledState) => {
+    opsgenieDisabled = disabledState;
     const teams = $('#opsgenie-team-selection-table').children('tr');
     for(iter = 0; iter < teams.length; iter++) {
-      removeOpsgenieTeamSelectionSpanElem(teams[iter], $("#opsgenie-team-table").find(`tr[team_name="${$(teams[iter]).attr('team_name')}"]`));
+      if($(teams[iter]).attr('selectAll')) {
+        $(teams[iter]).remove();
+        $("#selectAllOpsgenieTeam").prop("checked", false);
+      } else {
+        removeOpsgenieTeamSelectionSpanElem(teams[iter], $("#opsgenie-team-table").find(`tr[team_name="${$(teams[iter]).attr('team_name')}"]`));
+      }
     }
-    $("#selectAllOpsgenieTeam").prop("checked", false);
+    opsgenieHandleDisableMode();
     updateSelectedOpsgenieTeam();
+    handleOpsgenieTeamSelectionView();
+    $('#max-team-selected-warning').hide();
   };
 
   const selectAllOpsgenieTeam = () => {
-    const teams = $("#opsgenie-team-table").children('tr');
-
-    for (iter = 0; iter < teams.length; iter++) {
-      if(!opsgenieSelectedList[$(teams[iter]).attr('team_name')]) {
-        addOpsgenieTeamSelection(teams[iter]);
-      }
-    }
+    removeAllOpsgenieTeams(true);
+    const selectionList = $('#opsgenie-team-selection-table');
+    const newSpan = $("#opsgenie-team-selection-row-template").clone(true, true);
+    newSpan.appendTo(selectionList);
+    newSpan.show();
+    const tableData = newSpan.children('td');
+    tableData[0].textContent = "All Teams Selected";
+    newSpan.attr("selectAll", true);
+    updateSelectedOpsgenieTeam();
   }
 
   const selectAllOpsgenieTeamToggle = (elem) => {
     if(elem.checked) {
       selectAllOpsgenieTeam();
     } else {
-      removeAllOpsgenieTeams();
+      removeAllOpsgenieTeams(false);
     }
-    updateSelectedOpsgenieTeam();
+    handleOpsgenieTeamSelectionView();
   }
 
   const removeOpsgenieTeamSelection = (elem) => {
@@ -98,18 +133,44 @@
 
   const removeOpsgenieTeamSelectionUI = (elem) => {
     rightElem = elem.parentElement.parentElement;
-    $("#selectAllOpsgenieTeam").prop("checked", false);
-    removeOpsgenieTeamSelectionSpanElem(rightElem, $("#opsgenie-team-table").find(`tr[team_name="${$(rightElem).attr('team_name')}"]`));
+    if($(rightElem).attr("selectAll")) {
+      $("#selectAllOpsgenieTeam").prop("checked", false);
+      opsgenieDisabled = false;
+      opsgenieHandleDisableMode();
+      $(rightElem).remove();
+      handleOpsgenieTeamSelectionView();
+    } else {
+      removeOpsgenieTeamSelectionSpanElem(rightElem, $("#opsgenie-team-table").find(`tr[team_name="${$(rightElem).attr('team_name')}"]`));
+    }
     updateSelectedOpsgenieTeam();
+    $('#max-team-selected-warning').hide();
   };
 
+  const findOpsgenieSelectedListLength = () => {
+    let count = 0;
+    Object.values(opsgenieSelectedList).forEach(val => {
+      if(val) count++;
+    })
+    return count;
+  }
+
   const handleOpsgenieTeamSelection = (elem) => {
+    if(opsgenieDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
+      if(findOpsgenieSelectedListLength() === OPSGENIE_TEAM_SELECTION_LIMIT) {
+        $('#max-team-selected-warning').show();
+        return;
+      }
       addOpsgenieTeamSelection(elem);
     } else {
       removeOpsgenieTeamSelection(elem);
     }
     updateSelectedOpsgenieTeam();
+    if(findOpsgenieSelectedListLength() === OPSGENIE_TEAM_SELECTION_LIMIT) {
+      $('#max-team-selected-warning').show();
+    } else {
+      $('#max-team-selected-warning').hide();
+    }
   };
 
   function updateSelectedOpsgenieTeam() {
@@ -123,6 +184,8 @@
   }
 
   function fetchOpsgenieTeams(search=undefined, page=undefined) {
+    $("#selectAllOpsgenieTeam").prop("disabled", true);
+    $("#opsgeniesearch").prop("disabled", true);
     $.ajax({
       url: "/api/v1/opsgenie/teams/",
       data: {"search": search, "page": page},
@@ -134,9 +197,9 @@
     }).done(function(data, statusText, xhr){
       $("#opsgenie-team-table tr").remove();
       let rows = data["teamsList"].map(function(team_name, idx){
-        return `<tr onclick="handleOpsgenieTeamSelection(this)" class="${opsgenieSelectedList[team_name]? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" team_name="${team_name}" >
+        return `<tr onclick="handleOpsgenieTeamSelection(this)" class="${(opsgenieSelectedList[team_name] || opsgenieDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" team_name="${team_name}" >
           <td id="opsgenie-checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
-            <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleOpsgenieTeamSelectionCheckbox(this)" ${ opsgenieSelectedList[team_name]? "checked": ""}></input>
+            <input type="checkbox" class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6" onclick="handleOpsgenieTeamSelectionCheckbox(this)" ${ (opsgenieSelectedList[team_name] || opsgenieDisabled)? "checked": ""} ${(opsgenieDisabled)? "disabled": ""}></input>
           </td>
           <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium ${ opsgenieSelectedList[team_name]? "text-blue-600" : "text-gray-900"}" id="opsgenie-description-td">${team_name}</td>
         </tr>`
@@ -170,6 +233,8 @@
       }
 
       $("#opsGenieTeamsScrollBar").scrollTop(0)
+      $("#selectAllOpsgenieTeam").prop("disabled", false)
+      $("#opsgeniesearch").prop("disabled", false)
     });
   }
 
@@ -194,6 +259,7 @@
   })
 
 </script>
+{% load reusable_components %}
 
 <div class="pt-4">
   <label for="opsgenie-access-level" class="text-sm font-medium leading-5 text-gray-700">Access Level:</label>
@@ -205,6 +271,11 @@
     </select>
   </div>
 </div>
+
+<div id="max-team-selected-warning" class="hidden">
+  {% get_error_panel_with_message "Max number of teams selected" "Deselect some selections or Submit request to select more teams." %}
+</div>
+
 <h1 class="pt-5 text-sm text-gray-900">Opsgenie teams that you can select</h1>
 <div class="grid grid-cols-2 gap-4">
   <div class="flex-col">
@@ -219,7 +290,7 @@
           </div>
         </div>
         <div class="flex-none flex">
-          <input type="checkbox" onclick="selectAllOpsgenieTeamToggle(this)" name="select-all-opsgenie-team" id="selectAllOpsgenieTeam" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
+          <input type="checkbox" onclick="selectAllOpsgenieTeamToggle(this)" name="select-all-opsgenie-teams" id="selectAllOpsgenieTeam" class="ml-4 mr-2 mt-2 px-1 py-1 top-1/2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 sm:left-6">
           <label class="ml-1 mr-3 mt-1 mb-2.5 text-base leading-6 font-normal text-gray-900">Select all</label>
         </div>
       </div>
@@ -286,7 +357,7 @@
           </table>
       </div>
       <nav class="flex flex-shrink-0 px-4 items-center justify-between align-bottom border-t border-gray-200 pt-4 pb-4 hidden">
-        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllOpsgenieTeams();">
+        <button type="button" class="inline-flex items-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-base font-medium text-blue-700 shadow-sm hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" onclick="removeAllOpsgenieTeams(false);">
           Remove all
         </button>
       </nav>
