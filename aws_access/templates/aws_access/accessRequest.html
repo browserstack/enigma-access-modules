@@ -103,7 +103,7 @@
     awsHandleDisableMode();
     updateSelectedAWSGroup();
     handleAWSGroupSelectionView();
-    $('#max-groups-selected-warning').hide();
+    $('#max-aws-group-selected-warning').hide();
   };
 
   const selectAllAWSGroup = () => {
@@ -144,7 +144,7 @@
       removeGroupSelectionSpanElem(rightElem, $("#aws-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
     }
     updateSelectedAWSGroup();
-    $('#max-groups-selected-warning').hide();
+    $('#max-aws-group-selected-warning').hide();
   };
 
   const findAWSSelectedListLength = () => {
@@ -159,7 +159,7 @@
     if(awsDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
       if(findAWSSelectedListLength() === AWS_GROUP_SELECTION_LIMIT) {
-        $('#max-groups-selected-warning').show();
+        $('#max-aws-group-selected-warning').show();
         return;
       }
       addAWSGroupSelection(elem);
@@ -168,9 +168,9 @@
     }
     updateSelectedAWSGroup();
     if(findAWSSelectedListLength() === AWS_GROUP_SELECTION_LIMIT) {
-      $('#max-groups-selected-warning').show();
+      $('#max-aws-group-selected-warning').show();
     } else {
-      $('#max-groups-selected-warning').hide();
+      $('#max-aws-group-selected-warning').hide();
     }
   };
 
@@ -286,7 +286,7 @@
   </div>
 </div>
 
-<div id="max-groups-selected-warning" class="hidden">
+<div id="max-aws-group-selected-warning" class="hidden">
   {% get_error_panel_with_message "Max number of groups selected" "Deselect some selections or Submit request to select more groups." %}
 </div>
 

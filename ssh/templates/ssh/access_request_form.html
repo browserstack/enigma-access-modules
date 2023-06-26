@@ -102,7 +102,7 @@
     SSHMachineHandleDisableMode();
     updateSelectedSSHMachine();
     handleSSHMachineSelectionView();
-    $('#max-machines-selected-warning').hide();
+    $('#max-ssh-machine-selected-warning').hide();
   };
 
   const selectAllSSHMachines = () => {
@@ -144,7 +144,7 @@
       removeSSHMachineSelectionSpanElem(rightElem, $("#ssh-machine-table").find(`tr[machine_ip="${$(rightElem).attr('machine_ip')}"]`));
     }
     updateSelectedSSHMachine();
-    $('#max-machines-selected-warning').hide();
+    $('#max-ssh-machine-selected-warning').hide();
   };
 
   const findSshSelectedListLength = () => {
@@ -159,7 +159,7 @@
     if(sshDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
       if(findSshSelectedListLength() === SSH_MACHINE_SELECTION_LIMIT) {
-        $('#max-machines-selected-warning').show();
+        $('#max-ssh-machine-selected-warning').show();
         return;
       }
       addSSHMachineSelection(elem);
@@ -168,9 +168,9 @@
     }
     updateSelectedSSHMachine();
     if(findSshSelectedListLength() === SSH_MACHINE_SELECTION_LIMIT) {
-      $('#max-machines-selected-warning').show();
+      $('#max-ssh-machine-selected-warning').show();
     } else {
-      $('#max-machines-selected-warning').hide();
+      $('#max-ssh-machine-selected-warning').hide();
     }
   };
 
@@ -295,7 +295,7 @@
   </div>
 </div>
 
-<div id="max-machines-selected-warning" class="hidden">
+<div id="max-ssh-machine-selected-warning" class="hidden">
   {% get_error_panel_with_message "Max number of ssh machines selected" "Deselect some selections or Submit request to select more machines." %}
 </div>
 
