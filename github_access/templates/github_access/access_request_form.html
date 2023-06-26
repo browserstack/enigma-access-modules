@@ -201,6 +201,13 @@
       }
     }).done(function(data, statusText, xhr){
       $("#github-repo-table tr").remove();
+
+      if(data["search_error"]) {
+        showNotification("failed", data["search_error"])
+      }
+
+      if(data["githubRepoList"] && data["githubRepoList"].length > 0 && data["githubRepoList"][0].length === 0) return;
+
       let rows = data["githubRepoList"].map(function(repo, idx){
         const repo_id = repo["orgName"]+"/"+repo["repoName"]
         return `<tr onclick="handleGithubReposelection(this)" org_name="${repo["orgName"]}" repo_name="${repo["repoName"]}" repo_id="${repo_id}" class="${(githubSelectedList[repo_id] || githubDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" >
@@ -231,10 +238,6 @@
 
       if(!data["next_page"] && !data["prev_page"]) {
         $("#githubPaginationNav").addClass("hidden")
-      }
-
-      if(data["search_error"]) {
-        showNotification("failed", data["search_error"])
       }
 
       $("#githubScrollBar").scrollTop(0)
