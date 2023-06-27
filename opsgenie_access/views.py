@@ -31,7 +31,7 @@ def get_opsgenie_team(request):
         if not teams:
             response["teamsList"] = all_teams
             response["search_error"] = ("Please try adjusting your search",
-                                        "to find what you're looking for.")
+                                        " to find what you're looking for.")
 
         return response
     except Exception:

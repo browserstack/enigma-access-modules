@@ -222,7 +222,7 @@
       error: function (XMLHttpRequest, textStatus, errorThrown) {
         if(XMLHttpRequest.responseJSON) {
           const msg = XMLHttpRequest.responseJSON;
-          showNotificiation("failed", msg["error"]);
+          showNotification("failed", msg["error"]);
         }
         $('#awsAccount').prop("disabled",false);
         $('#awsSearch').prop("disabled", false);
@@ -231,6 +231,12 @@
     }).done(function(data, statusText, xhr){
 
       $("#aws-group-table").empty();
+      if(data["search_error"]) {
+        showNotification("failed", data["search_error"], "No exact match found");
+      }
+
+      if(data["AWSGroups"] && data["AWSGroups"].length === 0) return;
+
       let rows = $.map(data["AWSGroups"], function(group, idx){
         return `<tr onclick="handleAWSGroupSelection(this)" class="(${(awsSelectedList[group] || awsDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" group="${group}" >
             <td class="relative w-12 px-6 sm:w-16 sm:px-8">
@@ -260,9 +266,6 @@
         $("#awsPaginationNav").addClass("hidden");
       }
 
-      if(data["search_error"]) {
-        showNotification("failed", data["search_error"], "No exact match found");
-      }
       $("#awsGroupsScrollBar").scrollTop(0)
 
       $('#aws-group-table').append(rows.join(""));

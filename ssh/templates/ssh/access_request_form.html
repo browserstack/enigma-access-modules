@@ -206,11 +206,17 @@
       data: {"search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
         const msg = XMLHttpRequest.responseJSON;
-        alert(msg["error"]);
-        showNotificiation("failed", msg["error"]);
+        showNotification("failed", msg["error"]);
       }
     }).done(function(data, statusText, xhr){
       $("#ssh-machine-table tr").remove();
+
+      if(data["search_error"]) {
+        showNotification("failed", data["search_error"])
+      }
+
+      if(data["machineList"] && data["machineList"].length === 0) return;
+
       let rows = data["machineList"].map(function(machine){
         return `<tr onclick="handleSSHMachineSelection(this)" class="${(sshSelectedList[machine.ip] || sshDisabled) ? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" machine_name="${machine.name}" machine_ip="${ machine.ip }" >
           <td id="checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
@@ -240,11 +246,6 @@
 
       if(!data["next_page"] && !data["prev_page"]) {
         $("#sshPaginationNav").addClass("hidden")
-      }
-
-      if(data["search_error"]) {
-        alert(data["search_error"])
-        showNotificiation("failed", data["search_error"])
       }
 
       $("#sshGroupsScrollBar").scrollTop(0)

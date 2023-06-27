@@ -206,7 +206,7 @@
         showNotification("failed", data["search_error"])
       }
 
-      if(data["githubRepoList"] && data["githubRepoList"].length > 0 && data["githubRepoList"][0].length === 0) return;
+      if(data["githubRepoList"] && data["githubRepoList"].length === 0) return;
 
       let rows = data["githubRepoList"].map(function(repo, idx){
         const repo_id = repo["orgName"]+"/"+repo["repoName"]
