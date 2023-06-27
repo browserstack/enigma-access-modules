@@ -102,7 +102,7 @@
     opsgenieHandleDisableMode();
     updateSelectedOpsgenieTeam();
     handleOpsgenieTeamSelectionView();
-    $('#max-team-selected-warning').hide();
+    $('#max-opsgenie-team-selected-warning').hide();
   };
 
   const selectAllOpsgenieTeam = () => {
@@ -143,7 +143,7 @@
       removeOpsgenieTeamSelectionSpanElem(rightElem, $("#opsgenie-team-table").find(`tr[team_name="${$(rightElem).attr('team_name')}"]`));
     }
     updateSelectedOpsgenieTeam();
-    $('#max-team-selected-warning').hide();
+    $('#max-opsgenie-team-selected-warning').hide();
   };
 
   const findOpsgenieSelectedListLength = () => {
@@ -158,7 +158,7 @@
     if(opsgenieDisabled) return;
     if(!$(elem).find('input').prop('checked')) {
       if(findOpsgenieSelectedListLength() === OPSGENIE_TEAM_SELECTION_LIMIT) {
-        $('#max-team-selected-warning').show();
+        $('#max-opsgenie-team-selected-warning').show();
         return;
       }
       addOpsgenieTeamSelection(elem);
@@ -167,9 +167,9 @@
     }
     updateSelectedOpsgenieTeam();
     if(findOpsgenieSelectedListLength() === OPSGENIE_TEAM_SELECTION_LIMIT) {
-      $('#max-team-selected-warning').show();
+      $('#max-opsgenie-team-selected-warning').show();
     } else {
-      $('#max-team-selected-warning').hide();
+      $('#max-opsgenie-team-selected-warning').hide();
     }
   };
 
@@ -191,11 +191,17 @@
       data: {"search": search, "page": page},
       error: function (XMLHttpRequest, textStatus, errorThrown) {
         const msg = XMLHttpRequest.responseJSON;
-        alert(msg["error"]);
-        showNotificiation("failed", msg["error"]);
+        showNotification("failed", msg["error"]);
       }
     }).done(function(data, statusText, xhr){
       $("#opsgenie-team-table tr").remove();
+
+      if(data["search_error"]) {
+        showNotification("failed", data["search_error"])
+      }
+
+      if(data["teamsList"] && data["teamsList"].length === 0) return;
+
       let rows = data["teamsList"].map(function(team_name, idx){
         return `<tr onclick="handleOpsgenieTeamSelection(this)" class="${(opsgenieSelectedList[team_name] || opsgenieDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" team_name="${team_name}" >
           <td id="opsgenie-checkbox-td" class="relative w-12 px-6 sm:w-16 sm:px-8">
@@ -225,11 +231,6 @@
 
       if(!data["next_page"] && !data["prev_page"]) {
         $("#opsgeniePaginationNav").addClass("hidden")
-      }
-
-      if(data["search_error"]) {
-        alert(data["search_error"])
-        showNotificiation("failed", data["search_error"])
       }
 
       $("#opsGenieTeamsScrollBar").scrollTop(0)
@@ -272,7 +273,7 @@
   </div>
 </div>
 
-<div id="max-team-selected-warning" class="hidden">
+<div id="max-opsgenie-team-selected-warning" class="hidden">
   {% get_error_panel_with_message "Max number of teams selected" "Deselect some selections or Submit request to select more teams." %}
 </div>
 

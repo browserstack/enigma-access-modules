@@ -82,7 +82,7 @@
     handleGCPGroupSelectionView();
   };
 
-  const removeGroupSelectionSpanElem = (rightElem, leftElem) => {
+  const removeGcpGroupSelectionSpanElem = (rightElem, leftElem) => {
     rightElem.remove();
     selectGCPGroupCheckbox(leftElem, false);
 
@@ -99,7 +99,7 @@
         $(groups[iter]).remove();
         $("#selectAllGCPGroup").prop("checked", false);
       } else {
-        removeGroupSelectionSpanElem(groups[iter], $("#gcp-group-table").find(`tr[group="${$(groups[iter]).attr('group')}"]`));
+        removeGcpGroupSelectionSpanElem(groups[iter], $("#gcp-group-table").find(`tr[group="${$(groups[iter]).attr('group')}"]`));
       }
     }
     gcpHandleDisableMode();
@@ -131,7 +131,7 @@
 
   const removeGCPGroupSelection = (elem) => {
     $("#selectAllGCPGroup").prop("checked", false);
-    removeGroupSelectionSpanElem($("#gcp-group-selection-table").find(`tr[group="${$(elem).attr('group')}"]`),elem);
+    removeGcpGroupSelectionSpanElem($("#gcp-group-selection-table").find(`tr[group="${$(elem).attr('group')}"]`),elem);
   };
 
   const removeGCPGroupSelectionUI = (elem) => {
@@ -143,7 +143,7 @@
       $(rightElem).remove();
       handleGCPGroupSelectionView();
     } else {
-      removeGroupSelectionSpanElem(rightElem, $("#gcp-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
+      removeGcpGroupSelectionSpanElem(rightElem, $("#gcp-group-table").find(`tr[group="${$(rightElem).attr('group')}"]`));
     }
     updateSelectedGCPGroup();
     $('#max-gcp-group-selected-warning').hide();
@@ -232,6 +232,12 @@
        }
     }).done(function(data, statusText, xhr){
       $("#gcp-group-table").empty();
+      if(data["search_error"]) {
+        showNotification("failed", data["search_error"], "No exact match found");
+      }
+
+      if(data["gcp_groups"] && data["gcp_groups"].length === 0) return;
+
       let rows = $.map(data["gcp_groups"], function(group, idx){
         return `<tr onclick="handleGCPGroupSelection(this)" class="${(gcpSelectedList[group] || gcpDisabled)? "bg-gray-50": "hover:bg-blue-50 hover:text-blue-700"}" group="${group}">
             <td class="relative w-12 px-6 sm:w-16 sm:px-8">
@@ -257,9 +263,6 @@
         $("#gcp_prev_page").attr("onclick", `gcpGroupPageChange('None')`);
       }
 
-      if(data["search_error"]) {
-        showNotification("failed", data["search_error"], "No exact match found");
-      }
       $("#gcpGroupsScrollBar").scrollTop(0);
 
       $('#gcp-group-table').append(rows.join(""));

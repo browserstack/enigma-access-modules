@@ -25,7 +25,7 @@ def get_github_repos(request):
         if not selected_repos:
             response["githubRepoList"] = all_repos
             response["search_error"] = ("Please try adjusting your search",
-                                        "to find what you're looking for.")
+                                        " to find what you're looking for.")
 
         return response
     except Exception:

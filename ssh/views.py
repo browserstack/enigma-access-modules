@@ -34,7 +34,7 @@ def get_ssh_machines(request):
         if not machine_list:
             response["machineList"] = all_machines
             response["search_error"] = ("Please try adjusting your search",
-                                        "to find what you're looking for.")
+                                        " to find what you're looking for.")
 
 
         return response
