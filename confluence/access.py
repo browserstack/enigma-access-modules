@@ -18,18 +18,23 @@ class Confluence(BaseEmailAccess):
     urlpatterns = []
 
     def _get_confluence_config(self):
+        """Returns confluence module config."""
         return ACCESS_MODULES.get(self.tag(), {})
 
     def _get_admin_email(self):
+        """Returns admin email from config."""
         return self._get_confluence_config()["ADMIN_EMAIL"]
 
     def _get_api_token(self):
+        """Returns API token from config."""
         return self._get_confluence_config()["API_TOKEN"]
 
     def _get_base_url(self):
+        """Returns base URL for confluence from config."""
         return self._get_confluence_config()["CONFLUENCE_BASE_URL"]
 
     def can_auto_approve(self):
+        """Returns true or false as if required to auto approve or manual approval."""
         return False
 
     def fetch_access_request_form_path(self):
@@ -78,6 +83,11 @@ class Confluence(BaseEmailAccess):
 
 
     def __in_access_types(self, access_type):
+        """
+        Takes in an access type and checks if it is present in a list of access types.
+
+        access_type: Specifies the type of access being requested or checked for.
+        """
         return access_type in ["View Access", "Edit Access", "Admin Access"]
 
     def get_label_desc(self, access_label):
@@ -150,13 +160,13 @@ class Confluence(BaseEmailAccess):
                 return json.loads(response.text)["message"].split(" ")[-1]
             logger.error(
                 "Could not approve permission %s for response %s",
-                str(permission), str(response.text)
+                str(permission),
+                str(response.text),
             )
             return False
         except Exception as ex:
             logger.error(
-                "Could not approve permission %s for error %s",
-                str(permission), str(ex)
+                "Could not approve permission %s for error %s", str(permission), str(ex)
             )
             return False
 
@@ -180,7 +190,8 @@ class Confluence(BaseEmailAccess):
         except Exception as ex:
             logger.error(
                 "Could not approve permission %s for error %s",
-                str(permission_id), str(ex)
+                str(permission_id),
+                str(ex),
             )
             return False
 
@@ -232,6 +243,11 @@ class Confluence(BaseEmailAccess):
         return available_spaces
 
     def __get_accesses_with_type(self, access_type):
+        """
+        returns a list of accesses with a specified access type.
+
+        access_type: Specifies the type of access being searched for.
+        """
         view_permissions = [
             {"key": "read", "target": "space"},
             {"key": "delete", "target": "space"},
@@ -324,8 +340,10 @@ class Confluence(BaseEmailAccess):
     def __send_approve_email(self, user, request_id, access_type, approver):
         """Generates and sends email in access grant."""
         targets = self.email_targets(user)
-        subject = (f"Approved Access: {request_id} for access to"
-        f" {self.access_desc()} for user {user.email}")
+        subject = (
+            f"Approved Access: {request_id} for access to"
+            f" {self.access_desc()} for user {user.email}"
+        )
 
         body = self.__generate_string_from_template(
             filename="confluence/approve_email.html",
@@ -336,6 +354,12 @@ class Confluence(BaseEmailAccess):
         self.email_via_smtp(targets, subject, body)
 
     def __generate_string_from_template(self, filename, **kwargs):
+        """
+        Generates a string from a template file using keyword arguments.
+
+        filename: The filename parameter is a string that represents the name of the file that
+        contains the template for generating the string.
+        """
         template = loader.get_template(filename)
         vals = {}
         for key, value in kwargs.items():
@@ -387,9 +411,19 @@ class Confluence(BaseEmailAccess):
         return "Confluence Access Module"
 
     def get_identity_template(self):
+        """
+        Returns path to identity form template.
+        """
         return "confluence/identity_form.html"
 
     def __is_valid_identity(self, id, email):
+        """
+        The function checks if a given identity and email are valid.
+
+        id: A unique identifier for a user or entity in a system. It
+
+        email: An email address.
+        """
         auth = HTTPBasicAuth(
             self._get_admin_email(),
             self._get_api_token(),
@@ -412,11 +446,18 @@ class Confluence(BaseEmailAccess):
         return True
 
     def verify_identity(self, request, email):
-        id = request["confluence_id"]
+        """
+        Takes in a request and an email address as parameters and verifies the identity
+        associated with the email.
+
+        email: The email parameter is a string that represents the email address of the user
+        whose identity needs to be verified.
+        """
+        confluence_id = request["confluence_id"]
         if not self.__is_valid_identity(id, email):
             return None
 
-        return {"id": id}
+        return {"id": confluence_id}
 
     def tag(self):
         """Returns confluence access tag."""
