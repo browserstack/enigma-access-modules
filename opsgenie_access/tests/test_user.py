@@ -184,6 +184,6 @@ def false_value(context_output):
 
 @then("return value should be true")
 def true_value(context_output):
-    """return value should be False."""
+    """return value should be True."""
     return_value = context_output[0]
     assert return_value is True
