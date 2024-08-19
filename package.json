@@ -1,0 +1,10 @@
+{
+  "name": "enigma-access-modules",
+  "version": "1.0.0",
+  "description": "Common access modules for enigma codebase https://github.com/browserstack/enigma"
+  "dependencies": {
+    "@commitlint/cli": "19.4.0",
+    "@commitlint/config-conventional": "19.2.2",
+    "husky": "9.1.4"
+  }
+}
