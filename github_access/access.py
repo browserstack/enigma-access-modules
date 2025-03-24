@@ -5,6 +5,7 @@ from Access.access_modules.github_access.helpers import (
     get_org,
     get_org_invite,
     get_org_repo_list,
+    get_repo_blacklist,
     get_repo,
     get_user,
     grant_access,
@@ -77,7 +78,14 @@ class GithubAccess(BaseEmailAccess):
                 error_message = constants.REPO_NOT_FOUND % label["repository"]
                 return_value = False
             else:
-                if return_value and grant_access(
+                # Verify that the repository is not in the blacklist
+                blacklisted_repos = set(get_repo_blacklist())
+
+                if label["repository"] in blacklisted_repos:
+                    logger.error(constants.REPO_BLACKLISTED, label["repository"])
+                    error_message = constants.REPO_BLACKLISTED % label["repository"]
+                    return_value = False
+                elif return_value and grant_access(
                     label["repository"], label["access_level"], user_name
                 ):
                     logger.debug(
@@ -199,9 +207,19 @@ class GithubAccess(BaseEmailAccess):
         return "github_access/access_request_form.html"
 
     def access_request_data(self, request, is_group=False):
-        repo_data = [repo for repo in get_org_repo_list()]
-        data = {"githubRepoList": repo_data}
+        repo_data = get_org_repo_list()
+        filtered_repo_data = self.__exclude_blacklisted_repos(repo_data)
+        data = {"githubRepoList": filtered_repo_data}
         return data
+
+    def __exclude_blacklisted_repos(self, repo_data):
+        blacklisted_repos = set(get_repo_blacklist())
+        if not blacklisted_repos:
+            return repo_data
+
+        filtered_repo_data = [repo for repo in repo_data if repo not in blacklisted_repos]
+        logger.debug(f"Filtered out {len(repo_data) - len(filtered_repo_data)} blacklisted repositories")
+        return filtered_repo_data
 
     def fetch_access_approve_email(self, request, data):
         context_details = {
