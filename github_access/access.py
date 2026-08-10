@@ -23,6 +23,9 @@ class GithubAccess(BaseEmailAccess):
     ACCESS_LABEL = "repository_access"
     urlpatterns = []
 
+    def can_auto_approve(self):
+        return False
+
     def email_targets(self, user):
         return [user.email] + self.grant_owner()
 
