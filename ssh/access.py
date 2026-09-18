@@ -294,7 +294,15 @@ class SSHAccess(BaseEmailAccess):
         ssh_public_key = request["ssh_pub_key"]
         if not ssh_public_key or ssh_public_key == '':
             return {}
-        return {"ssh_public_key": ssh_public_key}
+        # Reject anything that is not a single, well-formed OpenSSH public key.
+        # The value is later interpolated into remote shell commands, so an
+        # unvalidated key is an OS command injection vector (CWE-78).
+        if not helpers.is_valid_ssh_public_key(ssh_public_key):
+            logger.warning(
+                "SSHModule: rejected malformed ssh public key from %s", email
+            )
+            return {}
+        return {"ssh_public_key": ssh_public_key.strip()}
 
     def can_auto_approve(self):
         return False
