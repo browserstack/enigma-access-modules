@@ -1,0 +1,108 @@
+{
+  "django_setup": {
+    "SECRET_KEY": "random_secret_that_you_should_change_on_production",
+    "DEBUG": false,
+    "ALLOWED_HOSTS": [
+      "localhost"
+    ],
+    "CSRF_TRUSTED_ORIGINS": [
+      "http://localhost"
+    ]
+  },
+  "sso": {
+    "googleapi": {
+      "SOCIAL_AUTH_GOOGLE_OAUTH2_KEY": "",
+      "SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET": ""
+    }
+  },
+  "database": {
+    "engine": "sqlite3",
+    "dbname": "",
+    "username": "",
+    "password": "",
+    "host": "",
+    "port": 3306
+  },
+  "access_modules": {
+    "git_urls": [
+      "https://github.com/browserstack/enigma-access-modules.git"
+    ],
+    "confluence_module": {
+      "CONFLUENCE_BASE_URL": "https://test.atlassian.net",
+      "ADMIN_EMAIL": "test@browserstack.com",
+      "API_TOKEN": "xyz"
+    },
+    "aws_access": {
+      "aws_accounts": [
+        {
+          "account": "Dev",
+          "access_key_id": "id",
+          "secret_access_key": "key"
+        }
+      ]
+    },
+    "github_access": {
+      "GITHUB_TOKEN": "test-token",
+      "GITHUB_BASE_URL": "https://api.github.com",
+      "GITHUB_ORG": "browserstack"
+    },
+    "gcp_access": {
+      "domains": [
+        {
+          "domain_id": "browserstack.com",
+          "admin_id": "test@browserstack.com",
+          "service_account_path": "./gcp.json"
+        }
+      ]
+    },
+    "zoom_access": {
+      "ZOOM_BASE_URL": "https://api.zoom.us/v2/",
+      "ZOOM_CLIENT_SECRET": "test-secret",
+      "ZOOM_API_KEY": "test-api"
+    },
+    "ssh": {
+      "engima_root_user": "enigma-user",
+      "app_user": "app",
+      "inventory_file_path": "Access/access_modules/ssh/inventory.csv",
+      "common_sudo_group": "sudoppl",
+      "private_key_path": "/Users/username/.ssh/id_rsa"
+    },
+    "opsgenie_access": {
+      "OPSGENIE_TOKEN": "test-token",
+      "IGNORE_TEAMS": [
+        "team_1",
+        "team_2"
+      ]
+    },
+    "slack_access": {
+      "enigma-slack": {
+        "AUTH_TOKEN": "abc",
+        "DEFAULT_CHANNELS": [
+          "general"
+        ]
+      }
+    }
+  },
+  "enigmaGroup": {
+    "MAIL_APPROVER_GROUPS": []
+  },
+  "emails": {
+    "access-approve": "",
+    "EMAIL_HOST": "",
+    "EMAIL_PORT": "",
+    "EMAIL_HOST_USER": "",
+    "EMAIL_HOST_PASSWORD": "",
+    "EMAIL_USE_TLS": true,
+    "EMAIL_USE_SSL": false,
+    "DEFAULT_FROM_EMAIL": ""
+  },
+  "background_task_manager": {
+    "type": "celery",
+    "config": {
+      "broker": "<celery-broker-url>",
+      "backend": "<celery-result-backend-url>",
+      "need_monitoring": true,
+      "monitoring_apps": "django_celery_results"
+    }
+  }
+}
