@@ -18,7 +18,7 @@ jobs:
     name: Scan
     runs-on: ubuntu-20.04
     container:
-      image: returntocorp/semgrep:1.166.0
+      image: returntocorp/semgrep:1.178.0
     if: (github.actor != 'dependabot[bot]')
     steps:
     - uses: actions/checkout@v4
