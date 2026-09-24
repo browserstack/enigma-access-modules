@@ -27,6 +27,13 @@ def user_identity(mocker):
     return identity_mock
 
 
+@pytest.fixture
+def request_obj(mocker):
+    request_obj = mocker.MagicMock()
+    request_obj.request_id = "123"
+    return request_obj
+
+
 @scenario("features/user.feature", "User does not exist on github")
 def test_user_does_not_exist_on_github():
     pass
@@ -230,9 +237,14 @@ def repo_does_not_exist(requests_mock, context):
 
 
 @when("I pass approval request", target_fixture="context_output")
-def add_user_approve(user, labels, user_identity):
+def add_user_approve(mocker, user, labels, user_identity, request_obj):
     github_access = access.get_object()
-    return github_access.approve(user_identity, labels, "test-approver", "123")
+
+    mocker.patch(
+        "Access.access_modules.github_access.access.GithubAccess._GithubAccess__send_approve_email",
+        return_value=""
+    )
+    return github_access.approve(user_identity, labels, "test-approver", request_obj)
 
 
 @then("return value should be False")

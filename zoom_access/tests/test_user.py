@@ -108,8 +108,12 @@ def user_name():
 
 
 @when("I pass approval request", target_fixture="context_output")
-def revoke_request(usera, user_identity_a, labels):
+def revoke_request(mocker, usera, user_identity_a, labels):
     zoom_access = access.get_object()
+    mocker.patch(
+        "Access.access_modules.zoom_access.access.Zoom._Zoom__send_approve_email",
+        return_value=True
+    )
     return zoom_access.approve(user_identity_a, labels, "test-approver", usera)
 
 
