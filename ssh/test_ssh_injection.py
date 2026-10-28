@@ -24,6 +24,22 @@ MALICIOUS_KEY = "ssh-ed25519 AAAATEST$(touch /tmp/pwned)attacker@example.com"
 MALICIOUS_USERNAME = "app;touch /tmp/pwned"
 
 
+@pytest.fixture(autouse=True)
+def ssh_module_config(mocker):
+    """Supply the ssh module config so tests don't depend on the host app's config.json."""
+    mocker.patch.dict(
+        helpers.ACCESS_MODULES,
+        {
+            "ssh": {
+                "app_user": "app",
+                "engima_root_user": "root",
+                "private_key_path": "/dev/null",
+                "common_sudo_group": "sudo",
+            }
+        },
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Pure validators
 # --------------------------------------------------------------------------- #
