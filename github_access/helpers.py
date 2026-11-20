@@ -219,6 +219,11 @@ def get_org_repo_list():
     return []
 
 
+def get_repo_blacklist():
+    config = _get_github_config()
+    return config.get("GITHUB_REPO_BLACKLIST", [])
+
+
 def revoke_access(username, repo=None):
     return _revoke_github_user(username, repo)
 
