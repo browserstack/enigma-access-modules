@@ -1,4 +1,10 @@
 # Enigma Access Modules
+
+> [!WARNING]
+> **This repository is no longer maintained and has been archived.**
+> It is kept read-only for reference.
+> There will be no further releases, bug fixes or security updates.
+
 Plug-able access modules for enigma
 
 ![BrowserStack Logo](https://d98b8t1nnulk5.cloudfront.net/production/images/layout/logo-header.png?1469004780)
